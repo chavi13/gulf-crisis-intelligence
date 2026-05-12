@@ -2,7 +2,7 @@
 
 A multi-module supply intelligence dashboard tracking tanker routing anomalies, LNG cargo rebalancing, and regional supply gap quantification during the 2026 Strait of Hormuz crisis.
 
-**Live dashboard**: [gulf-crisis-intelligence.streamlit.app]([https://gulf-crisis-intelligence.streamlit.app])
+**Live dashboard**: [gulf-crisis-intelligence.streamlit.app](https://gulf-crisis-intelligence.streamlit.app)
 
 ---
 
