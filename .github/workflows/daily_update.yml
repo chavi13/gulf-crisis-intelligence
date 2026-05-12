@@ -2,12 +2,15 @@ name: Daily Data Update
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # 6am UTC daily
-  workflow_dispatch:       # allows manual trigger from GitHub UI
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: /home/runner/work/gulf-crisis-intelligence/gulf-crisis-intelligence
 
     steps:
       - name: Checkout repo
@@ -28,7 +31,7 @@ jobs:
           echo "AISSTREAM_API_KEY=${{ secrets.AISSTREAM_API_KEY }}" >> .env
 
       - name: Run ingestion pipeline
-        run: python $GITHUB_WORKSPACE/run_all.py
+        run: python run_all.py
 
       - name: Commit updated database
         run: |
