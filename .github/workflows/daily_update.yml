@@ -28,7 +28,7 @@ jobs:
           echo "AISSTREAM_API_KEY=${{ secrets.AISSTREAM_API_KEY }}" >> .env
 
       - name: Run ingestion pipeline
-        run: python run_all.py
+        run: python $GITHUB_WORKSPACE/run_all.py
 
       - name: Commit updated database
         run: |
