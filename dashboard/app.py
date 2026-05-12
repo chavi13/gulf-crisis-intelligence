@@ -131,9 +131,11 @@ section[data-testid="stSidebar"] * {
     padding: 1.25rem 1.5rem;
     margin-bottom: 1rem;
     min-height: 160px;
-    height: 100%;         
+    height: 100%;
     box-sizing: border-box;
     overflow: visible;
+    display: flex;
+    flex-direction: column;
 }
 
 .metric-label {
@@ -147,7 +149,7 @@ section[data-testid="stSidebar"] * {
 }
 .metric-value {
     font-family: var(--font-mono);
-    font-size: 2.4rem;
+    font-size: 2rem;
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.1;
@@ -163,7 +165,8 @@ section[data-testid="stSidebar"] * {
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--text-muted);
-    margin-top: 0.6rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
 }
 
 /* ── Thesis block ───────────────────────────────────────────────── */
@@ -423,6 +426,19 @@ details.info-dropdown .dropdown-body {
     line-height: 1.7;
     border-top: 1px solid rgba(59,130,246,0.15);
 }
+/* ── Expander content background fix ───────────────────────────── */
+div[data-testid="stExpander"] details {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+}
+div[data-testid="stExpander"] div[role="region"] {
+    background-color: var(--bg-card) !important;
+}
+div[data-testid="stExpander"] summary {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-card) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -656,14 +672,10 @@ with tab_overview:
                 <div class="metric-sub">
                     of pre-crisis normal &nbsp;·&nbsp; {risk_badge(flag)}
                 </div>
-                <div class="metric-sub" style="margin-top:0.6rem;">
-                    Trend &nbsp;<span style="font-family:'IBM Plex Mono',monospace;
-                    color:#e8edf5;">{trend}</span>
-                    &nbsp;·&nbsp;
-                    {safe(tanker.get("transit_count"))} ships/day vs
-                    {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline
-                </div>
-                <div class="metric-timestamp">Updated {ts}</div>
+                <div class="metric-sub" style="margin-top:0.6rem;">Trend &nbsp;<span style="font-family:IBM Plex Mono,monospace; color:#e8edf5;">{trend}</span></div>
+<div class="metric-sub">{safe(tanker.get('transit_count'))} ships/day vs {safe(tanker.get('baseline_30d'), '.0f')} baseline</div>
+
+                <div class="metric-timestamp" style="margin-top:auto;padding-top:0.75rem;">Updated {ts}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -689,12 +701,9 @@ with tab_overview:
                 <div class="metric-sub">
                     Confidence {confidence} &nbsp;·&nbsp; {score_badge}
                 </div>
-                <div class="metric-sub" style="margin-top:0.6rem;">
-                    Routing signal &nbsp;<span style="font-family:'IBM Plex Mono',
-                    monospace;color:#e8edf5;">{routing}</span>
-                    &nbsp;·&nbsp; US utilization {util}
-                </div>
-                <div class="metric-timestamp">Updated {ts2}</div>
+                <div class="metric-sub" style="margin-top:0.6rem;">Routing signal &nbsp;<span style="font-family:IBM Plex Mono, monospace;color:#e8edf5;">{routing}</span></div>
+<div class="metric-sub">US utilization {util}%</div>
+                <div class="metric-timestamp" style="margin-top:auto;padding-top:0.75rem;">Updated {ts2}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -742,7 +751,7 @@ with tab_overview:
                         </tr>
                     </table>
                 </div>
-                <div class="metric-timestamp">Updated {ts3}</div>
+                <div class="metric-timestamp" style="margin-top:auto;padding-top:0.75rem;">Updated {ts3}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -782,7 +791,9 @@ with tab_overview:
                 </div>
                 <div class="metric-sub">
                     {safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg
-                    &nbsp;·&nbsp; {risk_badge(lng.get("storage_risk"))}
+                </div>
+                <div class="metric-sub" style="margin-top:0.3rem;">
+                    {risk_badge(lng.get("storage_risk"))}
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -946,7 +957,7 @@ with tab_tanker:
             plot_bgcolor="#0a0e1a",
             paper_bgcolor="#0a0e1a",
             font=dict(family="IBM Plex Sans", color="#8a9bb5", size=13),
-            height=420,
+            height=370,
             margin=dict(l=10, r=10, t=20, b=10),
             legend=dict(
                 orientation="h",
@@ -1122,9 +1133,11 @@ with tab_lng:
                 <div class="metric-value" style="font-size:1.4rem;">
                     {safe(lng.get("storage_pct"), "{:.1f}%")}
                 </div>
-                <div class="metric-sub">
+                 <div class="metric-sub">
                     {safe(lng.get("days_deficit"), "{:.1f} days")} behind required pace
-                    &nbsp;·&nbsp; {risk_badge(lng.get("storage_risk"))}
+                </div>
+                <div class="metric-sub" style="margin-top:0.3rem;">
+                    {risk_badge(lng.get("storage_risk"))}
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -1222,7 +1235,7 @@ with tab_lng:
             plot_bgcolor="#0a0e1a",
             paper_bgcolor="#0a0e1a",
             font=dict(family="IBM Plex Sans", color="#8a9bb5", size=13),
-            height=400,
+            height=350,
             margin=dict(l=10, r=60, t=20, b=10),
             legend=dict(
                 orientation="h",
@@ -1355,7 +1368,7 @@ with tab_lng:
             plot_bgcolor="#0a0e1a",
             paper_bgcolor="#0a0e1a",
             font=dict(family="IBM Plex Sans", color="#8a9bb5", size=13),
-            height=320,
+            height=280,
             margin=dict(l=10, r=80, t=10, b=10),
             xaxis=dict(
                 gridcolor="#1a2235",
