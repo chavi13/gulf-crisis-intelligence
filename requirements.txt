@@ -1,2 +1,4 @@
-websockets
+streamlit
+pandas
+plotly
 python-dotenv
