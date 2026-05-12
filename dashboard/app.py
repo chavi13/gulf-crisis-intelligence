@@ -91,6 +91,20 @@ header { visibility: hidden; }
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
 [data-testid="stSidebarCollapsedControl"] { display: none !important; }
 
+/* Tighten top margin — default block-container leaves a large gap */
+[data-testid="stHeader"] {
+    display: none !important;
+    height: 0 !important;
+}
+[data-testid="stDecoration"] {
+    display: none !important;
+}
+section.main > div.block-container,
+.main > div.block-container {
+    padding-top: 0.75rem !important;
+    padding-bottom: 2rem !important;
+}
+
 /* ── Sidebar ────────────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
     background-color: var(--bg-secondary);
@@ -100,11 +114,15 @@ section[data-testid="stSidebar"] * {
     color: var(--text-primary) !important;
 }
 
-/* ── Tabs ───────────────────────────────────────────────────────── */
+/* ── Tabs — sticky bar while scrolling main content ───────────────── */
 .stTabs [data-baseweb="tab-list"] {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
     gap: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
 }
 .stTabs [data-baseweb="tab"] {
     background-color: transparent;
@@ -149,7 +167,7 @@ section[data-testid="stSidebar"] * {
 }
 .metric-value {
     font-family: var(--font-mono);
-    font-size: 2rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.1;
@@ -168,6 +186,187 @@ section[data-testid="stSidebar"] * {
     margin-top: auto;
     padding-top: 0.75rem;
 }
+
+/* ── Overview tab: Headline Metrics row (three cards, CSS Grid) ─── */
+.headline-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+    margin-bottom: 1rem;
+}
+.headline-metrics-grid > .overview-headline-card {
+    margin-bottom: 0;
+    height: 100%;
+    align-self: stretch;
+}
+/* ── Key Numbers: EU Storage — badge beside % value ─────────────── */
+.key-numbers-storage-value-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.65rem;
+    margin-top: 0.1rem;
+}
+.key-numbers-storage-value-row .metric-value {
+    margin: 0;
+    line-height: 1.1;
+}
+.key-numbers-storage-value-row .key-numbers-storage-badge {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.overview-headline-card {
+    min-height: 268px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+.overview-headline-card .overview-headline-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.overview-headline-card .metric-label {
+    font-size: 0.88rem;
+}
+.overview-headline-card .metric-value {
+    font-size: 1.12rem;
+    line-height: 1.2;
+}
+.overview-headline-card .metric-value .headline-keyword {
+    font-family: var(--font-mono);
+    font-size: 1.48rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+.overview-headline-card .metric-sub {
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+.overview-headline-card .metric-timestamp {
+    font-size: 0.82rem;
+    margin-top: auto;
+    padding-top: 0.85rem;
+    flex-shrink: 0;
+    align-self: stretch;
+}
+.overview-headline-card .overview-risk-table {
+    font-size: 0.92rem;
+}
+.overview-headline-card .overview-risk-table tr:first-child td {
+    font-size: 0.74rem;
+}
+
+.headline-mono-emphasis {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Headline Metrics — cards 1 & 2 only (must follow base .overview-headline-card rules) */
+.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-label {
+    font-size: 0.92rem;
+    margin-bottom: 0.45rem;
+}
+.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-value {
+    font-size: 1.2rem;
+    line-height: 1.25;
+}
+.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-value .headline-keyword {
+    font-size: 1.56rem;
+}
+.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-sub {
+    font-size: 1.02rem;
+    line-height: 1.55;
+    margin-top: 0.5rem;
+}
+.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-sub:first-of-type {
+    margin-top: 0.35rem;
+}
+.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-timestamp {
+    font-size: 0.84rem;
+    padding-top: 0.9rem;
+}
+
+/* Key Numbers — all four cards */
+.key-numbers-card {
+    min-height: 158px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+.key-numbers-card .metric-label {
+    font-size: 0.88rem;
+    margin-bottom: 0.3rem;
+}
+.key-numbers-card .metric-value,
+.key-numbers-card .key-numbers-storage-value-row .metric-value {
+    font-size: 1.62rem;
+    line-height: 1.12;
+}
+.key-numbers-card .metric-sub {
+    font-size: 1.02rem;
+    line-height: 1.52;
+    margin-top: 0.45rem;
+}
+.key-numbers-card .key-numbers-storage-value-row {
+    margin-top: 0.12rem;
+}
+
+/* Tanker tab — Hormuz Transit Anomaly Index (four cards) */
+.tanker-anomaly-card {
+    min-height: 200px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+.tanker-anomaly-card .metric-label {
+    font-size: 0.88rem;
+    margin-bottom: 0.3rem;
+}
+.tanker-anomaly-card .metric-value {
+    font-size: 1.62rem;
+    line-height: 1.12;
+    font-weight: 600;
+}
+.tanker-anomaly-card .metric-value .has-tooltip {
+    font-size: inherit;
+}
+.tanker-anomaly-card .metric-sub {
+    font-size: 1.02rem;
+    line-height: 1.52;
+    margin-top: 0.45rem;
+}
+/* Data Last Updated — keep timestamp on one line in narrow columns */
+.tanker-anomaly-dateline-card .metric-value {
+    white-space: nowrap;
+    font-size: clamp(0.78rem, 0.65vw + 0.72rem, 1.4rem);
+    letter-spacing: -0.02em;
+}
+
+
+/* Supply Gap tab — regional + extrapolation tables (pandas HTML) */
+table.supply-gap-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+table.supply-gap-table th,
+table.supply-gap-table td {
+    text-align: center !important;
+    vertical-align: middle;
+    padding: 0.5rem 0.65rem;
+}
+
 
 /* ── Thesis block ───────────────────────────────────────────────── */
 .thesis-block {
@@ -653,107 +852,93 @@ with tab_overview:
         </div>
     """, unsafe_allow_html=True)
 
-    # ── Three headline metric columns ─────────────────────────────────────────
+    # ── Three headline metric cards (CSS Grid — equal heights, aligned footers) ─
     st.markdown('<div class="section-header">Headline Metrics</div>', unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
+    pct = safe(tanker.get("pct_of_normal"), "{:.1f}%")
+    flag = "CRITICAL" if tanker.get("anomaly_flag") == 1 else "NORMAL"
+    trend = safe(tanker.get("trend_direction"), fallback="—")
+    ts = fmt_timestamp(tanker.get("logged_at"))
+    baseline_ships = safe(tanker.get("baseline_30d"), "{:.0f}")
 
-    # Column 1 — Tanker / Hormuz Transit Index
-    with col1:
-        pct = safe(tanker.get("pct_of_normal"), "{:.1f}%")
-        flag = "CRITICAL" if tanker.get("anomaly_flag") == 1 else "NORMAL"
-        trend = safe(tanker.get("trend_direction"), fallback="—")
-        ts = fmt_timestamp(tanker.get("logged_at"))
+    score = safe(lng.get("rebalancing_score"), fallback="—")
+    confidence = safe(lng.get("confidence"), fallback="—")
+    routing = safe(lng.get("routing_signal"), fallback="—")
+    util = safe(lng.get("us_utilization"), "{:.1f}%")
+    ts2 = fmt_timestamp(lng.get("logged_at"))
+    score_badge = risk_badge(
+        "RED" if "CRITICAL" in str(score) else
+        "AMBER" if score == "DEFICIT" else
+        "GREEN"
+    )
+    score_kw = str(score) if score is not None else "—"
+    if "balanced" in score_kw.lower():
+        score_value_html = f'<span class="headline-keyword">{score_kw}</span>'
+    else:
+        score_value_html = score_kw
 
-        st.markdown(f"""
-            <div class="metric-card" style="height:250px;">
-                <div class="metric-label">Hormuz Transit Index</div>
-                <div class="metric-value">{pct}</div>
-                <div class="metric-sub">
-                    of pre-crisis normal &nbsp;·&nbsp; {risk_badge(flag)}
-                </div>
-                <div class="metric-sub" style="margin-top:0.6rem;">Trend &nbsp;<span style="font-family:IBM Plex Mono,monospace; color:#e8edf5;">{trend}</span></div>
-<div class="metric-sub">{safe(tanker.get('transit_count'))} ships/day vs {safe(tanker.get('baseline_30d'), '.0f')} baseline</div>
+    asia_crude = gap.get("asia_crude_risk") or "—"
+    asia_lng = gap.get("asia_lng_risk") or "—"
+    eur_crude = gap.get("europe_crude_risk") or "—"
+    eur_lng = gap.get("europe_lng_risk") or "—"
+    ts3 = fmt_timestamp(gap.get("logged_at"))
 
-                <div class="metric-timestamp" style="margin-top:auto;padding-top:0.75rem;">Updated {ts}</div>
+    st.markdown(f"""
+<div class="headline-metrics-grid">
+    <div class="metric-card overview-headline-card">
+        <div class="overview-headline-body">
+            <div class="metric-label">Hormuz Transit Index</div>
+            <div class="metric-value"><span class="headline-keyword">{pct}</span></div>
+            <div class="metric-sub">of pre-crisis normal &nbsp;&nbsp; {risk_badge(flag)}</div>
+            <div class="metric-sub">Trend &nbsp;<span class="headline-mono-emphasis">{trend}</span></div>
+            <div class="metric-sub">{safe(tanker.get('transit_count'))} ships/day vs {baseline_ships} baseline</div>
+        </div>
+        <div class="metric-timestamp">Updated {ts}</div>
+    </div>
+    <div class="metric-card overview-headline-card">
+        <div class="overview-headline-body">
+            <div class="metric-label">LNG Rebalancing Score</div>
+            <div class="metric-value">{score_value_html}</div>
+            <div class="metric-sub">
+                Confidence {confidence} &nbsp;·&nbsp; {score_badge}
             </div>
-        """, unsafe_allow_html=True)
-
-    # Column 2 — LNG Rebalancing Score
-    with col2:
-        score = safe(lng.get("rebalancing_score"), fallback="—")
-        confidence = safe(lng.get("confidence"), fallback="—")
-        routing = safe(lng.get("routing_signal"), fallback="—")
-        util = safe(lng.get("us_utilization"), "{:.1f}%")
-        ts2 = fmt_timestamp(lng.get("logged_at"))
-
-        # Score badge colour: DEFICIT → amber, CRITICAL DEFICIT → red, BALANCED → green
-        score_badge = risk_badge(
-            "RED" if "CRITICAL" in str(score) else
-            "AMBER" if score == "DEFICIT" else
-            "GREEN"
-        )
-
-        st.markdown(f"""
-            <div class="metric-card" style="height:250px;">
-                <div class="metric-label">LNG Rebalancing Score</div>
-                <div class="metric-value">{score}</div>
-                <div class="metric-sub">
-                    Confidence {confidence} &nbsp;·&nbsp; {score_badge}
-                </div>
-                <div class="metric-sub" style="margin-top:0.6rem;">Routing signal &nbsp;<span style="font-family:IBM Plex Mono, monospace;color:#e8edf5;">{routing}</span></div>
-<div class="metric-sub">US utilization {util}%</div>
-                <div class="metric-timestamp" style="margin-top:auto;padding-top:0.75rem;">Updated {ts2}</div>
+            <div class="metric-sub">Routing signal &nbsp;<span class="headline-mono-emphasis">{routing}</span></div>
+            <div class="metric-sub">US utilization <span class="headline-mono-emphasis">{util}</span></div>
+        </div>
+        <div class="metric-timestamp">Updated {ts2}</div>
+    </div>
+    <div class="metric-card overview-headline-card">
+        <div class="overview-headline-body">
+            <div class="metric-label">Regional Risk Summary</div>
+            <div style="margin-top:0.6rem;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;">
+                <table class="overview-risk-table" style="width:100%;border-collapse:collapse;font-family:'IBM Plex Sans',sans-serif;">
+                    <tr style="color:#8a9bb5;letter-spacing:0.08em;text-transform:uppercase;">
+                        <td style="padding:0.3rem 0;">Region</td>
+                        <td style="padding:0.3rem 0;text-align:center;">Crude</td>
+                        <td style="padding:0.3rem 0;text-align:center;">LNG</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.35rem 0;color:#e8edf5;">Asia</td>
+                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge(asia_crude)}</td>
+                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge(asia_lng)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.35rem 0;color:#e8edf5;">Europe</td>
+                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge(eur_crude)}</td>
+                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge(eur_lng)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.35rem 0;color:#e8edf5;">US</td>
+                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge("GREEN")}</td>
+                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge("GREEN")}</td>
+                    </tr>
+                </table>
             </div>
-        """, unsafe_allow_html=True)
-
-    # Column 3 — Regional Risk Summary
-    with col3:
-        asia_crude  = gap.get("asia_crude_risk") or "—"
-        asia_lng    = gap.get("asia_lng_risk")   or "—"
-        eur_crude   = gap.get("europe_crude_risk") or "—"
-        eur_lng     = gap.get("europe_lng_risk")   or "—"
-        ts3 = fmt_timestamp(gap.get("logged_at"))
-
-        st.markdown(f"""
-            <div class="metric-card" style="height:250px;">
-                <div class="metric-label">Regional Risk Summary</div>
-                <div style="margin-top:0.6rem;">
-                    <table style="width:100%;border-collapse:collapse;
-                                  font-family:'IBM Plex Sans',sans-serif;
-                                  font-size:0.82rem;">
-                        <tr style="color:#8a9bb5;font-size:0.68rem;
-                                   letter-spacing:0.08em;text-transform:uppercase;">
-                            <td style="padding:0.3rem 0;">Region</td>
-                            <td style="padding:0.3rem 0;text-align:center;">Crude</td>
-                            <td style="padding:0.3rem 0;text-align:center;">LNG</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:0.35rem 0;color:#e8edf5;">Asia</td>
-                            <td style="padding:0.35rem 0;text-align:center;">
-                                {risk_badge(asia_crude)}</td>
-                            <td style="padding:0.35rem 0;text-align:center;">
-                                {risk_badge(asia_lng)}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:0.35rem 0;color:#e8edf5;">Europe</td>
-                            <td style="padding:0.35rem 0;text-align:center;">
-                                {risk_badge(eur_crude)}</td>
-                            <td style="padding:0.35rem 0;text-align:center;">
-                                {risk_badge(eur_lng)}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:0.35rem 0;color:#e8edf5;">US</td>
-                            <td style="padding:0.35rem 0;text-align:center;">
-                                {risk_badge("GREEN")}</td>
-                            <td style="padding:0.35rem 0;text-align:center;">
-                                {risk_badge("GREEN")}</td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="metric-timestamp" style="margin-top:auto;padding-top:0.75rem;">Updated {ts3}</div>
-            </div>
-        """, unsafe_allow_html=True)
+        </div>
+        <div class="metric-timestamp">Updated {ts3}</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
     # ── Key numbers row ───────────────────────────────────────────────────────
     st.markdown('<div class="section-header">Key Numbers</div>', unsafe_allow_html=True)
@@ -762,9 +947,9 @@ with tab_overview:
 
     with kc1:
         st.markdown(f"""
-            <div class="metric-card" style="height:140px;">
+            <div class="metric-card key-numbers-card">
                 <div class="metric-label">Net Crude Gap</div>
-                <div class="metric-value" style="font-size:1.5rem;">
+                <div class="metric-value">
                     {safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}
                 </div>
                 <div class="metric-sub">Mb/d after bypass + SPR offsets</div>
@@ -773,9 +958,9 @@ with tab_overview:
 
     with kc2:
         st.markdown(f"""
-            <div class="metric-card" style="height:140px;">
+            <div class="metric-card key-numbers-card">
                 <div class="metric-label">LNG Gap (Asia)</div>
-                <div class="metric-value" style="font-size:1.5rem;">
+                <div class="metric-value">
                     {safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}
                 </div>
                 <div class="metric-sub">Bcf/d — no pipeline bypass available</div>
@@ -784,25 +969,27 @@ with tab_overview:
 
     with kc3:
         st.markdown(f"""
-            <div class="metric-card" style="height:140px;">
+            <div class="metric-card key-numbers-card">
                 <div class="metric-label">EU Storage vs Seasonal</div>
-                <div class="metric-value" style="font-size:1.5rem;">
-                    {safe(lng.get("storage_pct"), "{:.1f}%")}
+                <div class="key-numbers-storage-value-row">
+                    <div class="metric-value">
+                        {safe(lng.get("storage_pct"), "{:.1f}%")}
+                    </div>
+                    <span class="key-numbers-storage-badge">
+                        {risk_badge(lng.get("storage_risk"))}
+                    </span>
                 </div>
                 <div class="metric-sub">
                     {safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg
-                </div>
-                <div class="metric-sub" style="margin-top:0.3rem;">
-                    {risk_badge(lng.get("storage_risk"))}
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
     with kc4:
         st.markdown(f"""
-            <div class="metric-card" style="height:140px;">
+            <div class="metric-card key-numbers-card">
                 <div class="metric-label">US LNG Utilization</div>
-                <div class="metric-value" style="font-size:1.5rem;">
+                <div class="metric-value">
                     {safe(lng.get("us_utilization"), "{:.1f}%")}
                 </div>
                 <div class="metric-sub">System at maximum — no relief capacity</div>
@@ -834,7 +1021,7 @@ with tab_tanker:
     tm1, tm2, tm3, tm4 = st.columns(4)
     with tm1:
         st.markdown(f"""
-            <div class="metric-card" style="height:200px;">
+            <div class="metric-card tanker-anomaly-card">
                 <div class="metric-label">Current Reading</div>
                 <div class="metric-value">
                     <span class="has-tooltip">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}<span class="tooltip-text">Percentage of pre-crisis normal traffic. Baseline was 103 ships/day. 7.8% means only ~8 ships/day are transiting — 92% of normal traffic is blocked.</span></span>
@@ -853,9 +1040,9 @@ with tab_tanker:
         """, unsafe_allow_html=True)
     with tm2:
         st.markdown(f"""
-            <div class="metric-card" style="height:200px;">
+            <div class="metric-card tanker-anomaly-card">
                 <div class="metric-label">7-Day Recovery Trend</div>
-                <div class="metric-value" style="font-size:1.3rem;">
+                <div class="metric-value">
                     <span class="has-tooltip">{safe(tanker.get("trend_direction"))}<span class="tooltip-text">Recovery pace toward the pre-crisis baseline of 103 ships/day. At +0.5 ships/day, it would take ~190 days to reach 50% of normal. Mine clearance — not diplomacy — is the binding constraint on speed.</span></span>
                 </div>
                 <div class="metric-sub">
@@ -876,9 +1063,9 @@ with tab_tanker:
             risk_badge("GREEN")
         )
         st.markdown(f"""
-            <div class="metric-card" style="height:200px;">
+            <div class="metric-card tanker-anomaly-card">
                 <div class="metric-label">Fujairah Anchorage Queue</div>
-                <div class="metric-value" style="font-size:1.3rem;">
+                <div class="metric-value">
                     {anchorage_count}
                 </div>
                 <div class="metric-sub">
@@ -891,9 +1078,9 @@ with tab_tanker:
         """, unsafe_allow_html=True)
     with tm4:
         st.markdown(f"""
-            <div class="metric-card" style="height:200px;">
+            <div class="metric-card tanker-anomaly-card tanker-anomaly-dateline-card">
                 <div class="metric-label">Data Last Updated</div>
-                <div class="metric-value" style="font-size:1.3rem;">
+                <div class="metric-value">
                     {fmt_timestamp(tanker.get("logged_at"))}
                 </div>
                 <div class="metric-sub">
@@ -1673,7 +1860,7 @@ with tab_gap:
         },
     ]
     st.markdown(
-        pd.DataFrame(gap_html_rows).to_html(escape=False, index=False),
+        pd.DataFrame(gap_html_rows).to_html(escape=False, index=False, classes="supply-gap-table"),
         unsafe_allow_html=True,
     )
 
@@ -1810,7 +1997,7 @@ with tab_gap:
         "Europe Gap (Mb/d)":   [f"{safe(gap.get('europe_crude_gap_mbd'), '{:.2f}')}", f"{eur_2w:.2f}", f"{eur_4w:.2f}"],
     }
     st.markdown(
-        pd.DataFrame(gap_extrap).to_html(escape=False, index=False),
+        pd.DataFrame(gap_extrap).to_html(escape=False, index=False, classes="supply-gap-table"),
         unsafe_allow_html=True,
     )
 
