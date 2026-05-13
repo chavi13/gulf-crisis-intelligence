@@ -1182,12 +1182,12 @@ with tab_lng:
     lc1, lc2, lc3 = st.columns(3)
     with lc1:
         score = safe(lng.get("rebalancing_score"), fallback="—")
-        score_badge = score_badge(lng.get("rebalancing_score"))
+        score_badge_html = score_badge(lng.get("rebalancing_score"))
         st.markdown(f"""
             <div class="metric-card" style="min-height:160px;">
                 <div class="metric-label">Rebalancing Score</div>
                 <div class="metric-value" style="font-size:var(--text-lg);">{score}</div>
-                <div class="metric-sub" style="margin-top:0.3rem;">{score_badge}</div>
+                <div class="metric-sub" style="margin-top:0.3rem;">{score_badge_html}</div>
                 <div class="metric-sub">Confidence {safe(lng.get("confidence"))}</div>
             </div>
         """, unsafe_allow_html=True)
