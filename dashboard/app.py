@@ -350,31 +350,35 @@ section[data-testid="stSidebar"] * {
     align-items: flex-start;
 }
 .tanker-anomaly-card .tanker-value-slot {
-    flex: 0 0 4rem;
+    flex: 0 0 5rem;
     display: flex;
     align-items: flex-start;
     overflow: visible;
 }
 .tanker-anomaly-card .metric-value {
     font-size: 1.62rem;
-    line-height: 1.12;
+    line-height: 1.2;
     font-weight: 600;
+    word-break: break-word;
+    white-space: normal;
 }
 .tanker-anomaly-card .metric-value .has-tooltip {
     font-size: inherit;
 }
 .tanker-anomaly-card .metric-sub {
-    font-size: 1.02rem;
-    line-height: 1.52;
+    font-size: 0.88rem;
+    line-height: 1.5;
     margin-top: 0.45rem;
     flex-shrink: 0;
 }
-/* Data Last Updated — keep timestamp on one line in narrow columns */
 .tanker-anomaly-dateline-card .metric-value {
-    white-space: nowrap;
-    font-size: clamp(0.78rem, 0.65vw + 0.72rem, 1.4rem);
-    letter-spacing: -0.02em;
+    font-size: 1.1rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    white-space: normal;
+    word-break: break-word;
 }
+
 
 
 /* Supply Gap tab — regional + extrapolation tables (pandas HTML) */
