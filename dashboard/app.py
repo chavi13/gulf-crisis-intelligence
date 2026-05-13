@@ -506,7 +506,7 @@ table.supply-gap-table td {
     color: #ef4444;
     border: 1px solid rgba(239,68,68,0.4);
     border-radius: 4px;
-    padding: 0.2rem 0.6rem;
+    padding: 0.35rem 0.6rem;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 600;
@@ -518,7 +518,7 @@ table.supply-gap-table td {
     color: #f59e0b;
     border: 1px solid rgba(245,158,11,0.4);
     border-radius: 4px;
-    padding: 0.2rem 0.6rem;
+    padding: 0.35rem 0.6rem;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 600;
@@ -530,7 +530,7 @@ table.supply-gap-table td {
     color: #22c55e;
     border: 1px solid rgba(34,197,94,0.4);
     border-radius: 4px;
-    padding: 0.2rem 0.6rem;
+    padding: 0.35rem 0.6rem;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 600;
@@ -542,7 +542,7 @@ table.supply-gap-table td {
     color: #ff6b6b;
     border: 1px solid rgba(239,68,68,0.6);
     border-radius: 4px;
-    padding: 0.2rem 0.6rem;
+    padding: 0.35rem 0.6rem;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 600;
