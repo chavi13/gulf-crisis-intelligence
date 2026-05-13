@@ -313,9 +313,10 @@ section[data-testid="stSidebar"] * {
     align-items: flex-start;
 }
 .key-numbers-card .key-numbers-value-slot {
-    flex: 0 0 3rem;
+    flex: 0 0 3.5rem;
     display: flex;
     align-items: flex-start;
+    overflow: visible;
 }
 .key-numbers-card .metric-value,
 .key-numbers-card .key-numbers-storage-value-row .metric-value {
