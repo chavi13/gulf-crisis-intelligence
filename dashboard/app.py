@@ -342,39 +342,40 @@ section[data-testid="stSidebar"] * {
 }
 .tanker-anomaly-card .ta-label {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-secondary);
-    min-height: 2.2rem;
+    height: 2.8rem;
+    overflow: hidden;
     display: flex;
     align-items: flex-start;
     flex-shrink: 0;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 .tanker-anomaly-card .ta-value {
     font-family: var(--font-mono);
-    font-size: 1.62rem;
+    font-size: 1.4rem;
     font-weight: 600;
     color: var(--text-primary);
-    line-height: 1.15;
-    min-height: 3.2rem;
+    line-height: 1.2;
+    height: 3.5rem;
+    overflow: hidden;
     display: flex;
     align-items: flex-start;
     flex-shrink: 0;
-    margin-bottom: 0.5rem;
-    word-break: break-word;
+    margin-bottom: 0.4rem;
 }
 .tanker-anomaly-card .ta-sub {
     font-family: var(--font-sans);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-secondary);
     line-height: 1.5;
     flex-shrink: 0;
 }
 .tanker-anomaly-card .ta-sub + .ta-sub {
-    margin-top: 0.3rem;
+    margin-top: 0.25rem;
 }
 
 
@@ -1044,12 +1045,13 @@ with tab_tanker:
     </div>
     <div class="metric-card tanker-anomaly-card">
         <div class="ta-label">Fujairah Anchorage Queue</div>
-        <div class="ta-value">{anchorage_count} <span style="font-size:0.9rem;font-weight:400;color:var(--text-secondary);">vessels</span></div>
-        <div class="ta-sub">{anchorage_badge} &nbsp; {anchorage_status}</div>
+        <div class="ta-value">{anchorage_count}</div>
+        <div class="ta-sub">vessels &nbsp;·&nbsp; {anchorage_badge}</div>
+        <div class="ta-sub">{anchorage_status}</div>
     </div>
     <div class="metric-card tanker-anomaly-card">
         <div class="ta-label">Data Last Updated</div>
-        <div class="ta-value" style="font-size:1.1rem;line-height:1.35;">{fmt_timestamp(tanker.get("logged_at"))}</div>
+        <div class="ta-value">{fmt_timestamp(tanker.get("logged_at"))}</div>
         <div class="ta-sub">Kaggle / IMF PortWatch / Kpler / Lloyd's List</div>
     </div>
 </div>
