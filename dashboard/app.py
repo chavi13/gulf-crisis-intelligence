@@ -307,6 +307,12 @@ section[data-testid="stSidebar"] * {
 .key-numbers-card .metric-label {
     font-size: 0.88rem;
     margin-bottom: 0.3rem;
+    flex-shrink: 0;
+}
+.key-numbers-card .key-numbers-value-slot {
+    flex: 0 0 3rem;
+    display: flex;
+    align-items: flex-start;
 }
 .key-numbers-card .metric-value,
 .key-numbers-card .key-numbers-storage-value-row .metric-value {
@@ -317,6 +323,7 @@ section[data-testid="stSidebar"] * {
     font-size: 1.02rem;
     line-height: 1.52;
     margin-top: 0.45rem;
+    flex-shrink: 0;
 }
 .key-numbers-card .key-numbers-storage-value-row {
     margin-top: 0.12rem;
@@ -947,17 +954,17 @@ with tab_overview:
 <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
     <div class="metric-card key-numbers-card">
         <div class="metric-label">Net Crude Gap</div>
-        <div class="metric-value">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div>
+        <div class="key-numbers-value-slot"><div class="metric-value">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div></div>
         <div class="metric-sub">Mb/d after bypass + SPR offsets</div>
     </div>
     <div class="metric-card key-numbers-card">
         <div class="metric-label">LNG Gap (Asia)</div>
-        <div class="metric-value">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div>
+        <div class="key-numbers-value-slot"><div class="metric-value">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div></div>
         <div class="metric-sub">Bcf/d — no pipeline bypass available</div>
     </div>
     <div class="metric-card key-numbers-card">
         <div class="metric-label">EU Storage vs Seasonal</div>
-        <div class="key-numbers-storage-value-row">
+        <div class="key-numbers-value-slot key-numbers-storage-value-row">
             <div class="metric-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
             <span class="key-numbers-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
         </div>
@@ -965,7 +972,7 @@ with tab_overview:
     </div>
     <div class="metric-card key-numbers-card">
         <div class="metric-label">US LNG Utilization</div>
-        <div class="metric-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div>
+        <div class="key-numbers-value-slot"><div class="metric-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div></div>
         <div class="metric-sub">System at maximum — no relief capacity</div>
     </div>
 </div>
