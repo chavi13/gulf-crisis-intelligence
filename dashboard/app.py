@@ -60,21 +60,31 @@ st.markdown("""
 
 /* ── Root variables ─────────────────────────────────────────────── */
 :root {
+    /* Backgrounds */
     --bg-primary:    #0a0e1a;
     --bg-secondary:  #111827;
     --bg-card:       #1a2235;
     --bg-card-hover: #1e2a42;
     --border:        #2a3a55;
+    /* Text */
     --text-primary:  #e8edf5;
     --text-secondary:#8a9bb5;
     --text-muted:    #4a5a72;
+    /* Accents */
     --accent-amber:  #f59e0b;
     --accent-red:    #ef4444;
     --accent-green:  #22c55e;
     --accent-blue:   #3b82f6;
     --accent-teal:   #14b8a6;
+    /* Fonts */
     --font-mono:     'IBM Plex Mono', monospace;
     --font-sans:     'IBM Plex Sans', sans-serif;
+    /* ── Type scale (4 steps — use only these) ──────────────────── */
+    --text-xs:   0.75rem;   /* badges, timestamps, labels, captions  */
+    --text-sm:   0.85rem;   /* body copy, sub-text, table cells      */
+    --text-base: 1rem;      /* metric values, card body default      */
+    --text-lg:   1.2rem;    /* secondary headline values             */
+    /* headline-keyword (.ta-big-value) deliberately oversized at 2.8rem — one-off */
 }
 
 /* ── Global overrides ───────────────────────────────────────────── */
@@ -86,19 +96,12 @@ st.markdown("""
 
 /* Hide Streamlit branding */
 #MainMenu { visibility: hidden; }
-footer { visibility: hidden; }
-header { visibility: hidden; }
-[data-testid="stSidebarCollapseButton"] { display: none !important; }
-[data-testid="stSidebarCollapsedControl"] { display: none !important; }
+footer    { visibility: hidden; }
+header    { visibility: hidden; }
 
-/* Tighten top margin — default block-container leaves a large gap */
-[data-testid="stHeader"] {
-    display: none !important;
-    height: 0 !important;
-}
-[data-testid="stDecoration"] {
-    display: none !important;
-}
+/* Tighten top margin */
+[data-testid="stHeader"]     { display: none !important; height: 0 !important; }
+[data-testid="stDecoration"] { display: none !important; }
 section.main > div.block-container,
 .main > div.block-container {
     padding-top: 0.75rem !important;
@@ -114,7 +117,32 @@ section[data-testid="stSidebar"] * {
     color: var(--text-primary) !important;
 }
 
-/* ── Tabs — sticky bar while scrolling main content ───────────────── */
+/* ── Sidebar toggle — all selectors in one block ────────────────── */
+/* NOTE: these data-testid selectors target Streamlit internals and  */
+/* may silently break on Streamlit upgrades. Non-critical styling.   */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"] { display: none !important; }
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapseButton"] button,
+button[kind="header"] {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--accent-amber) !important;
+    border-radius: 4px !important;
+    color: var(--accent-amber) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+[data-testid="collapsedControl"]:hover,
+[data-testid="stSidebarCollapseButton"] button:hover,
+button[kind="header"]:hover {
+    background-color: var(--bg-card-hover) !important;
+}
+[data-testid="stSidebarCollapseButton"] button svg {
+    fill: var(--accent-amber) !important;
+    stroke: var(--accent-amber) !important;
+}
+
+/* ── Tabs — sticky bar while scrolling ──────────────────────────── */
 .stTabs [data-baseweb="tab-list"] {
     position: sticky;
     top: 0;
@@ -128,7 +156,7 @@ section[data-testid="stSidebar"] * {
     background-color: transparent;
     color: var(--text-secondary) !important;
     font-family: var(--font-sans);
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -141,8 +169,17 @@ section[data-testid="stSidebar"] * {
     background-color: transparent !important;
 }
 
-/* ── Metric cards ───────────────────────────────────────────────── */
-.metric-card {
+/* ══════════════════════════════════════════════════════════════════
+   CARD SYSTEM
+   Base class: .card
+   Modifiers:
+     .card--primary   — tanker anomaly hero card (red tint border, subtle gradient)
+     .card--sm        — compact card (less padding, no min-height)
+     .card--muted     — transparent background, reduced opacity (meta/last-updated)
+     .card--headline  — tall overview headline cards (min-height 268px)
+     .card--kpi       — key-numbers row cards (larger metric value, min-height 158px)
+   ══════════════════════════════════════════════════════════════════ */
+.card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -156,89 +193,99 @@ section[data-testid="stSidebar"] * {
     flex-direction: column;
 }
 
-.metric-label {
+/* Primary — tanker anomaly hero (red-tint border, dark gradient) */
+.card--primary {
+    border-color: rgba(239,68,68,0.35);
+    background: linear-gradient(135deg, #1e1828 0%, #1a2235 100%);
+    gap: 0;
+}
+
+/* Small — compact operational cards */
+.card--sm {
+    padding: 1rem 1.25rem;
+    min-height: unset;
+    justify-content: center;
+}
+
+/* Muted — last-updated / metadata card */
+.card--muted {
+    background: transparent;
+    opacity: 0.75;
+}
+
+/* Headline — tall Overview cards */
+.card--headline {
+    min-height: 268px;
+}
+.card--headline .card-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* KPI — key-numbers row cards */
+.card--kpi {
+    min-height: 158px;
+}
+.card--kpi .card-label {
+    margin-bottom: 0.3rem;
+    flex-shrink: 0;
+    min-height: 2.4rem;
+    display: flex;
+    align-items: flex-start;
+}
+.card--kpi .card-value-slot {
+    flex: 0 0 3.5rem;
+    display: flex;
+    align-items: flex-start;
+    overflow: visible;
+}
+.card--kpi .card-value {
+    font-size: 1.62rem;
+    line-height: 1.12;
+}
+.card--kpi .card-sub {
+    font-size: var(--text-base);
+    line-height: 1.52;
+    margin-top: 0.45rem;
+    flex-shrink: 0;
+}
+.card--kpi .kpi-storage-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.65rem;
+    margin-top: 0.12rem;
+}
+.card--kpi .kpi-storage-row .card-value {
+    margin: 0;
+    line-height: 1.1;
+}
+.card--kpi .kpi-storage-row .kpi-storage-badge {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Card typography elements ───────────────────────────────────── */
+.card-label {
     font-family: var(--font-sans);
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-secondary);
     margin-bottom: 0.4rem;
 }
-.metric-value {
+.card-value {
     font-family: var(--font-mono);
-    font-size: 1rem;
+    font-size: var(--text-base);
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.1;
 }
-.metric-sub {
-    font-family: var(--font-sans);
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-    margin-top: 0.4rem;
-    line-height: 1.4;
-}
-.metric-timestamp {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: auto;
-    padding-top: 0.75rem;
-}
-
-/* ── Overview tab: Headline Metrics row (three cards, CSS Grid) ─── */
-.headline-metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    align-items: stretch;
-    margin-bottom: 1rem;
-}
-.headline-metrics-grid > .overview-headline-card {
-    margin-bottom: 0;
-    height: 100%;
-    align-self: stretch;
-}
-/* ── Key Numbers: EU Storage — badge beside % value ─────────────── */
-.key-numbers-storage-value-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.65rem;
-    margin-top: 0.1rem;
-}
-.key-numbers-storage-value-row .metric-value {
-    margin: 0;
-    line-height: 1.1;
-}
-.key-numbers-storage-value-row .key-numbers-storage-badge {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-}
-
-.overview-headline-card {
-    min-height: 268px;
-    height: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-}
-.overview-headline-card .overview-headline-body {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-.overview-headline-card .metric-label {
-    font-size: 0.88rem;
-}
-.overview-headline-card .metric-value {
-    font-size: 1.12rem;
-    line-height: 1.2;
-}
-.overview-headline-card .metric-value .headline-keyword {
+.card-value .headline-keyword {
     font-family: var(--font-mono);
     font-size: 1.48rem;
     font-weight: 600;
@@ -246,232 +293,106 @@ section[data-testid="stSidebar"] * {
     line-height: 1.15;
     letter-spacing: -0.02em;
 }
-.overview-headline-card .metric-sub {
-    font-size: 0.95rem;
-    line-height: 1.45;
-}
-.overview-headline-card .metric-timestamp {
-    font-size: 0.82rem;
-    margin-top: auto;
-    padding-top: 0.85rem;
-    flex-shrink: 0;
-    align-self: stretch;
-}
-.overview-headline-card .overview-risk-table {
-    font-size: 0.92rem;
-}
-.overview-headline-card .overview-risk-table tr:first-child td {
-    font-size: 0.74rem;
-}
-
-.headline-mono-emphasis {
-    font-family: var(--font-mono);
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-/* Headline Metrics — cards 1 & 2 only (must follow base .overview-headline-card rules) */
-.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-label {
-    font-size: 0.92rem;
-    margin-bottom: 0.45rem;
-}
-.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-value {
-    font-size: 1.2rem;
-    line-height: 1.25;
-}
-.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-value .headline-keyword {
-    font-size: 1.56rem;
-}
-.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-sub {
-    font-size: 1.02rem;
-    line-height: 1.55;
-    margin-top: 0.5rem;
-}
-.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-sub:first-of-type {
-    margin-top: 0.35rem;
-}
-.headline-metrics-grid > .overview-headline-card:nth-child(-n+2) .metric-timestamp {
-    font-size: 0.84rem;
-    padding-top: 0.9rem;
-}
-
-/* Key Numbers — all four cards */
-.key-numbers-card {
-    min-height: 158px;
-    height: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-}
-.key-numbers-card .metric-label {
-    font-size: 0.88rem;
-    margin-bottom: 0.3rem;
-    flex-shrink: 0;
-    min-height: 2.4rem;
-    display: flex;
-    align-items: flex-start;
-}
-.key-numbers-card .key-numbers-value-slot {
-    flex: 0 0 3.5rem;
-    display: flex;
-    align-items: flex-start;
-    overflow: visible;
-}
-.key-numbers-card .metric-value,
-.key-numbers-card .key-numbers-storage-value-row .metric-value {
-    font-size: 1.62rem;
-    line-height: 1.12;
-}
-.key-numbers-card .metric-sub {
-    font-size: 1.02rem;
-    line-height: 1.52;
-    margin-top: 0.45rem;
-    flex-shrink: 0;
-}
-.key-numbers-card .key-numbers-storage-value-row {
-    margin-top: 0.12rem;
-}
-
-/* Tanker tab — Hormuz Transit Anomaly Index */
-/* Primary signal card (left, dominant) */
-.ta-primary-card {
-    background: var(--bg-card);
-    border: 1px solid rgba(239,68,68,0.35);
-    background: linear-gradient(135deg, #1e1828 0%, #1a2235 100%);
-    border-radius: 8px;
-    padding: 1.25rem 1.5rem;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-.ta-primary-card .ta-label {
+.card-sub {
     font-family: var(--font-sans);
-    font-size: 0.72rem;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-top: 0.4rem;
+    line-height: 1.4;
+}
+.card-timestamp {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-top: auto;
+    padding-top: 0.75rem;
+}
+
+/* Headline card type overrides */
+.card--headline .card-label  { font-size: var(--text-sm); }
+.card--headline .card-value  { font-size: var(--text-lg); line-height: 1.2; }
+.card--headline .card-value .headline-keyword { font-size: 1.48rem; }
+.card--headline .card-sub    { font-size: var(--text-sm); line-height: 1.45; }
+.card--headline .card-timestamp { padding-top: 0.85rem; flex-shrink: 0; align-self: stretch; }
+.card--headline .overview-risk-table { font-size: var(--text-sm); }
+.card--headline .overview-risk-table tr:first-child td { font-size: var(--text-xs); }
+
+/* Headline cards 1 & 2 (larger emphasis — nth-child via grid parent) */
+.headline-metrics-grid > .card--headline:nth-child(-n+2) .card-label  { font-size: var(--text-sm); margin-bottom: 0.45rem; }
+.headline-metrics-grid > .card--headline:nth-child(-n+2) .card-value  { font-size: var(--text-lg); line-height: 1.25; }
+.headline-metrics-grid > .card--headline:nth-child(-n+2) .card-value .headline-keyword { font-size: 1.56rem; }
+.headline-metrics-grid > .card--headline:nth-child(-n+2) .card-sub    { font-size: var(--text-base); line-height: 1.55; margin-top: 0.5rem; }
+.headline-metrics-grid > .card--headline:nth-child(-n+2) .card-sub:first-of-type { margin-top: 0.35rem; }
+.headline-metrics-grid > .card--headline:nth-child(-n+2) .card-timestamp { padding-top: 0.9rem; }
+
+/* Tanker card typography (reuses .card base + .card--primary / .card--sm) */
+.card-ta-label {
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--text-secondary);
     margin-bottom: 0.5rem;
 }
-.ta-primary-card .ta-number-row {
+.card--sm .card-ta-label { color: var(--text-muted); }
+.card-ta-number-row {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 0.5rem;
 }
-.ta-primary-card .ta-big-value {
+.card-ta-big-value {
     font-family: var(--font-mono);
-    font-size: 2.8rem;
+    font-size: 2.8rem;   /* intentional one-off — hero number */
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1;
 }
-.ta-primary-card .ta-sub {
-    font-family: var(--font-sans);
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-    margin-top: 0.2rem;
-}
-.ta-primary-card .ta-sub + .ta-sub {
-    margin-top: 0.2rem;
-}
-
-/* Secondary card (trend) */
-.ta-secondary-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1.25rem 1.5rem;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-}
-.ta-secondary-card .ta-label {
-    font-family: var(--font-sans);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-.ta-secondary-card .ta-value {
+.card-ta-value {
     font-family: var(--font-mono);
-    font-size: 1.35rem;
+    font-size: var(--text-lg);
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.25;
     margin-bottom: 0.5rem;
 }
-.ta-secondary-card .ta-sub {
+.card--sm .card-ta-value { font-size: var(--text-base); }
+.card-ta-sub {
     font-family: var(--font-sans);
-    font-size: 0.82rem;
+    font-size: var(--text-sm);
     color: var(--text-secondary);
     line-height: 1.5;
-}
-
-/* Small cards (operational + metadata, stacked right) */
-.ta-small-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem 1.25rem;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-.ta-small-card .ta-label {
-    font-family: var(--font-sans);
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 0.35rem;
-}
-.ta-small-card .ta-value {
-    font-family: var(--font-mono);
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    line-height: 1.2;
-    margin-bottom: 0.3rem;
-}
-.ta-small-card .ta-sub {
-    font-family: var(--font-sans);
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    line-height: 1.45;
-}
-.ta-small-card .ta-sub + .ta-sub {
     margin-top: 0.2rem;
 }
-/* Last updated — dimmer */
-.ta-meta-card {
-    background: transparent;
-    border: 1px solid var(--border);
-    opacity: 0.75;
+.card-ta-sub + .card-ta-sub { margin-top: 0.2rem; }
+
+/* Headline metrics grid layout */
+.headline-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: stretch;
+    margin-bottom: 1rem;
+}
+.headline-metrics-grid > .card--headline {
+    margin-bottom: 0;
+    align-self: stretch;
 }
 
-
-
+/* Backward-compat aliases so existing HTML in this file still renders */
+/* These map old class names → new card system classes */
+.metric-card       { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; min-height: 160px; height: 100%; box-sizing: border-box; overflow: visible; display: flex; flex-direction: column; }
+.metric-label      { font-family: var(--font-sans); font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.4rem; }
+.metric-value      { font-family: var(--font-mono); font-size: var(--text-base); font-weight: 600; color: var(--text-primary); line-height: 1.1; }
+.metric-sub        { font-family: var(--font-sans); font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.4rem; line-height: 1.4; }
+.metric-timestamp  { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); margin-top: auto; padding-top: 0.75rem; }
+.headline-mono-emphasis { font-family: var(--font-mono); font-size: var(--text-base); font-weight: 600; color: var(--text-primary); }
 
 /* Supply Gap tab — regional + extrapolation tables (pandas HTML) */
-table.supply-gap-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+table.supply-gap-table { width: 100%; border-collapse: collapse; }
 table.supply-gap-table th,
-table.supply-gap-table td {
-    text-align: center !important;
-    vertical-align: middle;
-    padding: 0.5rem 0.65rem;
-}
-
+table.supply-gap-table td { text-align: center !important; vertical-align: middle; padding: 0.5rem 0.65rem; }
 
 /* ── Thesis block ───────────────────────────────────────────────── */
 .thesis-block {
@@ -484,7 +405,7 @@ table.supply-gap-table td {
 }
 .thesis-label {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -500,59 +421,24 @@ table.supply-gap-table td {
 }
 
 /* ── Risk badges ────────────────────────────────────────────────── */
-.badge-red {
+.badge-red, .badge-amber, .badge-green, .badge-critical {
     display: inline-block;
-    background: rgba(239,68,68,0.15);
-    color: #ef4444;
-    border: 1px solid rgba(239,68,68,0.4);
     border-radius: 4px;
     padding: 0.35rem 0.6rem;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: 0.05em;
 }
-.badge-amber {
-    display: inline-block;
-    background: rgba(245,158,11,0.15);
-    color: #f59e0b;
-    border: 1px solid rgba(245,158,11,0.4);
-    border-radius: 4px;
-    padding: 0.35rem 0.6rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-}
-.badge-green {
-    display: inline-block;
-    background: rgba(34,197,94,0.15);
-    color: #22c55e;
-    border: 1px solid rgba(34,197,94,0.4);
-    border-radius: 4px;
-    padding: 0.35rem 0.6rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-}
-.badge-critical {
-    display: inline-block;
-    background: rgba(239,68,68,0.25);
-    color: #ff6b6b;
-    border: 1px solid rgba(239,68,68,0.6);
-    border-radius: 4px;
-    padding: 0.35rem 0.6rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-}
+.badge-red      { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.4);  }
+.badge-amber    { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.4); }
+.badge-green    { background: rgba(34,197,94,0.15);  color: #22c55e; border: 1px solid rgba(34,197,94,0.4);  }
+.badge-critical { background: rgba(239,68,68,0.25);  color: #ff6b6b; border: 1px solid rgba(239,68,68,0.6);  }
 
 /* ── Section headers ────────────────────────────────────────────── */
 .section-header {
     font-family: var(--font-sans);
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -568,13 +454,13 @@ table.supply-gap-table td {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-left: 3px solid var(--accent-teal);
-    border-radius: 6px;
+    border-radius: 0 6px 6px 0;
     padding: 1rem 1.25rem;
     margin-top: 1.5rem;
 }
 .interpretation-label {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -583,15 +469,15 @@ table.supply-gap-table td {
 }
 .interpretation-text {
     font-family: var(--font-sans);
-    font-size: 0.95rem;
+    font-size: var(--text-sm);
     color: var(--text-secondary);
     line-height: 1.65;
 }
 
-/* ── Extrapolation table note ───────────────────────────────────── */
+/* ── Extrapolation note ─────────────────────────────────────────── */
 .extrapolation-note {
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: var(--text-xs);
     color: var(--accent-amber);
     letter-spacing: 0.04em;
     margin-bottom: 0.5rem;
@@ -604,73 +490,27 @@ table.supply-gap-table td {
     border-radius: 6px;
     padding: 0.75rem 1rem;
     font-family: var(--font-sans);
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     color: var(--text-secondary);
     line-height: 1.5;
     margin-top: 0.75rem;
 }
 
-/* ── Streamlit dataframe overrides ──────────────────────────────── */
-.stDataFrame {
-    background: var(--bg-card) !important;
-}
+/* ── Streamlit dataframe override ───────────────────────────────── */
+.stDataFrame { background: var(--bg-card) !important; }
 
 /* ── Divider ────────────────────────────────────────────────────── */
-hr {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 1.5rem 0;
-}
-
-/* ── Sidebar toggle button — make it visible ────────────────────── */
-button[kind="header"] {
-    background-color: var(--bg-card) !important;
-    border: 1px solid var(--border) !important;
-    color: var(--accent-amber) !important;
-    border-radius: 4px !important;
-    opacity: 1 !important;
-}
-button[kind="header"]:hover {
-    background-color: var(--bg-card-hover) !important;
-    border-color: var(--accent-amber) !important;
-}
-[data-testid="collapsedControl"] {
-    background-color: var(--bg-card) !important;
-    border: 1px solid var(--accent-amber) !important;
-    border-radius: 4px !important;
-    color: var(--accent-amber) !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-[data-testid="collapsedControl"]:hover {
-    background-color: var(--bg-card-hover) !important;
-}
-/* ── Sidebar toggle button ──────────────────────────────────────── */
-[data-testid="stSidebarCollapseButton"] button {
-    background-color: #1a2235 !important;
-    border: 1px solid #f59e0b !important;
-    border-radius: 4px !important;
-    color: #f59e0b !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-[data-testid="stSidebarCollapseButton"] button svg {
-    fill: #f59e0b !important;
-    stroke: #f59e0b !important;
-}
+hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 
 /* ── Custom hover tooltips ──────────────────────────────────────── */
-.has-tooltip {
-    position: relative;
-    display: inline-block;
-}
+.has-tooltip { position: relative; display: inline-block; }
 .has-tooltip .tooltip-text {
     visibility: hidden;
     opacity: 0;
     background: #1a2235;
     color: #e8edf5;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.78rem;
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
     font-weight: 400;
     line-height: 1.5;
     border: 1px solid #2a3a55;
@@ -687,10 +527,7 @@ button[kind="header"]:hover {
     white-space: normal;
     word-wrap: break-word;
 }
-.has-tooltip:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
-}
+.has-tooltip:hover .tooltip-text { visibility: visible; opacity: 1; }
 
 /* ── Styled dropdown ────────────────────────────────────────────── */
 details.info-dropdown {
@@ -700,10 +537,10 @@ details.info-dropdown {
     margin-top: 0.75rem;
 }
 details.info-dropdown summary {
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.88rem;
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
     font-weight: 600;
-    color: #e8edf5;
+    color: var(--text-primary);
     padding: 0.75rem 1rem;
     cursor: pointer;
     list-style: none;
@@ -715,34 +552,24 @@ details.info-dropdown summary::-webkit-details-marker { display: none; }
 details.info-dropdown summary::after {
     content: '▾';
     margin-left: auto;
-    color: #8a9bb5;
-    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
     transition: transform 0.2s;
 }
-details.info-dropdown[open] summary::after {
-    transform: rotate(180deg);
-}
+details.info-dropdown[open] summary::after { transform: rotate(180deg); }
 details.info-dropdown .dropdown-body {
     padding: 0.75rem 1rem 1rem 1rem;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 0.85rem;
-    color: #8a9bb5;
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
     line-height: 1.7;
     border-top: 1px solid rgba(59,130,246,0.15);
 }
+
 /* ── Expander content background fix ───────────────────────────── */
-div[data-testid="stExpander"] details {
-    background-color: var(--bg-card) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 6px !important;
-}
-div[data-testid="stExpander"] div[role="region"] {
-    background-color: var(--bg-card) !important;
-}
-div[data-testid="stExpander"] summary {
-    color: var(--text-primary) !important;
-    background-color: var(--bg-card) !important;
-}
+div[data-testid="stExpander"] details    { background-color: var(--bg-card) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; }
+div[data-testid="stExpander"] div[role="region"] { background-color: var(--bg-card) !important; }
+div[data-testid="stExpander"] summary    { color: var(--text-primary) !important; background-color: var(--bg-card) !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -990,31 +817,31 @@ with tab_overview:
 
     st.markdown(f"""
 <div class="headline-metrics-grid">
-    <div class="metric-card overview-headline-card">
-        <div class="overview-headline-body">
-            <div class="metric-label">Hormuz Transit Index</div>
-            <div class="metric-value"><span class="headline-keyword">{pct}</span></div>
-            <div class="metric-sub">of pre-crisis normal &nbsp;&nbsp; {risk_badge(flag)}</div>
-            <div class="metric-sub">Trend &nbsp;<span class="headline-mono-emphasis">{trend}</span></div>
-            <div class="metric-sub">{safe(tanker.get('transit_count'))} ships/day vs {baseline_ships} baseline</div>
+    <div class="card card--headline">
+        <div class="card-body">
+            <div class="card-label">Hormuz Transit Index</div>
+            <div class="card-value"><span class="headline-keyword">{pct}</span></div>
+            <div class="card-sub">of pre-crisis normal &nbsp;&nbsp; {risk_badge(flag)}</div>
+            <div class="card-sub">Trend &nbsp;<span class="headline-mono-emphasis">{trend}</span></div>
+            <div class="card-sub">{safe(tanker.get('transit_count'))} ships/day vs {baseline_ships} baseline</div>
         </div>
-        <div class="metric-timestamp">Updated {ts}</div>
+        <div class="card-timestamp">Updated {ts}</div>
     </div>
-    <div class="metric-card overview-headline-card">
-        <div class="overview-headline-body">
-            <div class="metric-label">LNG Rebalancing Score</div>
-            <div class="metric-value">{score_value_html}</div>
-            <div class="metric-sub">
+    <div class="card card--headline">
+        <div class="card-body">
+            <div class="card-label">LNG Rebalancing Score</div>
+            <div class="card-value">{score_value_html}</div>
+            <div class="card-sub">
                 Confidence {confidence} &nbsp;·&nbsp; {score_badge}
             </div>
-            <div class="metric-sub">Routing signal &nbsp;<span class="headline-mono-emphasis">{routing}</span></div>
-            <div class="metric-sub">US utilization <span class="headline-mono-emphasis">{util}</span></div>
+            <div class="card-sub">Routing signal &nbsp;<span class="headline-mono-emphasis">{routing}</span></div>
+            <div class="card-sub">US utilization <span class="headline-mono-emphasis">{util}</span></div>
         </div>
-        <div class="metric-timestamp">Updated {ts2}</div>
+        <div class="card-timestamp">Updated {ts2}</div>
     </div>
-    <div class="metric-card overview-headline-card">
-        <div class="overview-headline-body">
-            <div class="metric-label">Regional Risk Summary</div>
+    <div class="card card--headline">
+        <div class="card-body">
+            <div class="card-label">Regional Risk Summary</div>
             <div style="margin-top:0.6rem;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;">
                 <table class="overview-risk-table" style="width:100%;border-collapse:collapse;font-family:'IBM Plex Sans',sans-serif;">
                     <tr style="color:#8a9bb5;letter-spacing:0.08em;text-transform:uppercase;">
@@ -1040,7 +867,7 @@ with tab_overview:
                 </table>
             </div>
         </div>
-        <div class="metric-timestamp">Updated {ts3}</div>
+        <div class="card-timestamp">Updated {ts3}</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -1050,28 +877,28 @@ with tab_overview:
 
     st.markdown(f"""
 <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
-    <div class="metric-card key-numbers-card">
-        <div class="metric-label">Net Crude Gap</div>
-        <div class="key-numbers-value-slot"><div class="metric-value">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div></div>
-        <div class="metric-sub">Mb/d after bypass + SPR offsets</div>
+    <div class="card card--kpi">
+        <div class="card-label">Net Crude Gap</div>
+        <div class="card-value-slot"><div class="card-value">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div></div>
+        <div class="card-sub">Mb/d after bypass + SPR offsets</div>
     </div>
-    <div class="metric-card key-numbers-card">
-        <div class="metric-label">LNG Gap (Asia)</div>
-        <div class="key-numbers-value-slot"><div class="metric-value">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div></div>
-        <div class="metric-sub">Bcf/d — no pipeline bypass available</div>
+    <div class="card card--kpi">
+        <div class="card-label">LNG Gap (Asia)</div>
+        <div class="card-value-slot"><div class="card-value">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div></div>
+        <div class="card-sub">Bcf/d — no pipeline bypass available</div>
     </div>
-    <div class="metric-card key-numbers-card">
-        <div class="metric-label">EU Storage vs Seasonal</div>
-        <div class="key-numbers-value-slot key-numbers-storage-value-row">
-            <div class="metric-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
-            <span class="key-numbers-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
+    <div class="card card--kpi">
+        <div class="card-label">EU Storage vs Seasonal</div>
+        <div class="card-value-slot kpi-storage-row">
+            <div class="card-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
+            <span class="kpi-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
         </div>
-        <div class="metric-sub">{safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg</div>
+        <div class="card-sub">{safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg</div>
     </div>
-    <div class="metric-card key-numbers-card">
-        <div class="metric-label">US LNG Utilization</div>
-        <div class="key-numbers-value-slot"><div class="metric-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div></div>
-        <div class="metric-sub">System at maximum — no relief capacity</div>
+    <div class="card card--kpi">
+        <div class="card-label">US LNG Utilization</div>
+        <div class="card-value-slot"><div class="card-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div></div>
+        <div class="card-sub">System at maximum — no relief capacity</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -1113,30 +940,30 @@ with tab_tanker:
     _flag_badge  = risk_badge("CRITICAL" if _is_critical else "NORMAL")
     st.markdown(f"""
 <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr;gap:1rem;align-items:stretch;margin-bottom:1.5rem;">
-    <div class="ta-primary-card">
-        <div class="ta-label">Hormuz Transit · Current Reading</div>
-        <div class="ta-number-row">
-            <span class="ta-big-value">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}</span>
+    <div class="card card--primary">
+        <div class="card-ta-label">Hormuz Transit · Current Reading</div>
+        <div class="card-ta-number-row">
+            <span class="card-ta-big-value">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}</span>
             {_flag_badge}
         </div>
-        <div class="ta-sub">of pre-crisis normal &nbsp;·&nbsp; {safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline</div>
-        <div class="ta-sub">z-score {safe(tanker.get("z_score"), "{:.1f}")}</div>
+        <div class="card-ta-sub">of pre-crisis normal &nbsp;·&nbsp; {safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline</div>
+        <div class="card-ta-sub">z-score {safe(tanker.get("z_score"), "{:.1f}")}</div>
     </div>
-    <div class="ta-secondary-card">
-        <div class="ta-label">7-Day Recovery Trend</div>
-        <div class="ta-value">{safe(tanker.get("trend_direction"))}</div>
-        <div class="ta-sub">Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day</div>
+    <div class="card" style="min-height:unset;">
+        <div class="card-ta-label">7-Day Recovery Trend</div>
+        <div class="card-ta-value">{safe(tanker.get("trend_direction"))}</div>
+        <div class="card-ta-sub">Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:0.75rem;">
-        <div class="ta-small-card">
-            <div class="ta-label">Fujairah Queue</div>
-            <div class="ta-value">{anchorage_count} <span style="font-size:0.85rem;font-weight:400;color:var(--text-secondary);">vessels</span></div>
-            <div class="ta-sub">{anchorage_badge} &nbsp;·&nbsp; {anchorage_status}</div>
+        <div class="card card--sm">
+            <div class="card-ta-label">Fujairah Queue</div>
+            <div class="card-ta-value">{anchorage_count} <span style="font-size:var(--text-sm);font-weight:400;color:var(--text-secondary);">vessels</span></div>
+            <div class="card-ta-sub">{anchorage_badge} &nbsp;·&nbsp; {anchorage_status}</div>
         </div>
-        <div class="ta-small-card ta-meta-card">
-            <div class="ta-label">Data Last Updated</div>
-            <div class="ta-value" style="font-size:0.95rem;">{fmt_timestamp(tanker.get("logged_at"))}</div>
-            <div class="ta-sub">Kaggle · IMF PortWatch · Kpler</div>
+        <div class="card card--sm card--muted">
+            <div class="card-ta-label">Data Last Updated</div>
+            <div class="card-ta-value">{fmt_timestamp(tanker.get("logged_at"))}</div>
+            <div class="card-ta-sub">Kaggle · IMF PortWatch · Kpler</div>
         </div>
     </div>
 </div>
@@ -1342,18 +1169,18 @@ with tab_lng:
             "AMBER" if score == "DEFICIT" else "GREEN"
         )
         st.markdown(f"""
-            <div class="metric-card" style="height:160px;">
+            <div class="metric-card" style="min-height:160px;">
                 <div class="metric-label">Rebalancing Score</div>
-                <div class="metric-value" style="font-size:1.4rem;">{score}</div>
+                <div class="metric-value" style="font-size:var(--text-lg);">{score}</div>
                 <div class="metric-sub" style="margin-top:0.3rem;">{score_badge}</div>
                 <div class="metric-sub">Confidence {safe(lng.get("confidence"))}</div>
             </div>
         """, unsafe_allow_html=True)
     with lc2:
         st.markdown(f"""
-            <div class="metric-card" style="height:160px;">
+            <div class="metric-card" style="min-height:160px;">
                 <div class="metric-label">JKM–TTF Spread (7-day avg)</div>
-                <div class="metric-value" style="font-size:1.4rem;">
+                <div class="metric-value" style="font-size:var(--text-lg);">
                     ${safe(lng.get("spread_7d"), "{:.3f}")}
                 </div>
                 <div class="metric-sub" style="margin-top:0.3rem;">
@@ -1369,9 +1196,9 @@ with tab_lng:
         """, unsafe_allow_html=True)
     with lc3:
         st.markdown(f"""
-            <div class="metric-card" style="height:160px;">
+            <div class="metric-card" style="min-height:160px;">
                 <div class="metric-label">EU Storage Coverage</div>
-                <div class="metric-value" style="font-size:1.4rem;">
+                <div class="metric-value" style="font-size:var(--text-lg);">
                     {safe(lng.get("storage_pct"), "{:.1f}%")}
                 </div>
                 <div class="metric-sub" style="margin-top:0.3rem;">
@@ -2176,4 +2003,3 @@ with tab_gap:
         """, unsafe_allow_html=True)
 
     # ── Section 5 — Analyst interpretation ────────────────────────────────────
-    
