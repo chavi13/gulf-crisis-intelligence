@@ -1887,8 +1887,48 @@ with tab_lng:
 with tab_gap:
     import plotly.graph_objects as go
 
+    # ── Pre-compute gap variables (used by both interpretation box and waterfall)
+    pct_normal     = gap.get("pct_of_normal") or 7.8
+    normal_flow    = 15.0
+    current_thru   = round(normal_flow * (pct_normal / 100), 2)
+    disrupted      = round(normal_flow - current_thru, 2)
+    bypass_offset  = 4.5
+    spr_offset     = 3.0
+    net_gap        = round(gap.get("crude_gap_net_mbd") or 6.33, 2)
+
     # ── Section 1 — Regional risk table ───────────────────────────────────────
     st.markdown('<div class="section-header" style="margin-top:0.5rem;">Regional Supply Gap — Current State</div>', unsafe_allow_html=True)
+
+    # ── Analyst interpretation — moved to top ─────────────────────────────────
+    st.markdown(f"""
+        <div class="interpretation-box" style="margin-bottom:1.5rem;">
+            <div class="interpretation-label">Analyst Interpretation</div>
+            <div class="interpretation-text">
+                The net crude supply gap of
+                <strong style="color:#f59e0b;">{net_gap:.2f} Mb/d</strong>
+                reflects the residual shortfall after all available offsets are applied —
+                bypass pipelines (4.5 Mb/d) and the IEA coordinated SPR release
+                (3.0 Mb/d) together cover roughly 54% of the disrupted volume, but
+                cannot close the gap at current transit levels of {pct_normal:.1f}%
+                of normal.
+                <br><br>
+                The regional distribution is asymmetric and analytically important:
+                <strong style="color:#ef4444;">Asia bears 80%
+                ({safe(gap.get("asia_crude_gap_mbd"), "{:.2f}")} Mb/d)</strong>
+                of the crude impact because 80% of Hormuz crude was destined for
+                Asian markets. Europe bears only 4%
+                ({safe(gap.get("europe_crude_gap_mbd"), "{:.2f}")} Mb/d) of the
+                crude impact — but faces a
+                <strong style="color:#f59e0b;">disproportionate LNG impact
+                ({safe(gap.get("europe_lng_gap_bcfd"), "{:.2f}")} Bcf/d)</strong>
+                because Qatar LNG has no pipeline bypass capacity whatsoever.
+                This asymmetry — Asia exposed on crude, Europe exposed on LNG —
+                is what drives the divergence between oil and gas prices during
+                the crisis, and is not visible unless you model the two commodity
+                chains separately.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
     gap_html_rows = [
         {
@@ -2136,32 +2176,4 @@ with tab_gap:
         """, unsafe_allow_html=True)
 
     # ── Section 5 — Analyst interpretation ────────────────────────────────────
-    st.markdown(f"""
-        <div class="interpretation-box" style="margin-top:1.5rem;">
-            <div class="interpretation-label">Analyst Interpretation</div>
-            <div class="interpretation-text">
-                The net crude supply gap of
-                <strong style="color:#f59e0b;">{net_gap:.2f} Mb/d</strong>
-                reflects the residual shortfall after all available offsets are applied —
-                bypass pipelines (4.5 Mb/d) and the IEA coordinated SPR release
-                (3.0 Mb/d) together cover roughly 54% of the disrupted volume, but
-                cannot close the gap at current transit levels of {pct_normal:.1f}%
-                of normal.
-                <br><br>
-                The regional distribution is asymmetric and analytically important:
-                <strong style="color:#ef4444;">Asia bears 80%
-                ({safe(gap.get("asia_crude_gap_mbd"), "{:.2f}")} Mb/d)</strong>
-                of the crude impact because 80% of Hormuz crude was destined for
-                Asian markets. Europe bears only 4%
-                ({safe(gap.get("europe_crude_gap_mbd"), "{:.2f}")} Mb/d) of the
-                crude impact — but faces a
-                <strong style="color:#f59e0b;">disproportionate LNG impact
-                ({safe(gap.get("europe_lng_gap_bcfd"), "{:.2f}")} Bcf/d)</strong>
-                because Qatar LNG has no pipeline bypass capacity whatsoever.
-                This asymmetry — Asia exposed on crude, Europe exposed on LNG —
-                is what drives the divergence between oil and gas prices during
-                the crisis, and is not visible unless you model the two commodity
-                chains separately.
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    
