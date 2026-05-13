@@ -1850,7 +1850,7 @@ with tab_lng:
         ],
     }
     st.markdown(
-        pd.DataFrame(storage_extrap).to_html(escape=False, index=False),
+        pd.DataFrame(storage_extrap).to_html(escape=False, index=False, classes="supply-gap-table"),
         unsafe_allow_html=True,
     )
 
