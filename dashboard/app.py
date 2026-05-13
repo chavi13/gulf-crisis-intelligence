@@ -602,7 +602,7 @@ def risk_badge(label: str) -> str:
 
 
 
-def score_badge(score: str) -> str:
+def score_badge_fn(score: str) -> str:
     """Return an HTML risk badge mapped from rebalancing score vocabulary."""
     if score is None or score == "—":
         return '<span class="badge-amber">UNKNOWN</span>'
@@ -822,7 +822,7 @@ with tab_overview:
     routing = safe(lng.get("routing_signal"), fallback="—")
     util = safe(lng.get("us_utilization"), "{:.1f}%")
     ts2 = fmt_timestamp(lng.get("logged_at"))
-    score_badge = risk_badge(
+    score_badge_sidebar = score_badge_fn(
         "RED" if "CRITICAL" in str(score) else
         "AMBER" if score == "DEFICIT" else
         "GREEN"
@@ -861,7 +861,7 @@ with tab_overview:
             <div class="card-label">LNG Rebalancing Score</div>
             <div class="card-value">{score_value_html}</div>
             <div class="card-sub">
-                Confidence {confidence} &nbsp;·&nbsp; {score_badge}
+                Confidence {confidence} &nbsp;·&nbsp; {score_badge_sidebar}
             </div>
             <div class="card-sub">Routing signal &nbsp;<span class="headline-mono-emphasis">{routing}</span></div>
             <div class="card-sub">US utilization <span class="headline-mono-emphasis">{util}</span></div>
@@ -1182,7 +1182,7 @@ with tab_lng:
     lc1, lc2, lc3 = st.columns(3)
     with lc1:
         score = safe(lng.get("rebalancing_score"), fallback="—")
-        score_badge_html = score_badge(lng.get("rebalancing_score"))
+        score_badge_html = score_badge_fn(lng.get("rebalancing_score"))
         st.markdown(f"""
             <div class="metric-card" style="min-height:160px;">
                 <div class="metric-label">Rebalancing Score</div>
