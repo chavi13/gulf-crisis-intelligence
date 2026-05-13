@@ -1064,17 +1064,15 @@ with tab_tanker:
 
         st.plotly_chart(fig_transit, use_container_width=True)
 
-        # Numbered event legend
-        st.markdown("""
+        # Numbered event legend — generated from CRISIS_EVENTS dict
+        legend_spans = "".join(
+            f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{label}</span>'
+            for i, (_, label) in enumerate(CRISIS_EVENTS.items(), 1)
+        )
+        st.markdown(f"""
             <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.5rem;
                         font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#8a9bb5;">
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">1</span> &nbsp;Disruption begins</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">2</span> &nbsp;Strait declared closed</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">3</span> &nbsp;P&amp;I insurance withdrawn</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">4</span> &nbsp;Brent peaks $126/bbl</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">5</span> &nbsp;IEA 400M bbl SPR release</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">6</span> &nbsp;Ceasefire agreed</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">7</span> &nbsp;US naval blockade</span>
+                {legend_spans}
             </div>
         """, unsafe_allow_html=True)
 
@@ -1083,22 +1081,10 @@ with tab_tanker:
                     unsafe_allow_html=True)
 
     # ── Section 3 — AIS dark events & diversions ──────────────────────────────
-    st.markdown('<div class="section-header">AIS Dark Events & Vessel Diversions</div>',
-                unsafe_allow_html=True)
-
     dark_count = tanker.get("dark_events") or 0
     st.markdown(f"""
-        <div class="interpretation-box">
-            <div class="interpretation-label">Detection Status</div>
-            <div class="interpretation-text">
-                Dark event and diversion detection logic is active and running daily.
-                <code>vessel_positions</code> is accumulating from aisstream.io —
-                <strong style="color:#e8edf5;">{dark_count} dark events</strong> detected
-                to date. This section will populate automatically as Gulf AIS coverage
-                increases. The detection logic is complete and validated — the constraint
-                is data volume, not methodology. At current recovery pace (~8 transits/day),
-                meaningful vessel-level data is expected to accumulate within weeks.
-            </div>
+        <div class="info-note">
+            AIS vessel data: accumulating ({dark_count} events). Section activates when coverage is sufficient.
         </div>
     """, unsafe_allow_html=True)
 
@@ -1142,25 +1128,29 @@ with tab_tanker:
             f"−{baseline - proj_4w:.0f} ships/day",
         ],
     }
-    st.dataframe(pd.DataFrame(extrap_data), hide_index=True, use_container_width=True)
+    st.markdown(
+        pd.DataFrame(extrap_data).to_html(escape=False, index=False, classes="supply-gap-table"),
+        unsafe_allow_html=True,
+    )
 
     # ── Section 5 — Plain-English interpretation ──────────────────────────────
-    st.markdown("""
+    _days_to_50pct = round((baseline * 0.5 - current_count) / slope) if slope > 0 else None
+    _days_str = f"approximately <strong style=\"color:#e8edf5;\">{_days_to_50pct} days</strong>" if _days_to_50pct else "an indeterminate period"
+    st.markdown(f"""
         <div class="interpretation-box" style="margin-top:1.5rem;">
             <div class="interpretation-label">Analyst Interpretation</div>
             <div class="interpretation-text">
-                Hormuz is operating at <strong style="color:#f59e0b;">7.8% of pre-crisis
-                normal</strong> — 8 ships per day versus a baseline of 103.
-                The z-score of −22.2 confirms this is a historically extreme deviation,
+                Hormuz is operating at <strong style="color:#f59e0b;">{safe(tanker.get("pct_of_normal"), "{:.1f}%")} of pre-crisis
+                normal</strong> — {safe(tanker.get("transit_count"))} ships per day versus a baseline of {safe(tanker.get("baseline_30d"), "{:.0f}")}.
+                The z-score of {safe(tanker.get("z_score"), "{:.1f}")} confirms this is a historically extreme deviation,
                 not a routine fluctuation. The 7-day trend shows slow recovery at
-                +0.5 transits/day, but this pace is structurally constrained by
+                +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day, but this pace is structurally constrained by
                 <strong style="color:#e8edf5;">mine clearance operations</strong>, which
                 remain incomplete as of the latest data. A ceasefire was agreed April 8,
                 but diplomatic resolution does not reopen the strait — physical mine
                 clearance by US warships is the binding bottleneck. At the current
-                recovery slope, the strait would reach 50% of normal in approximately
-                <strong style="color:#e8edf5;">190 days</strong> — making an accelerated
-                clearance timeline the single most important variable to monitor.
+                recovery slope, the strait would reach 50% of normal in {_days_str} —
+                making an accelerated clearance timeline the single most important variable to monitor.
             </div>
         </div>
     """, unsafe_allow_html=True)
