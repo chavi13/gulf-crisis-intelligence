@@ -1113,8 +1113,6 @@ with tab_tanker:
     _flag_badge  = risk_badge("CRITICAL" if _is_critical else "NORMAL")
     st.markdown(f"""
 <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr;gap:1rem;align-items:stretch;margin-bottom:1.5rem;">
-
-    <!-- PRIMARY — Current Reading -->
     <div class="ta-primary-card">
         <div class="ta-label">Hormuz Transit · Current Reading</div>
         <div class="ta-number-row">
@@ -1124,15 +1122,11 @@ with tab_tanker:
         <div class="ta-sub">of pre-crisis normal &nbsp;·&nbsp; {safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline</div>
         <div class="ta-sub">z-score {safe(tanker.get("z_score"), "{:.1f}")}</div>
     </div>
-
-    <!-- SECONDARY — Recovery Trend -->
     <div class="ta-secondary-card">
         <div class="ta-label">7-Day Recovery Trend</div>
         <div class="ta-value">{safe(tanker.get("trend_direction"))}</div>
         <div class="ta-sub">Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day</div>
     </div>
-
-    <!-- SMALL STACK — Queue + Last Updated -->
     <div style="display:flex;flex-direction:column;gap:0.75rem;">
         <div class="ta-small-card">
             <div class="ta-label">Fujairah Queue</div>
@@ -1145,7 +1139,6 @@ with tab_tanker:
             <div class="ta-sub">Kaggle · IMF PortWatch · Kpler</div>
         </div>
     </div>
-
 </div>
 """, unsafe_allow_html=True)
 
