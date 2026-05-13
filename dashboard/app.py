@@ -350,10 +350,10 @@ section[data-testid="stSidebar"] * {
     align-items: flex-start;
 }
 .tanker-anomaly-card .tanker-value-slot {
-    flex: 0 0 5rem;
+    flex: 0 0 auto;
     display: flex;
     align-items: flex-start;
-    overflow: visible;
+    margin-bottom: 0.45rem;
 }
 .tanker-anomaly-card .metric-value {
     font-size: 1.62rem;
@@ -365,18 +365,16 @@ section[data-testid="stSidebar"] * {
 .tanker-anomaly-card .metric-value .has-tooltip {
     font-size: inherit;
 }
-.tanker-anomaly-card .metric-sub {
-    font-size: 0.88rem;
-    line-height: 1.5;
-    margin-top: 0.45rem;
-    flex-shrink: 0;
-}
 .tanker-anomaly-dateline-card .metric-value {
     font-size: 1.1rem;
     line-height: 1.3;
     letter-spacing: -0.01em;
-    white-space: normal;
-    word-break: break-word;
+}
+.tanker-anomaly-card .metric-sub {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-top: 0;
+    flex-shrink: 0;
 }
 
 
