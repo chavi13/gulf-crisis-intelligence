@@ -622,6 +622,55 @@ def safe(val, fmt=None, fallback="—"):
     return val
 
 
+def _status_span(text: str, color: str, bg: str, border: str) -> str:
+    """Return a styled inline badge span."""
+    return (
+        f'<span style="display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;'
+        f'font-family:monospace;font-size:0.75rem;font-weight:600;'
+        f'background:{bg};color:{color};border:1px solid {border};">'
+        f'{text}</span>'
+    )
+
+
+def render_sidebar(crisis: dict) -> str:
+    """Build sidebar status HTML. Returns a string for st.markdown(unsafe_allow_html=True)."""
+    mine_status  = crisis.get("mine_clearance_status") or "UNKNOWN"
+    diplo_status = crisis.get("diplomatic_status")     or "UNKNOWN"
+    blockade     = crisis.get("us_blockade_active")
+    as_of        = crisis.get("as_of_date")            or "—"
+    updated      = crisis.get("last_updated")          or "—"
+
+    if mine_status == "COMPLETE":
+        mine_span = _status_span(mine_status, "#22c55e", "rgba(34,197,94,0.15)", "rgba(34,197,94,0.4)")
+    elif mine_status == "IN PROGRESS":
+        mine_span = _status_span(mine_status, "#ef4444", "rgba(239,68,68,0.15)", "rgba(239,68,68,0.4)")
+    else:
+        mine_span = _status_span(mine_status, "#f59e0b", "rgba(245,158,11,0.15)", "rgba(245,158,11,0.4)")
+
+    if diplo_status == "CEASEFIRE":
+        diplo_span = _status_span(diplo_status, "#22c55e", "rgba(34,197,94,0.15)", "rgba(34,197,94,0.4)")
+    elif diplo_status in ("ACTIVE CONFLICT", "CEASEFIRE COLLAPSED"):
+        diplo_span = _status_span(diplo_status, "#ef4444", "rgba(239,68,68,0.15)", "rgba(239,68,68,0.4)")
+    else:
+        diplo_span = _status_span(diplo_status, "#f59e0b", "rgba(245,158,11,0.15)", "rgba(245,158,11,0.4)")
+
+    if blockade == 1:
+        block_span = _status_span("ACTIVE",   "#ef4444", "rgba(239,68,68,0.15)", "rgba(239,68,68,0.4)")
+    else:
+        block_span = _status_span("INACTIVE", "#22c55e", "rgba(34,197,94,0.15)", "rgba(34,197,94,0.4)")
+
+    lbl = "font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:#4a5a72;"
+    return (
+        '<div style="font-family:IBM Plex Sans,sans-serif;font-size:0.82rem;'
+        'color:#8a9bb5;line-height:1.65;">'
+        f'<div style="margin-bottom:0.6rem;"><span style="{lbl}">Mine Clearance</span><br>{mine_span}</div>'
+        f'<div style="margin-bottom:0.6rem;"><span style="{lbl}">Diplomatic Status</span><br>{diplo_span}</div>'
+        f'<div style="margin-bottom:1rem;"><span style="{lbl}">US Naval Blockade</span><br>{block_span}</div>'
+        f'<div style="font-size:0.62rem;color:#4a5a72;">As of {as_of} · Updated {updated}</div>'
+        '</div>'
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # DATA LOAD — cached so queries run once per session, not on every interaction
 # ══════════════════════════════════════════════════════════════════════════════
@@ -670,64 +719,27 @@ crisis = data["crisis"]
 
 with st.sidebar:
     st.markdown("""
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
-                    letter-spacing:0.15em;text-transform:uppercase;
-                    color:#f59e0b;margin-bottom:0.25rem;">
-            Gulf Crisis Intelligence
-        </div>
-        <div style="font-family:'IBM Plex Sans',sans-serif;font-size:1.1rem;
-                    font-weight:600;color:#e8edf5;margin-bottom:1.5rem;">
-            Supply Monitor
+        <div style="font-family:'IBM Plex Sans',sans-serif;font-size:1rem;
+                    font-weight:600;color:#e8edf5;margin-bottom:1.5rem;
+                    padding-bottom:0.75rem;border-bottom:1px solid #2a3a55;">
+            Gulf Crisis Supply Intelligence
         </div>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-        <div class="section-header" style="margin-top:0;">Crisis Context</div>
+        <div class="section-header" style="margin-top:0;">Crisis Status</div>
     """, unsafe_allow_html=True)
 
-    # Dynamic values from crisis_context table
-    mine_status   = crisis.get("mine_clearance_status") or "UNKNOWN"
-    diplo_status  = crisis.get("diplomatic_status")     or "UNKNOWN"
-    blockade      = crisis.get("us_blockade_active")
-    notes         = crisis.get("notes")                 or ""
-    as_of         = crisis.get("as_of_date")            or "—"
-    updated       = crisis.get("last_updated")          or "—"
+    st.markdown(render_sidebar(crisis), unsafe_allow_html=True)
 
-    # Map mine clearance status to badge colour
-    mine_badge_class = (
-        "badge-red"   if mine_status == "IN PROGRESS" else
-        "badge-green" if mine_status == "COMPLETE"    else
-        "badge-amber"
-    )
-    # Map diplomatic status to badge colour
-    diplo_badge_class = (
-        "badge-green" if diplo_status == "CEASEFIRE"                                    else
-        "badge-red"   if diplo_status in ("ACTIVE CONFLICT", "CEASEFIRE COLLAPSED")     else
-        "badge-amber"
-    )
-    blockade_badge = (
-        '<span class="badge-red">ACTIVE</span>'   if blockade == 1 else
-        '<span class="badge-green">INACTIVE</span>'
-    )
-
-    # Build badge HTML inline — avoids f-string CSS brace conflicts
-    _mine_span    = f'<span style="display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-family:monospace;font-size:0.75rem;font-weight:600;background:{"rgba(239,68,68,0.15)" if mine_status == "IN PROGRESS" else "rgba(34,197,94,0.15)" if mine_status == "COMPLETE" else "rgba(245,158,11,0.15)"};color:{"#ef4444" if mine_status == "IN PROGRESS" else "#22c55e" if mine_status == "COMPLETE" else "#f59e0b"};border:1px solid {"rgba(239,68,68,0.4)" if mine_status == "IN PROGRESS" else "rgba(34,197,94,0.4)" if mine_status == "COMPLETE" else "rgba(245,158,11,0.4)"};">{mine_status}</span>'
-    _diplo_span   = f'<span style="display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-family:monospace;font-size:0.75rem;font-weight:600;background:{"rgba(34,197,94,0.15)" if diplo_status == "CEASEFIRE" else "rgba(239,68,68,0.15)" if diplo_status in ("ACTIVE CONFLICT", "CEASEFIRE COLLAPSED") else "rgba(245,158,11,0.15)"};color:{"#22c55e" if diplo_status == "CEASEFIRE" else "#ef4444" if diplo_status in ("ACTIVE CONFLICT", "CEASEFIRE COLLAPSED") else "#f59e0b"};border:1px solid {"rgba(34,197,94,0.4)" if diplo_status == "CEASEFIRE" else "rgba(239,68,68,0.4)" if diplo_status in ("ACTIVE CONFLICT", "CEASEFIRE COLLAPSED") else "rgba(245,158,11,0.4)"};">{diplo_status}</span>'
-    _block_span   = '<span style="display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-family:monospace;font-size:0.75rem;font-weight:600;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.4);">ACTIVE</span>' if blockade == 1 else '<span style="display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-family:monospace;font-size:0.75rem;font-weight:600;background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.4);">INACTIVE</span>'
-
-    _label_style  = "font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:#4a5a72;"
-    _sidebar_html = (
-        '<div style="font-family:IBM Plex Sans,sans-serif;font-size:0.82rem;color:#8a9bb5;line-height:1.65;">'
-        '<div style="margin-bottom:1rem;">'
-        f'<div style="margin-bottom:0.6rem;"><span style="{_label_style}">Mine Clearance</span><br>' + _mine_span + '</div>'
-        f'<div style="margin-bottom:0.6rem;"><span style="{_label_style}">Diplomatic Status</span><br>' + _diplo_span + '</div>'
-        f'<div><span style="{_label_style}">US Naval Blockade</span><br>' + _block_span + '</div>'
-        '</div>'
-        f'<div style="color:#8a9bb5;font-size:0.8rem;line-height:1.6;">{notes}</div>'
-        f'<div style="margin-top:0.75rem;font-size:0.62rem;color:#4a5a72;">As of {as_of} · Last updated {updated}</div>'
-        '</div>'
-    )
-    st.markdown(_sidebar_html, unsafe_allow_html=True)
+    if crisis.get("notes"):
+        with st.expander("📋  Analyst Notes", expanded=False):
+            st.markdown(f"""
+                <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;
+                            color:#8a9bb5;line-height:1.65;">
+                    {crisis.get("notes")}
+                </div>
+            """, unsafe_allow_html=True)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
