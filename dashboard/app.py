@@ -308,6 +308,9 @@ section[data-testid="stSidebar"] * {
     font-size: 0.88rem;
     margin-bottom: 0.3rem;
     flex-shrink: 0;
+    min-height: 2.4rem;
+    display: flex;
+    align-items: flex-start;
 }
 .key-numbers-card .key-numbers-value-slot {
     flex: 0 0 3rem;
