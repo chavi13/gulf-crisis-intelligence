@@ -333,49 +333,128 @@ section[data-testid="stSidebar"] * {
     margin-top: 0.12rem;
 }
 
-/* Tanker tab — Hormuz Transit Anomaly Index (four cards) */
-.tanker-anomaly-card {
-    height: 100%;
+/* Tanker tab — Hormuz Transit Anomaly Index */
+/* Primary signal card (left, dominant) */
+.ta-primary-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(239,68,68,0.35);
+    background: linear-gradient(135deg, #1e1828 0%, #1a2235 100%);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    gap: 0;
 }
-.tanker-anomaly-card .ta-label {
+.ta-primary-card .ta-label {
     font-family: var(--font-sans);
     font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--text-secondary);
-    height: 2.8rem;
-    overflow: hidden;
-    display: flex;
-    align-items: flex-start;
-    flex-shrink: 0;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
 }
-.tanker-anomaly-card .ta-value {
+.ta-primary-card .ta-number-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.ta-primary-card .ta-big-value {
     font-family: var(--font-mono);
-    font-size: 1.4rem;
+    font-size: 2.8rem;
     font-weight: 600;
     color: var(--text-primary);
-    line-height: 1.2;
-    height: 3.5rem;
-    overflow: hidden;
-    display: flex;
-    align-items: flex-start;
-    flex-shrink: 0;
-    margin-bottom: 0.4rem;
+    line-height: 1;
 }
-.tanker-anomaly-card .ta-sub {
+.ta-primary-card .ta-sub {
     font-family: var(--font-sans);
     font-size: 0.82rem;
     color: var(--text-secondary);
     line-height: 1.5;
-    flex-shrink: 0;
+    margin-top: 0.2rem;
 }
-.tanker-anomaly-card .ta-sub + .ta-sub {
-    margin-top: 0.25rem;
+.ta-primary-card .ta-sub + .ta-sub {
+    margin-top: 0.2rem;
+}
+
+/* Secondary card (trend) */
+.ta-secondary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+.ta-secondary-card .ta-label {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+.ta-secondary-card .ta-value {
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+}
+.ta-secondary-card .ta-sub {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Small cards (operational + metadata, stacked right) */
+.ta-small-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.ta-small-card .ta-label {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+}
+.ta-small-card .ta-value {
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 0.3rem;
+}
+.ta-small-card .ta-sub {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+.ta-small-card .ta-sub + .ta-sub {
+    margin-top: 0.2rem;
+}
+/* Last updated — dimmer */
+.ta-meta-card {
+    background: transparent;
+    border: 1px solid var(--border);
+    opacity: 0.75;
 }
 
 
@@ -1030,30 +1109,43 @@ with tab_tanker:
         risk_badge("AMBER") if anchorage_count > 0   else
         risk_badge("GREEN")
     )
+    _is_critical = tanker.get("anomaly_flag") == 1
+    _flag_badge  = risk_badge("CRITICAL" if _is_critical else "NORMAL")
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
-    <div class="metric-card tanker-anomaly-card">
-        <div class="ta-label">Current Reading</div>
-        <div class="ta-value">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}</div>
-        <div class="ta-sub">of pre-crisis normal &nbsp;·&nbsp; {risk_badge("CRITICAL" if tanker.get("anomaly_flag") == 1 else "NORMAL")}</div>
-        <div class="ta-sub">{safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline &nbsp;·&nbsp; z-score {safe(tanker.get("z_score"), "{:.1f}")}</div>
+<div style="display:grid;grid-template-columns:2fr 1.5fr 1fr;gap:1rem;align-items:stretch;margin-bottom:1.5rem;">
+
+    <!-- PRIMARY — Current Reading -->
+    <div class="ta-primary-card">
+        <div class="ta-label">Hormuz Transit · Current Reading</div>
+        <div class="ta-number-row">
+            <span class="ta-big-value">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}</span>
+            {_flag_badge}
+        </div>
+        <div class="ta-sub">of pre-crisis normal &nbsp;·&nbsp; {safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline</div>
+        <div class="ta-sub">z-score {safe(tanker.get("z_score"), "{:.1f}")}</div>
     </div>
-    <div class="metric-card tanker-anomaly-card">
+
+    <!-- SECONDARY — Recovery Trend -->
+    <div class="ta-secondary-card">
         <div class="ta-label">7-Day Recovery Trend</div>
         <div class="ta-value">{safe(tanker.get("trend_direction"))}</div>
         <div class="ta-sub">Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day</div>
     </div>
-    <div class="metric-card tanker-anomaly-card">
-        <div class="ta-label">Fujairah Anchorage Queue</div>
-        <div class="ta-value">{anchorage_count}</div>
-        <div class="ta-sub">vessels &nbsp;·&nbsp; {anchorage_badge}</div>
-        <div class="ta-sub">{anchorage_status}</div>
+
+    <!-- SMALL STACK — Queue + Last Updated -->
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <div class="ta-small-card">
+            <div class="ta-label">Fujairah Queue</div>
+            <div class="ta-value">{anchorage_count} <span style="font-size:0.85rem;font-weight:400;color:var(--text-secondary);">vessels</span></div>
+            <div class="ta-sub">{anchorage_badge} &nbsp;·&nbsp; {anchorage_status}</div>
+        </div>
+        <div class="ta-small-card ta-meta-card">
+            <div class="ta-label">Data Last Updated</div>
+            <div class="ta-value" style="font-size:0.95rem;">{fmt_timestamp(tanker.get("logged_at"))}</div>
+            <div class="ta-sub">Kaggle · IMF PortWatch · Kpler</div>
+        </div>
     </div>
-    <div class="metric-card tanker-anomaly-card">
-        <div class="ta-label">Data Last Updated</div>
-        <div class="ta-value">{fmt_timestamp(tanker.get("logged_at"))}</div>
-        <div class="ta-sub">Kaggle / IMF PortWatch / Kpler / Lloyd's List</div>
-    </div>
+
 </div>
 """, unsafe_allow_html=True)
 
