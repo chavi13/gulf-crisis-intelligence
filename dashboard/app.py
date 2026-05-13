@@ -1345,10 +1345,8 @@ with tab_lng:
             <div class="metric-card" style="height:160px;">
                 <div class="metric-label">Rebalancing Score</div>
                 <div class="metric-value" style="font-size:1.4rem;">{score}</div>
-                <div class="metric-sub">
-                    Confidence {safe(lng.get("confidence"))}
-                    &nbsp;·&nbsp; {score_badge}
-                </div>
+                <div class="metric-sub">Confidence {safe(lng.get("confidence"))}</div>
+                <div class="metric-sub" style="margin-top:0.3rem;">{score_badge}</div>
             </div>
         """, unsafe_allow_html=True)
     with lc2:
@@ -1363,6 +1361,9 @@ with tab_lng:
                     <span style="font-family:'IBM Plex Mono',monospace;
                     color:#e8edf5;">{safe(lng.get("routing_signal"))}</span>
                     &nbsp;·&nbsp; threshold $2.00
+                </div>
+                <div class="metric-sub" style="margin-top:0.3rem;">
+                    {risk_badge("GREEN" if safe(lng.get("routing_signal")) == "NEUTRAL" else "AMBER")}
                 </div>
             </div>
         """, unsafe_allow_html=True)
