@@ -344,6 +344,16 @@ section[data-testid="stSidebar"] * {
 .tanker-anomaly-card .metric-label {
     font-size: 0.88rem;
     margin-bottom: 0.3rem;
+    flex-shrink: 0;
+    min-height: 2.4rem;
+    display: flex;
+    align-items: flex-start;
+}
+.tanker-anomaly-card .tanker-value-slot {
+    flex: 0 0 4rem;
+    display: flex;
+    align-items: flex-start;
+    overflow: visible;
 }
 .tanker-anomaly-card .metric-value {
     font-size: 1.62rem;
@@ -357,6 +367,7 @@ section[data-testid="stSidebar"] * {
     font-size: 1.02rem;
     line-height: 1.52;
     margin-top: 0.45rem;
+    flex-shrink: 0;
 }
 /* Data Last Updated — keep timestamp on one line in narrow columns */
 .tanker-anomaly-dateline-card .metric-value {
@@ -1004,76 +1015,43 @@ with tab_tanker:
     # ── Section 1 — Current reading metric card ───────────────────────────────
     st.markdown('<div class="section-header" style="margin-top:0.5rem;">Hormuz Transit Anomaly Index</div>', unsafe_allow_html=True)
 
-    tm1, tm2, tm3, tm4 = st.columns(4)
-    with tm1:
-        st.markdown(f"""
-            <div class="metric-card tanker-anomaly-card">
-                <div class="metric-label">Current Reading</div>
-                <div class="metric-value">
-                    <span class="has-tooltip">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}<span class="tooltip-text">Percentage of pre-crisis normal traffic. Baseline was 103 ships/day. 7.8% means only ~8 ships/day are transiting — 92% of normal traffic is blocked.</span></span>
-                </div>
-                <div class="metric-sub">
-                    of pre-crisis normal &nbsp;·&nbsp;
-                    {risk_badge("CRITICAL" if tanker.get("anomaly_flag") == 1 else "NORMAL")}
-                </div>
-                <div class="metric-sub" style="margin-top:0.4rem;">
-                    {safe(tanker.get("transit_count"))} ships/day vs
-                    {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline
-                    &nbsp;·&nbsp;
-                    <span class="has-tooltip">z-score {safe(tanker.get("z_score"), "{:.1f}")}<span class="tooltip-text">Z-score measures how far the current reading is from the historical mean. -22.2 means 22 standard deviations below normal — a historically unprecedented disruption.</span></span>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    with tm2:
-        st.markdown(f"""
-            <div class="metric-card tanker-anomaly-card">
-                <div class="metric-label">7-Day Recovery Trend</div>
-                <div class="metric-value">
-                    <span class="has-tooltip">{safe(tanker.get("trend_direction"))}<span class="tooltip-text">Recovery pace toward the pre-crisis baseline of 103 ships/day. At +0.5 ships/day, it would take ~190 days to reach 50% of normal. Mine clearance — not diplomacy — is the binding constraint on speed.</span></span>
-                </div>
-                <div class="metric-sub">
-                    Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    with tm3:
-        anchorage_count = tanker.get("anchorage_count") or 0
-        anchorage_status = (
-            "ELEVATED — possible Hormuz queue" if anchorage_count >= 15
-            else f"{anchorage_count} vessels present" if anchorage_count > 0
-            else "Accumulating — sparse data"
-        )
-        anchorage_badge = (
-            risk_badge("RED")   if anchorage_count >= 15 else
-            risk_badge("AMBER") if anchorage_count > 0   else
-            risk_badge("GREEN")
-        )
-        st.markdown(f"""
-            <div class="metric-card tanker-anomaly-card">
-                <div class="metric-label">Fujairah Anchorage Queue</div>
-                <div class="metric-value">
-                    {anchorage_count}
-                </div>
-                <div class="metric-sub">
-                    vessels &nbsp;·&nbsp; {anchorage_badge}
-                </div>
-                <div class="metric-sub" style="margin-top:0.4rem;">
-                    {anchorage_status}
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-    with tm4:
-        st.markdown(f"""
-            <div class="metric-card tanker-anomaly-card tanker-anomaly-dateline-card">
-                <div class="metric-label">Data Last Updated</div>
-                <div class="metric-value">
-                    {fmt_timestamp(tanker.get("logged_at"))}
-                </div>
-                <div class="metric-sub">
-                    Source: Kaggle / IMF PortWatch / Kpler / Lloyd's List
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+    anchorage_count = tanker.get("anchorage_count") or 0
+    anchorage_status = (
+        "ELEVATED — possible Hormuz queue" if anchorage_count >= 15
+        else f"{anchorage_count} vessels present" if anchorage_count > 0
+        else "Accumulating — sparse data"
+    )
+    anchorage_badge = (
+        risk_badge("RED")   if anchorage_count >= 15 else
+        risk_badge("AMBER") if anchorage_count > 0   else
+        risk_badge("GREEN")
+    )
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
+    <div class="metric-card tanker-anomaly-card">
+        <div class="metric-label">Current Reading</div>
+        <div class="tanker-value-slot"><div class="metric-value"><span class="has-tooltip">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}<span class="tooltip-text">Percentage of pre-crisis normal traffic. Baseline was 103 ships/day. 7.8% means only ~8 ships/day are transiting — 92% of normal traffic is blocked.</span></span></div></div>
+        <div class="metric-sub">of pre-crisis normal &nbsp;·&nbsp; {risk_badge("CRITICAL" if tanker.get("anomaly_flag") == 1 else "NORMAL")}</div>
+        <div class="metric-sub" style="margin-top:0.4rem;">{safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline &nbsp;·&nbsp; <span class="has-tooltip">z-score {safe(tanker.get("z_score"), "{:.1f}")}<span class="tooltip-text">Z-score measures how far the current reading is from the historical mean. -22.2 means 22 standard deviations below normal — a historically unprecedented disruption.</span></span></div>
+    </div>
+    <div class="metric-card tanker-anomaly-card">
+        <div class="metric-label">7-Day Recovery Trend</div>
+        <div class="tanker-value-slot"><div class="metric-value"><span class="has-tooltip">{safe(tanker.get("trend_direction"))}<span class="tooltip-text">Recovery pace toward the pre-crisis baseline of 103 ships/day. At +0.5 ships/day, it would take ~190 days to reach 50% of normal. Mine clearance — not diplomacy — is the binding constraint on speed.</span></span></div></div>
+        <div class="metric-sub">Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day</div>
+    </div>
+    <div class="metric-card tanker-anomaly-card">
+        <div class="metric-label">Fujairah Anchorage Queue</div>
+        <div class="tanker-value-slot"><div class="metric-value">{anchorage_count}</div></div>
+        <div class="metric-sub">vessels &nbsp;·&nbsp; {anchorage_badge}</div>
+        <div class="metric-sub" style="margin-top:0.4rem;">{anchorage_status}</div>
+    </div>
+    <div class="metric-card tanker-anomaly-card tanker-anomaly-dateline-card">
+        <div class="metric-label">Data Last Updated</div>
+        <div class="tanker-value-slot"><div class="metric-value">{fmt_timestamp(tanker.get("logged_at"))}</div></div>
+        <div class="metric-sub">Source: Kaggle / IMF PortWatch / Kpler / Lloyd's List</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
     # ── Section 2 — Transit count chart ──────────────────────────────────────
     st.markdown('<div class="section-header">Daily Transit Count — Hormuz Strait</div>', unsafe_allow_html=True)
