@@ -602,6 +602,19 @@ def risk_badge(label: str) -> str:
 
 
 
+def score_badge(score: str) -> str:
+    """Return an HTML risk badge mapped from rebalancing score vocabulary."""
+    if score is None or score == "—":
+        return '<span class="badge-amber">UNKNOWN</span>'
+    s = str(score).upper()
+    if "CRITICAL" in s:
+        return '<span class="badge-critical">CRITICAL DEFICIT</span>'
+    if s == "DEFICIT":
+        return '<span class="badge-red">DEFICIT</span>'
+    if s == "BALANCED":
+        return '<span class="badge-green">BALANCED</span>'
+    return f'<span class="badge-amber">{score}</span>'
+
 def fmt_timestamp(ts: str) -> str:
     """Format a logged_at ISO string to a readable label."""
     if ts is None:
@@ -1169,10 +1182,7 @@ with tab_lng:
     lc1, lc2, lc3 = st.columns(3)
     with lc1:
         score = safe(lng.get("rebalancing_score"), fallback="—")
-        score_badge = risk_badge(
-            "RED" if "CRITICAL" in str(score) else
-            "AMBER" if score == "DEFICIT" else "GREEN"
-        )
+        score_badge = score_badge(lng.get("rebalancing_score"))
         st.markdown(f"""
             <div class="metric-card" style="min-height:160px;">
                 <div class="metric-label">Rebalancing Score</div>
@@ -1498,16 +1508,20 @@ with tab_lng:
             how="left"
         )
 
+        show_full_history = st.toggle("Show full storage history (2020–)", value=False, key="storage_history_toggle")
+        storage_hist_display = storage_df if show_full_history else storage_df[storage_df["date"].dt.year >= 2024]
+
         fig_storage = go.Figure()
 
-        # Full EU storage history (2020 onwards) — muted
-        fig_storage.add_trace(go.Scatter(
-            x=storage_df["date"],
-            y=storage_df["pct_full"],
-            name="EU storage (historical)",
-            line=dict(color="#2a3a55", width=1),
-            hovertemplate="%{x|%b %d, %Y}<br>%{y:.1f}%<extra>Historical</extra>",
-        ))
+        # Historical trace — muted, shown only when toggle is on
+        if show_full_history:
+            fig_storage.add_trace(go.Scatter(
+                x=storage_hist_display["date"],
+                y=storage_hist_display["pct_full"],
+                name="EU storage (historical)",
+                line=dict(color="#2a3a55", width=1),
+                hovertemplate="%{x|%b %d, %Y}<br>%{y:.1f}%<extra>Historical</extra>",
+            ))
 
         # 2026 current year — highlighted
         fig_storage.add_trace(go.Scatter(
