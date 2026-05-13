@@ -943,58 +943,33 @@ with tab_overview:
     # ── Key numbers row ───────────────────────────────────────────────────────
     st.markdown('<div class="section-header">Key Numbers</div>', unsafe_allow_html=True)
 
-    kc1, kc2, kc3, kc4 = st.columns(4)
-
-    with kc1:
-        st.markdown(f"""
-            <div class="metric-card key-numbers-card">
-                <div class="metric-label">Net Crude Gap</div>
-                <div class="metric-value">
-                    {safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}
-                </div>
-                <div class="metric-sub">Mb/d after bypass + SPR offsets</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with kc2:
-        st.markdown(f"""
-            <div class="metric-card key-numbers-card">
-                <div class="metric-label">LNG Gap (Asia)</div>
-                <div class="metric-value">
-                    {safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}
-                </div>
-                <div class="metric-sub">Bcf/d — no pipeline bypass available</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with kc3:
-        st.markdown(f"""
-            <div class="metric-card key-numbers-card">
-                <div class="metric-label">EU Storage vs Seasonal</div>
-                <div class="key-numbers-storage-value-row">
-                    <div class="metric-value">
-                        {safe(lng.get("storage_pct"), "{:.1f}%")}
-                    </div>
-                    <span class="key-numbers-storage-badge">
-                        {risk_badge(lng.get("storage_risk"))}
-                    </span>
-                </div>
-                <div class="metric-sub">
-                    {safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with kc4:
-        st.markdown(f"""
-            <div class="metric-card key-numbers-card">
-                <div class="metric-label">US LNG Utilization</div>
-                <div class="metric-value">
-                    {safe(lng.get("us_utilization"), "{:.1f}%")}
-                </div>
-                <div class="metric-sub">System at maximum — no relief capacity</div>
-            </div>
-        """, unsafe_allow_html=True)
+    st.markdown(f"""
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
+    <div class="metric-card key-numbers-card">
+        <div class="metric-label">Net Crude Gap</div>
+        <div class="metric-value">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div>
+        <div class="metric-sub">Mb/d after bypass + SPR offsets</div>
+    </div>
+    <div class="metric-card key-numbers-card">
+        <div class="metric-label">LNG Gap (Asia)</div>
+        <div class="metric-value">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div>
+        <div class="metric-sub">Bcf/d — no pipeline bypass available</div>
+    </div>
+    <div class="metric-card key-numbers-card">
+        <div class="metric-label">EU Storage vs Seasonal</div>
+        <div class="key-numbers-storage-value-row">
+            <div class="metric-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
+            <span class="key-numbers-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
+        </div>
+        <div class="metric-sub">{safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg</div>
+    </div>
+    <div class="metric-card key-numbers-card">
+        <div class="metric-label">US LNG Utilization</div>
+        <div class="metric-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div>
+        <div class="metric-sub">System at maximum — no relief capacity</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
