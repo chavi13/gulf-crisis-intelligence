@@ -215,7 +215,7 @@ button[kind="header"]:hover {
 
 /* Headline — tall Overview cards */
 .card--headline {
-    min-height: 268px;
+    min-height: unset;
 }
 .card--headline .card-body {
     flex: 1 1 auto;
@@ -226,7 +226,7 @@ button[kind="header"]:hover {
 
 /* KPI — key-numbers row cards */
 .card--kpi {
-    min-height: 158px;
+    min-height: unset;
 }
 .card--kpi .card-label {
     margin-bottom: 0.3rem;
@@ -796,8 +796,7 @@ with tab_overview:
         </div>
     """, unsafe_allow_html=True)
 
-    # ── Three headline metric cards (CSS Grid — equal heights, aligned footers) ─
-    st.markdown('<div class="section-header">Headline Metrics</div>', unsafe_allow_html=True)
+    # ── Consolidated metrics row — 4 KPI cards below thesis block ────────────
 
     pct = safe(tanker.get("pct_of_normal"), "{:.1f}%")
     flag = "CRITICAL" if tanker.get("anomaly_flag") == 1 else "NORMAL"
@@ -822,10 +821,15 @@ with tab_overview:
         score_value_html = score_kw
 
     asia_crude = gap.get("asia_crude_risk") or "—"
-    asia_lng = gap.get("asia_lng_risk") or "—"
-    eur_crude = gap.get("europe_crude_risk") or "—"
-    eur_lng = gap.get("europe_lng_risk") or "—"
-    ts3 = fmt_timestamp(gap.get("logged_at"))
+    asia_lng   = gap.get("asia_lng_risk")   or "—"
+    eur_crude  = gap.get("europe_crude_risk") or "—"
+    eur_lng    = gap.get("europe_lng_risk")   or "—"
+    ts3        = fmt_timestamp(gap.get("logged_at"))
+    # US is a Hormuz importer of last resort only — not meaningfully exposed
+    # to a Hormuz closure. Hardcoded GREEN is analytically correct but must be
+    # revisited if a US domestic supply shock scenario is added to the model.
+    US_CRUDE_RISK = "GREEN"
+    US_LNG_RISK   = "GREEN"
 
     st.markdown(f"""
 <div class="headline-metrics-grid">
@@ -873,8 +877,8 @@ with tab_overview:
                     </tr>
                     <tr>
                         <td style="padding:0.35rem 0;color:#e8edf5;">US</td>
-                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge("GREEN")}</td>
-                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge("GREEN")}</td>
+                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge(US_CRUDE_RISK)}</td>
+                        <td style="padding:0.35rem 0;text-align:center;">{risk_badge(US_LNG_RISK)}</td>
                     </tr>
                 </table>
             </div>
@@ -884,8 +888,7 @@ with tab_overview:
 </div>
 """, unsafe_allow_html=True)
 
-    # ── Key numbers row ───────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">Key Numbers</div>', unsafe_allow_html=True)
+    # ── Supply gap KPIs ───────────────────────────────────────────────────────
 
     st.markdown(f"""
 <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
