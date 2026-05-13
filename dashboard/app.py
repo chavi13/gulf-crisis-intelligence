@@ -1365,9 +1365,6 @@ with tab_lng:
                     color:#e8edf5;">{safe(lng.get("routing_signal"))}</span>
                     &nbsp;·&nbsp; threshold $2.00
                 </div>
-                <div class="metric-sub" style="margin-top:0.3rem;">
-                    {risk_badge("GREEN" if safe(lng.get("routing_signal")) == "NEUTRAL" else "AMBER")}
-                </div>
             </div>
         """, unsafe_allow_html=True)
     with lc3:
