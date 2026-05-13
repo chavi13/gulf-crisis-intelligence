@@ -1742,10 +1742,10 @@ with tab_gap:
     spr_offset     = 3.0
     net_gap        = round(gap.get("crude_gap_net_mbd") or 6.33, 2)
 
-    # ── Section 1 — Regional risk table ───────────────────────────────────────
-    st.markdown('<div class="section-header" style="margin-top:0.5rem;">Regional Supply Gap — Current State</div>', unsafe_allow_html=True)
+    # ── Section 1 — Crude gap waterfall chart ─────────────────────────────────
+    st.markdown('<div class="section-header" style="margin-top:0.5rem;">Crude Supply Gap — Accounting Waterfall</div>', unsafe_allow_html=True)
 
-    # ── Analyst interpretation — moved to top ─────────────────────────────────
+    # ── Analyst interpretation ─────────────────────────────────────────────────
     st.markdown(f"""
         <div class="interpretation-box" style="margin-bottom:1.5rem;">
             <div class="interpretation-label">Analyst Interpretation</div>
@@ -1804,17 +1804,9 @@ with tab_gap:
         unsafe_allow_html=True,
     )
 
-    # ── Section 2 — Crude gap waterfall chart ─────────────────────────────────
-    st.markdown('<div class="section-header">Crude Supply Gap — Accounting Waterfall</div>',
+    # ── Section 2 — Regional risk table ───────────────────────────────────────
+    st.markdown('<div class="section-header">Regional Supply Gap — Current State</div>',
                 unsafe_allow_html=True)
-
-    pct_normal     = gap.get("pct_of_normal") or 7.8
-    normal_flow    = 15.0
-    current_thru   = round(normal_flow * (pct_normal / 100), 2)
-    disrupted      = round(normal_flow - current_thru, 2)
-    bypass_offset  = 4.5
-    spr_offset     = 3.0
-    net_gap        = round(gap.get("crude_gap_net_mbd") or 6.33, 2)
 
     waterfall_labels = [
         "Normal Hormuz flow",
@@ -1858,8 +1850,8 @@ with tab_gap:
         textposition="outside",
         textfont=dict(size=11, family="IBM Plex Mono", color="#e8edf5"),
         connector=dict(line=dict(color="#2a3a55", width=1)),
-        increasing=dict(marker=dict(color="#ef4444")),
-        decreasing=dict(marker=dict(color="#22c55e")),
+        increasing=dict(marker=dict(color="#22c55e")),
+        decreasing=dict(marker=dict(color="#ef4444")),
         totals=dict(marker=dict(color="#f59e0b")),
     ))
 
@@ -1930,7 +1922,7 @@ with tab_gap:
     net_4w, asia_4w, eur_4w, pct_4w = project_gap(28)
 
     gap_extrap = {
-        "Timeframe":           ["Current (May 11)", "+2 weeks", "+4 weeks"],
+        "Timeframe":           [f"Current ({datetime.now(timezone.utc).strftime('%b %-d')})", "+2 weeks", "+4 weeks"],
         "Transit (% normal)":  [f"{pct_normal:.1f}%", f"{pct_2w:.1f}%", f"{pct_4w:.1f}%"],
         "Net Crude Gap (Mb/d)":[f"{net_gap:.2f}", f"{net_2w:.2f}", f"{net_4w:.2f}"],
         "Asia Gap (Mb/d)":     [f"{safe(gap.get('asia_crude_gap_mbd'), '{:.2f}')}", f"{asia_2w:.2f}", f"{asia_4w:.2f}"],
