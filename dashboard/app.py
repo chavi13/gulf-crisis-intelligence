@@ -1123,8 +1123,9 @@ with tab_tanker:
     pct_2w   = round((proj_2w / baseline) * 100, 1)
     pct_4w   = round((proj_4w / baseline) * 100, 1)
 
+    _today_label = datetime.now(timezone.utc).strftime("%b %-d")
     extrap_data = {
-        "Timeframe":         ["Current (May 11)", "+2 weeks", "+4 weeks"],
+        "Timeframe":         [f"Current ({_today_label})", "+2 weeks", "+4 weeks"],
         "Projected ships/day": [
             f"{current_count}",
             f"{proj_2w:.0f}",
@@ -1184,24 +1185,22 @@ with tab_lng:
         score = safe(lng.get("rebalancing_score"), fallback="—")
         score_badge_html = score_badge_fn(lng.get("rebalancing_score"))
         st.markdown(f"""
-            <div class="metric-card" style="min-height:160px;">
-                <div class="metric-label">Rebalancing Score</div>
-                <div class="metric-value" style="font-size:var(--text-lg);">{score}</div>
-                <div class="metric-sub" style="margin-top:0.3rem;">{score_badge_html}</div>
-                <div class="metric-sub">Confidence {safe(lng.get("confidence"))}</div>
+            <div class="card card--kpi">
+                <div class="card-label">Rebalancing Score</div>
+                <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">{score}</div></div>
+                <div class="card-sub" style="margin-top:0.3rem;">{score_badge_html}</div>
+                <div class="card-sub">Confidence {safe(lng.get("confidence"))}</div>
             </div>
         """, unsafe_allow_html=True)
     with lc2:
         st.markdown(f"""
-            <div class="metric-card" style="min-height:160px;">
-                <div class="metric-label">JKM–TTF Spread (7-day avg)</div>
-                <div class="metric-value" style="font-size:var(--text-lg);">
-                    ${safe(lng.get("spread_7d"), "{:.3f}")}
-                </div>
-                <div class="metric-sub" style="margin-top:0.3rem;">
+            <div class="card card--kpi">
+                <div class="card-label">JKM–TTF Spread (7-day avg)</div>
+                <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">${safe(lng.get("spread_7d"), "{:.3f}")}</div></div>
+                <div class="card-sub" style="margin-top:0.3rem;">
                     {risk_badge("GREEN" if safe(lng.get("routing_signal")) == "NEUTRAL" else "AMBER")}
                 </div>
-                <div class="metric-sub">
+                <div class="card-sub">
                     /MMBtu &nbsp;·&nbsp; routing signal:
                     <span style="font-family:'IBM Plex Mono',monospace;
                     color:#e8edf5;">{safe(lng.get("routing_signal"))}</span>
@@ -1211,15 +1210,13 @@ with tab_lng:
         """, unsafe_allow_html=True)
     with lc3:
         st.markdown(f"""
-            <div class="metric-card" style="min-height:160px;">
-                <div class="metric-label">EU Storage Coverage</div>
-                <div class="metric-value" style="font-size:var(--text-lg);">
-                    {safe(lng.get("storage_pct"), "{:.1f}%")}
-                </div>
-                <div class="metric-sub" style="margin-top:0.3rem;">
+            <div class="card card--kpi">
+                <div class="card-label">EU Storage Coverage</div>
+                <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">{safe(lng.get("storage_pct"), "{:.1f}%")}</div></div>
+                <div class="card-sub" style="margin-top:0.3rem;">
                     {risk_badge(lng.get("storage_risk"))}
                 </div>
-                <div class="metric-sub">
+                <div class="card-sub">
                     {safe(lng.get("days_deficit"), "{:.1f} days")} behind required pace
                 </div>
             </div>
@@ -1353,15 +1350,15 @@ with tab_lng:
 
         st.plotly_chart(fig_spread, use_container_width=True)
 
-        # Numbered event legend
-        st.markdown("""
+        # Numbered event legend — auto-generated from LNG_EVENTS dict (single source of truth)
+        lng_legend_spans = "".join(
+            f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{label}</span>'
+            for i, (_, label) in enumerate(LNG_EVENTS.items(), 1)
+        )
+        st.markdown(f"""
             <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.5rem;
                         font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#8a9bb5;">
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">1</span> &nbsp;Ras Laffan attack</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">2</span> &nbsp;JKM &gt; TTF inflection</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">3</span> &nbsp;Ceasefire agreed</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">4</span> &nbsp;Spread peaks $4.86</span>
-                <span><span style="color:#ef4444;font-family:'IBM Plex Mono',monospace;font-weight:600;">5</span> &nbsp;Ceasefire collapse</span>
+                {lng_legend_spans}
             </div>
         """, unsafe_allow_html=True)
 
@@ -1685,8 +1682,9 @@ with tab_lng:
     proj_deficit_2w = round(days_deficit + ((required_pace - actual_pace) * 14) / required_pace * 1, 1)
     proj_deficit_4w = round(days_deficit + ((required_pace - actual_pace) * 28) / required_pace * 1, 1)
 
+    _today_label_lng = datetime.now(timezone.utc).strftime("%b %-d")
     storage_extrap = {
-        "Timeframe":          ["Current (May 11)", "+2 weeks", "+4 weeks"],
+        "Timeframe":          [f"Current ({_today_label_lng})", "+2 weeks", "+4 weeks"],
         "EU Storage (% full)": [f"{storage_pct:.1f}%", f"{proj_pct_2w:.1f}%", f"{proj_pct_4w:.1f}%"],
         "Days Behind Pace":    [f"{days_deficit:.1f}", f"{proj_deficit_2w:.1f}", f"{proj_deficit_4w:.1f}"],
         "Risk":                [
@@ -1742,10 +1740,7 @@ with tab_gap:
     spr_offset     = 3.0
     net_gap        = round(gap.get("crude_gap_net_mbd") or 6.33, 2)
 
-    # ── Section 1 — Regional risk table ───────────────────────────────────────
-    st.markdown('<div class="section-header" style="margin-top:0.5rem;">Regional Supply Gap — Current State</div>', unsafe_allow_html=True)
-
-    # ── Analyst interpretation — moved to top ─────────────────────────────────
+    # ── Analyst interpretation — top of tab ───────────────────────────────────
     st.markdown(f"""
         <div class="interpretation-box" style="margin-bottom:1.5rem;">
             <div class="interpretation-label">Analyst Interpretation</div>
@@ -1776,46 +1771,11 @@ with tab_gap:
         </div>
     """, unsafe_allow_html=True)
 
-    gap_html_rows = [
-        {
-            "Region": "Asia",
-            "Crude Gap (Mb/d)": f"{safe(gap.get('asia_crude_gap_mbd'), '{:.2f}')}",
-            "Crude Risk": risk_badge(gap.get("asia_crude_risk")),
-            "LNG Gap (Bcf/d)": f"{safe(gap.get('asia_lng_gap_bcfd'), '{:.2f}')}",
-            "LNG Risk": risk_badge(gap.get("asia_lng_risk")),
-        },
-        {
-            "Region": "Europe",
-            "Crude Gap (Mb/d)": f"{safe(gap.get('europe_crude_gap_mbd'), '{:.2f}')}",
-            "Crude Risk": risk_badge(gap.get("europe_crude_risk")),
-            "LNG Gap (Bcf/d)": f"{safe(gap.get('europe_lng_gap_bcfd'), '{:.2f}')}",
-            "LNG Risk": risk_badge(gap.get("europe_lng_risk")),
-        },
-        {
-            "Region": "US",
-            "Crude Gap (Mb/d)": "0.00",
-            "Crude Risk": risk_badge("GREEN"),
-            "LNG Gap (Bcf/d)": "0.00",
-            "LNG Risk": risk_badge("GREEN"),
-        },
-    ]
-    st.markdown(
-        pd.DataFrame(gap_html_rows).to_html(escape=False, index=False, classes="supply-gap-table"),
-        unsafe_allow_html=True,
-    )
-
-    # ── Section 2 — Crude gap waterfall chart ─────────────────────────────────
+    # ── Section 2 — Crude gap waterfall chart (before regional table) ─────────
     st.markdown('<div class="section-header">Crude Supply Gap — Accounting Waterfall</div>',
                 unsafe_allow_html=True)
 
-    pct_normal     = gap.get("pct_of_normal") or 7.8
-    normal_flow    = 15.0
-    current_thru   = round(normal_flow * (pct_normal / 100), 2)
-    disrupted      = round(normal_flow - current_thru, 2)
-    bypass_offset  = 4.5
-    spr_offset     = 3.0
-    net_gap        = round(gap.get("crude_gap_net_mbd") or 6.33, 2)
-
+    # Variables already computed at top of tab_gap block — no re-computation needed
     waterfall_labels = [
         "Normal Hormuz flow",
         "Currently transiting",
@@ -1900,6 +1860,37 @@ with tab_gap:
         </div>
     """, unsafe_allow_html=True)
 
+    # ── Section 1 — Regional risk table (after waterfall — numbers follow the visual) ──
+    st.markdown('<div class="section-header">Regional Supply Gap — Current State</div>', unsafe_allow_html=True)
+
+    gap_html_rows = [
+        {
+            "Region": "Asia",
+            "Crude Gap (Mb/d)": f"{safe(gap.get('asia_crude_gap_mbd'), '{:.2f}')}",
+            "Crude Risk": risk_badge(gap.get("asia_crude_risk")),
+            "LNG Gap (Bcf/d)": f"{safe(gap.get('asia_lng_gap_bcfd'), '{:.2f}')}",
+            "LNG Risk": risk_badge(gap.get("asia_lng_risk")),
+        },
+        {
+            "Region": "Europe",
+            "Crude Gap (Mb/d)": f"{safe(gap.get('europe_crude_gap_mbd'), '{:.2f}')}",
+            "Crude Risk": risk_badge(gap.get("europe_crude_risk")),
+            "LNG Gap (Bcf/d)": f"{safe(gap.get('europe_lng_gap_bcfd'), '{:.2f}')}",
+            "LNG Risk": risk_badge(gap.get("europe_lng_risk")),
+        },
+        {
+            "Region": "US",
+            "Crude Gap (Mb/d)": "0.00",
+            "Crude Risk": risk_badge("GREEN"),
+            "LNG Gap (Bcf/d)": "0.00",
+            "LNG Risk": risk_badge("GREEN"),
+        },
+    ]
+    st.markdown(
+        pd.DataFrame(gap_html_rows).to_html(escape=False, index=False, classes="supply-gap-table"),
+        unsafe_allow_html=True,
+    )
+
     # ── Section 3 — Trend extrapolation ───────────────────────────────────────
     st.markdown('<div class="section-header">Trend Extrapolation</div>',
                 unsafe_allow_html=True)
@@ -1929,8 +1920,9 @@ with tab_gap:
     net_2w, asia_2w, eur_2w, pct_2w = project_gap(14)
     net_4w, asia_4w, eur_4w, pct_4w = project_gap(28)
 
+    _today_label_gap = datetime.now(timezone.utc).strftime("%b %-d")
     gap_extrap = {
-        "Timeframe":           ["Current (May 11)", "+2 weeks", "+4 weeks"],
+        "Timeframe":           [f"Current ({_today_label_gap})", "+2 weeks", "+4 weeks"],
         "Transit (% normal)":  [f"{pct_normal:.1f}%", f"{pct_2w:.1f}%", f"{pct_4w:.1f}%"],
         "Net Crude Gap (Mb/d)":[f"{net_gap:.2f}", f"{net_2w:.2f}", f"{net_4w:.2f}"],
         "Asia Gap (Mb/d)":     [f"{safe(gap.get('asia_crude_gap_mbd'), '{:.2f}')}", f"{asia_2w:.2f}", f"{asia_4w:.2f}"],
