@@ -1290,28 +1290,38 @@ with tab_tanker:
 
         st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ── 4c — Historical Multi-Line Chart ──────────────────────────────────────
-    # One line per vessel type from Jan 2019 to latest.
-    # Crisis onset annotated. Shows the collapse and the pre-crisis normal.
+    # ── 4c — Historical Multi-Line Chart with vessel type selector ────────────
+    # Defaults to Tanker only. User can add other vessel types via multiselect.
+    # All 7 crisis events annotated — same dates as Section 2 transit chart.
 
     if not vessel_mix_df.empty:
-        st.markdown('<div class="section-header">Historical Vessel Mix — Jan 2019 to Present</div>',
+        st.markdown('<div class="section-header">Historical Transit by Vessel Type — Jan 2019 to Present</div>',
                     unsafe_allow_html=True)
 
-        # Vessel type lines: label, column, color
-        VM_LINES = [
-            ("Tanker",        "n_tanker",        "#f59e0b"),  # amber  — primary signal
-            ("Container",     "n_container",     "#3b82f6"),  # blue
-            ("Dry Bulk",      "n_dry_bulk",       "#8b5cf6"),  # purple
-            ("RoRo",          "n_roro",           "#14b8a6"),  # teal
-            ("General Cargo", "n_general_cargo", "#f97316"),  # orange
-            ("Total",         "n_total",          "#e8edf5"),  # white — total always last
-        ]
+        # Vessel type options: label, column, color
+        VM_LINES = {
+            "Tanker":        ("n_tanker",        "#f59e0b"),
+            "Container":     ("n_container",     "#3b82f6"),
+            "Dry Bulk":      ("n_dry_bulk",      "#8b5cf6"),
+            "RoRo":          ("n_roro",          "#14b8a6"),
+            "General Cargo": ("n_general_cargo", "#f97316"),
+            "Total":         ("n_total",         "#e8edf5"),
+        }
+
+        selected_types = st.multiselect(
+            "Vessel types",
+            options=list(VM_LINES.keys()),
+            default=["Tanker"],
+            label_visibility="collapsed",
+        )
+
+        if not selected_types:
+            selected_types = ["Tanker"]
 
         fig_hist = go.Figure()
 
-        for line_label, col, color in VM_LINES:
-            # Total line is thicker and dashed to distinguish from type lines
+        for line_label in selected_types:
+            col, color = VM_LINES[line_label]
             is_total = (col == "n_total")
             fig_hist.add_trace(go.Scatter(
                 x=vessel_mix_df["date"],
@@ -1319,33 +1329,34 @@ with tab_tanker:
                 name=line_label,
                 line=dict(
                     color=color,
-                    width=2.5 if is_total else 1.5,
+                    width=2.5 if is_total else 2,
                     dash="dot" if is_total else "solid",
                 ),
                 hovertemplate=f"%{{x|%b %d, %Y}}<br>{line_label}: %{{y}}<extra></extra>",
             ))
 
-        # Crisis onset vertical line
-        fig_hist.add_shape(
-            type="line",
-            x0="2026-03-01", x1="2026-03-01",
-            y0=0, y1=1,
-            xref="x", yref="paper",
-            line=dict(color="rgba(239,68,68,0.5)", width=1.5, dash="dot"),
-        )
-        fig_hist.add_annotation(
-            x="2026-03-01",
-            y=0.97,
-            xref="x", yref="paper",
-            text="Crisis onset",
-            showarrow=False,
-            font=dict(size=10, color="#ef4444", family="IBM Plex Mono"),
-            bgcolor="rgba(10,14,26,0.85)",
-            bordercolor="rgba(239,68,68,0.4)",
-            borderwidth=1,
-            borderpad=3,
-            yanchor="top",
-        )
+        # All 7 crisis events — same as Section 2 transit count chart
+        for i, (date_str, label) in enumerate(CRISIS_EVENTS.items(), 1):
+            fig_hist.add_shape(
+                type="line",
+                x0=date_str, x1=date_str,
+                y0=0, y1=1,
+                xref="x", yref="paper",
+                line=dict(color="rgba(239,68,68,0.35)", width=1, dash="dot"),
+            )
+            fig_hist.add_annotation(
+                x=date_str,
+                y=0.97,
+                xref="x", yref="paper",
+                text=str(i),
+                showarrow=False,
+                font=dict(size=10, color="#ef4444", family="IBM Plex Mono"),
+                bgcolor="rgba(10,14,26,0.85)",
+                bordercolor="rgba(239,68,68,0.4)",
+                borderwidth=1,
+                borderpad=3,
+                yanchor="top",
+            )
 
         fig_hist.update_layout(
             plot_bgcolor="#0a0e1a",
@@ -1375,6 +1386,18 @@ with tab_tanker:
         )
 
         st.plotly_chart(fig_hist, use_container_width=True)
+
+        # Numbered event legend — same as Section 2
+        legend_spans = "".join(
+            f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{label}</span>'
+            for i, (_, label) in enumerate(CRISIS_EVENTS.items(), 1)
+        )
+        st.markdown(f"""
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.5rem;
+                        font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#8a9bb5;">
+                {legend_spans}
+            </div>
+        """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">Trend Extrapolation</div>', unsafe_allow_html=True)
 
