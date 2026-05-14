@@ -3,3 +3,4 @@ data/raw/
 __pycache__/
 *.pyc
 .DS_Store.env
+data/processed/gulf_data.db
