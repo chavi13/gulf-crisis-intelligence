@@ -1290,15 +1290,15 @@ with tab_tanker:
 
         st.plotly_chart(fig_bar, use_container_width=True)
 
-    # ── 4c — Historical Multi-Line Chart with vessel type selector ────────────
-    # Defaults to Tanker only. User can add other vessel types via multiselect.
-    # All 7 crisis events annotated — same dates as Section 2 transit chart.
+    # ── 4c — Historical Multi-Line Chart ──────────────────────────────────────
+    # Vessel type toggles (inline pill buttons) — default Tanker only.
+    # Timeline toggles — default 2026 only.
+    # All 7 crisis events annotated when visible in selected range.
 
     if not vessel_mix_df.empty:
-        st.markdown('<div class="section-header">Historical Transit by Vessel Type — Jan 2019 to Present</div>',
+        st.markdown('<div class="section-header">Historical Transit by Vessel Type</div>',
                     unsafe_allow_html=True)
 
-        # Vessel type options: label, column, color
         VM_LINES = {
             "Tanker":        ("n_tanker",        "#f59e0b"),
             "Container":     ("n_container",     "#3b82f6"),
@@ -1308,24 +1308,67 @@ with tab_tanker:
             "Total":         ("n_total",         "#e8edf5"),
         }
 
-        selected_types = st.multiselect(
-            "Vessel types",
-            options=list(VM_LINES.keys()),
-            default=["Tanker"],
-            label_visibility="collapsed",
-        )
+        # ── Vessel type toggles ───────────────────────────────────────────────
+        st.markdown("""
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.65rem;
+                        font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+                        color:#4a5a72;margin-bottom:0.4rem;">Vessel Type</div>
+        """, unsafe_allow_html=True)
 
-        if not selected_types:
-            selected_types = ["Tanker"]
+        type_cols = st.columns(len(VM_LINES))
+        active_types = []
+        for i, vtype in enumerate(VM_LINES.keys()):
+            with type_cols[i]:
+                _, col_color = VM_LINES[vtype]
+                default_on = (vtype == "Tanker")
+                checked = st.checkbox(
+                    vtype,
+                    value=default_on,
+                    key=f"vmix_type_{vtype}",
+                )
+                if checked:
+                    active_types.append(vtype)
 
+        if not active_types:
+            active_types = ["Tanker"]
+
+        # ── Timeline toggles ──────────────────────────────────────────────────
+        st.markdown("""
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.65rem;
+                        font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+                        color:#4a5a72;margin-top:0.75rem;margin-bottom:0.4rem;">Timeline</div>
+        """, unsafe_allow_html=True)
+
+        TIMELINE_OPTIONS = {
+            "2026":      ("2026-01-01", None),
+            "2025–2026": ("2025-01-01", None),
+            "2023–2026": ("2023-01-01", None),
+            "All (2019+)":("2019-01-01", None),
+        }
+
+        tl_cols = st.columns(len(TIMELINE_OPTIONS))
+        selected_timeline = "2026"
+        for i, tl_label in enumerate(TIMELINE_OPTIONS.keys()):
+            with tl_cols[i]:
+                if st.checkbox(
+                    tl_label,
+                    value=(tl_label == "2026"),
+                    key=f"vmix_tl_{tl_label}",
+                ):
+                    selected_timeline = tl_label
+
+        date_from, _ = TIMELINE_OPTIONS[selected_timeline]
+        plot_df = vessel_mix_df[vessel_mix_df["date"] >= date_from]
+
+        # ── Build chart ───────────────────────────────────────────────────────
         fig_hist = go.Figure()
 
-        for line_label in selected_types:
+        for line_label in active_types:
             col, color = VM_LINES[line_label]
             is_total = (col == "n_total")
             fig_hist.add_trace(go.Scatter(
-                x=vessel_mix_df["date"],
-                y=vessel_mix_df[col],
+                x=plot_df["date"],
+                y=plot_df[col],
                 name=line_label,
                 line=dict(
                     color=color,
@@ -1335,28 +1378,29 @@ with tab_tanker:
                 hovertemplate=f"%{{x|%b %d, %Y}}<br>{line_label}: %{{y}}<extra></extra>",
             ))
 
-        # All 7 crisis events — same as Section 2 transit count chart
+        # Crisis event annotations — only render if date is in visible range
         for i, (date_str, label) in enumerate(CRISIS_EVENTS.items(), 1):
-            fig_hist.add_shape(
-                type="line",
-                x0=date_str, x1=date_str,
-                y0=0, y1=1,
-                xref="x", yref="paper",
-                line=dict(color="rgba(239,68,68,0.35)", width=1, dash="dot"),
-            )
-            fig_hist.add_annotation(
-                x=date_str,
-                y=0.97,
-                xref="x", yref="paper",
-                text=str(i),
-                showarrow=False,
-                font=dict(size=10, color="#ef4444", family="IBM Plex Mono"),
-                bgcolor="rgba(10,14,26,0.85)",
-                bordercolor="rgba(239,68,68,0.4)",
-                borderwidth=1,
-                borderpad=3,
-                yanchor="top",
-            )
+            if date_str >= date_from:
+                fig_hist.add_shape(
+                    type="line",
+                    x0=date_str, x1=date_str,
+                    y0=0, y1=1,
+                    xref="x", yref="paper",
+                    line=dict(color="rgba(239,68,68,0.35)", width=1, dash="dot"),
+                )
+                fig_hist.add_annotation(
+                    x=date_str,
+                    y=0.97,
+                    xref="x", yref="paper",
+                    text=str(i),
+                    showarrow=False,
+                    font=dict(size=10, color="#ef4444", family="IBM Plex Mono"),
+                    bgcolor="rgba(10,14,26,0.85)",
+                    bordercolor="rgba(239,68,68,0.4)",
+                    borderwidth=1,
+                    borderpad=3,
+                    yanchor="top",
+                )
 
         fig_hist.update_layout(
             plot_bgcolor="#0a0e1a",
@@ -1387,17 +1431,19 @@ with tab_tanker:
 
         st.plotly_chart(fig_hist, use_container_width=True)
 
-        # Numbered event legend — same as Section 2
-        legend_spans = "".join(
-            f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{label}</span>'
-            for i, (_, label) in enumerate(CRISIS_EVENTS.items(), 1)
-        )
-        st.markdown(f"""
-            <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.5rem;
-                        font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#8a9bb5;">
-                {legend_spans}
-            </div>
-        """, unsafe_allow_html=True)
+        # Numbered event legend — only for visible events
+        visible_events = [(i, label) for i, (date_str, label) in enumerate(CRISIS_EVENTS.items(), 1) if date_str >= date_from]
+        if visible_events:
+            legend_spans = "".join(
+                f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{label}</span>'
+                for i, label in visible_events
+            )
+            st.markdown(f"""
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.5rem;
+                            font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#8a9bb5;">
+                    {legend_spans}
+                </div>
+            """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">Trend Extrapolation</div>', unsafe_allow_html=True)
 
