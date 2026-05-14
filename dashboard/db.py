@@ -551,6 +551,207 @@ def get_supply_gap_log_history() -> pd.DataFrame:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# VESSEL MIX MODULE — CHART DATA
+# These two functions support the Vessel Mix panel in the Tanker tab.
+# Both read transit_events directly — no changes to anomaly_log schema needed.
+# Baseline logic mirrors tanker_anomaly.get_latest_index() exactly:
+#   pre-crisis baseline = full-year 2025 (2025-01-01 to 2026-01-01)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_vessel_mix_latest() -> dict:
+    """
+    Read the latest row from transit_events and compute per-vessel-type stats.
+    Used for the six metric cards in the Vessel Mix panel.
+
+    Computes for each of the 5 vessel types (tanker, container, dry_bulk,
+    roro, general_cargo) plus the total:
+        today_count   — raw count from the latest available date
+        baseline      — mean of full-year 2025 (pre-crisis peacetime normal)
+        pct_of_normal — today_count / baseline × 100
+        z_score       — deviation in standard deviation units
+        anomaly_flag  — 1 if abs(z_score) >= 1.5, else 0
+
+    Baseline period: 2025-01-01 to 2026-01-01
+    This matches the logic in tanker_anomaly.get_latest_index() exactly.
+    Jan–Feb 2026 is excluded because it was already suppressed by pre-crisis
+    tension — full-year 2025 gives a cleaner peacetime normal.
+
+    Returns a flat dict with keys prefixed by vessel type, e.g.:
+        latest_date,
+        n_tanker, baseline_tanker, pct_normal_tanker,
+            z_score_tanker, anomaly_flag_tanker,
+        n_container, baseline_container, pct_normal_container,
+            z_score_container, anomaly_flag_container,
+        ... (same pattern for dry_bulk, roro, general_cargo, total)
+
+    Returns an empty dict if transit_events has no rows.
+    Returns a dict of None values per vessel type if baseline cannot be computed.
+    """
+    latest_query = """
+        SELECT date, n_tanker, n_container, n_dry_bulk,
+               n_roro, n_general_cargo, n_total
+        FROM transit_events
+        ORDER BY date DESC
+        LIMIT 1
+    """
+
+    baseline_query = """
+        SELECT n_tanker, n_container, n_dry_bulk,
+               n_roro, n_general_cargo, n_total
+        FROM transit_events
+        WHERE date >= '2025-01-01' AND date < '2026-01-01'
+        ORDER BY date ASC
+    """
+
+    def _stats(baseline_vals: list, current: int) -> dict:
+        """
+        Given a list of historical daily counts and today's count,
+        returns baseline, pct_of_normal, z_score, anomaly_flag.
+        Returns None values if fewer than 3 baseline rows exist.
+        Anomaly threshold: abs(z_score) >= 1.5 (same as tanker_anomaly.py).
+        """
+        import numpy as np
+        if len(baseline_vals) < 3 or current is None:
+            return {
+                "baseline": None, "pct_of_normal": None,
+                "z_score": None,  "anomaly_flag": 0,
+            }
+        baseline  = round(float(np.mean(baseline_vals)), 2)
+        std_dev   = float(np.std(baseline_vals))
+        z_score   = round((current - baseline) / std_dev, 2) if std_dev > 0 else 0.0
+        anomaly_flag  = 1 if abs(z_score) >= 1.5 else 0
+        pct_of_normal = round((current / baseline) * 100, 1) if baseline else 0.0
+        if current == 0 and baseline:
+            pct_of_normal = 0.0
+        return {
+            "baseline":      baseline,
+            "pct_of_normal": pct_of_normal,
+            "z_score":       z_score,
+            "anomaly_flag":  anomaly_flag,
+        }
+
+    try:
+        with _connect() as conn:
+            # Latest row
+            latest_row = conn.execute(latest_query).fetchone()
+            if latest_row is None:
+                return {}
+
+            latest_date  = latest_row["date"]
+            n_tanker     = latest_row["n_tanker"]
+            n_container  = latest_row["n_container"]
+            n_dry_bulk   = latest_row["n_dry_bulk"]
+            n_roro       = latest_row["n_roro"]
+            n_gen_cargo  = latest_row["n_general_cargo"]
+            n_total      = latest_row["n_total"]
+
+            # Baseline rows — full-year 2025
+            b_rows = conn.execute(baseline_query).fetchall()
+
+        # Unpack each column from baseline rows, excluding nulls
+        def col(key): return [r[key] for r in b_rows if r[key] is not None]
+
+        tanker_s   = _stats(col("n_tanker"),        n_tanker)
+        container_s= _stats(col("n_container"),     n_container)
+        drybulk_s  = _stats(col("n_dry_bulk"),      n_dry_bulk)
+        roro_s     = _stats(col("n_roro"),           n_roro)
+        gencargo_s = _stats(col("n_general_cargo"), n_gen_cargo)
+        total_s    = _stats(col("n_total"),          n_total)
+
+        return {
+            "latest_date": latest_date,
+
+            # Raw counts — today
+            "n_tanker":        n_tanker,
+            "n_container":     n_container,
+            "n_dry_bulk":      n_dry_bulk,
+            "n_roro":          n_roro,
+            "n_general_cargo": n_gen_cargo,
+            "n_total":         n_total,
+
+            # Tanker
+            "baseline_tanker":      tanker_s["baseline"],
+            "pct_normal_tanker":    tanker_s["pct_of_normal"],
+            "z_score_tanker":       tanker_s["z_score"],
+            "anomaly_flag_tanker":  tanker_s["anomaly_flag"],
+
+            # Container
+            "baseline_container":      container_s["baseline"],
+            "pct_normal_container":    container_s["pct_of_normal"],
+            "z_score_container":       container_s["z_score"],
+            "anomaly_flag_container":  container_s["anomaly_flag"],
+
+            # Dry Bulk
+            "baseline_dry_bulk":      drybulk_s["baseline"],
+            "pct_normal_dry_bulk":    drybulk_s["pct_of_normal"],
+            "z_score_dry_bulk":       drybulk_s["z_score"],
+            "anomaly_flag_dry_bulk":  drybulk_s["anomaly_flag"],
+
+            # RoRo
+            "baseline_roro":      roro_s["baseline"],
+            "pct_normal_roro":    roro_s["pct_of_normal"],
+            "z_score_roro":       roro_s["z_score"],
+            "anomaly_flag_roro":  roro_s["anomaly_flag"],
+
+            # General Cargo
+            "baseline_general_cargo":      gencargo_s["baseline"],
+            "pct_normal_general_cargo":    gencargo_s["pct_of_normal"],
+            "z_score_general_cargo":       gencargo_s["z_score"],
+            "anomaly_flag_general_cargo":  gencargo_s["anomaly_flag"],
+
+            # Total (all vessel types combined)
+            "baseline_total":      total_s["baseline"],
+            "pct_normal_total":    total_s["pct_of_normal"],
+            "z_score_total":       total_s["z_score"],
+            "anomaly_flag_total":  total_s["anomaly_flag"],
+        }
+
+    except Exception as e:
+        print(f"[db] get_vessel_mix_latest error: {e}")
+        return {}
+
+
+def get_vessel_mix_history() -> pd.DataFrame:
+    """
+    Read all rows from transit_events for all vessel type columns.
+    Used for the historical multi-line chart in the Vessel Mix panel.
+
+    Returns DataFrame with columns:
+        date (datetime), n_tanker, n_container, n_dry_bulk,
+        n_roro, n_general_cargo, n_total
+
+    Coverage: Jan 1 2019 → latest available (PortWatch dataset).
+    ~2,687 rows. Sorted ascending so charts render left-to-right correctly.
+
+    Rows where all vessel type counts are NULL are dropped —
+    these are incomplete records that would render as gaps on the chart.
+    """
+    query = """
+        SELECT
+            date,
+            n_tanker,
+            n_container,
+            n_dry_bulk,
+            n_roro,
+            n_general_cargo,
+            n_total
+        FROM transit_events
+        WHERE n_total IS NOT NULL
+        ORDER BY date ASC
+    """
+    try:
+        with _connect() as conn:
+            df = pd.read_sql_query(query, conn, parse_dates=["date"])
+            return df
+    except Exception as e:
+        print(f"[db] get_vessel_mix_history error: {e}")
+        return pd.DataFrame(columns=[
+            "date", "n_tanker", "n_container", "n_dry_bulk",
+            "n_roro", "n_general_cargo", "n_total"
+        ])
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # CONNECTION HEALTH CHECK
 # ══════════════════════════════════════════════════════════════════════════════
 

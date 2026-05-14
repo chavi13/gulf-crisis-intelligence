@@ -9,8 +9,10 @@ scripts = [
     "ingestion/prices_ingestor.py",
 
     # Phase 2 — vessel intelligence
-    # Note: ais_ingestor.py is NOT here — it runs continuously as a separate
-    # background process. It cannot be run as a one-shot daily script.
+    # ais_ingestor.py runs continuously as a separate background process.
+    # portwatch_ingestor.py runs daily — fetches latest chokepoint6 transit
+    # counts from IMF PortWatch API and upserts new rows into transit_events.
+    "ingestion/portwatch_ingestor.py",
     "models/tanker_anomaly.py",
 
     # Phase 3 — LNG cargo flow & Atlantic Basin rebalancing

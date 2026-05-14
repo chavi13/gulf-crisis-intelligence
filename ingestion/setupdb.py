@@ -27,12 +27,15 @@ cursor.execute("""
 # Table 2: daily transit events (computed from positions)
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS transit_events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date TEXT,
-        transit_count INTEGER,
-        baseline_30d REAL,
-        z_score REAL,
-        anomaly_flag INTEGER
+        date              TEXT PRIMARY KEY,
+        n_tanker          INTEGER,
+        n_container       INTEGER,
+        n_dry_bulk        INTEGER,
+        n_roro            INTEGER,
+        n_general_cargo   INTEGER,
+        n_total           INTEGER,
+        capacity_tanker   INTEGER,
+        capacity_total    INTEGER
     )
 """)
 

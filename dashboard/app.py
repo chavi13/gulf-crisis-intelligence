@@ -35,6 +35,8 @@ from db import (
     get_storage_seasonal_baseline,
     get_storage_yoy_level,
     get_supply_gap_log_history,
+    get_vessel_mix_latest,
+    get_vessel_mix_history,
 )
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -692,18 +694,20 @@ def render_sidebar(crisis: dict) -> str:
 def load_all_data():
     """Load all data from the database in one call. Cached for 5 minutes."""
     return {
-        "tanker":      get_latest_tanker_metrics(),
-        "lng":         get_latest_lng_metrics(),
-        "gap":         get_latest_supply_gap_metrics(),
-        "crisis":      get_crisis_context(),
-        "transit_df":  get_transit_history(),
-        "anomaly_df":  get_anomaly_log_history(),
-        "prices_df":   get_price_history(),
-        "util_df":     get_terminal_utilization(),
-        "storage_df":  get_european_storage(),
-        "baseline_df": get_storage_seasonal_baseline(),
-        "yoy_level":   get_storage_yoy_level(),
-        "gap_log_df":  get_supply_gap_log_history(),
+        "tanker":        get_latest_tanker_metrics(),
+        "lng":           get_latest_lng_metrics(),
+        "gap":           get_latest_supply_gap_metrics(),
+        "crisis":        get_crisis_context(),
+        "transit_df":    get_transit_history(),
+        "anomaly_df":    get_anomaly_log_history(),
+        "prices_df":     get_price_history(),
+        "util_df":       get_terminal_utilization(),
+        "storage_df":    get_european_storage(),
+        "baseline_df":   get_storage_seasonal_baseline(),
+        "yoy_level":     get_storage_yoy_level(),
+        "gap_log_df":    get_supply_gap_log_history(),
+        "vessel_mix":    get_vessel_mix_latest(),
+        "vessel_mix_df": get_vessel_mix_history(),
     }
 
 
@@ -1101,7 +1105,277 @@ with tab_tanker:
         </div>
     """, unsafe_allow_html=True)
 
-    # ── Section 4 — Trend extrapolation table ─────────────────────────────────
+    # ── Section 4 — Vessel Mix Panel ──────────────────────────────────────────
+    st.markdown('<div class="section-header">Vessel Mix — Disruption by Type</div>',
+                unsafe_allow_html=True)
+
+    vessel_mix    = data["vessel_mix"]
+    vessel_mix_df = data["vessel_mix_df"]
+
+    # ── 4a — Vessel type metric cards ─────────────────────────────────────────
+    # One card per vessel type. Color-coded: red border if anomaly, green if normal.
+    # Layout: 5 type cards + 1 total card = 6 across one row.
+
+    VESSEL_TYPES = [
+        ("Tanker",        "n_tanker",        "baseline_tanker",        "pct_normal_tanker",        "z_score_tanker",        "anomaly_flag_tanker"),
+        ("Container",     "n_container",     "baseline_container",     "pct_normal_container",     "z_score_container",     "anomaly_flag_container"),
+        ("Dry Bulk",      "n_dry_bulk",      "baseline_dry_bulk",      "pct_normal_dry_bulk",      "z_score_dry_bulk",      "anomaly_flag_dry_bulk"),
+        ("RoRo",          "n_roro",          "baseline_roro",          "pct_normal_roro",          "z_score_roro",          "anomaly_flag_roro"),
+        ("General Cargo", "n_general_cargo", "baseline_general_cargo", "pct_normal_general_cargo", "z_score_general_cargo", "anomaly_flag_general_cargo"),
+        ("ALL VESSELS",   "n_total",         "baseline_total",         "pct_normal_total",         "z_score_total",         "anomaly_flag_total"),
+    ]
+
+    if vessel_mix:
+        cards_html = '<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0.65rem;margin-bottom:1.5rem;">'
+        for label, n_key, b_key, pct_key, z_key, flag_key in VESSEL_TYPES:
+            today     = vessel_mix.get(n_key)
+            baseline  = vessel_mix.get(b_key)
+            pct       = vessel_mix.get(pct_key)
+            z         = vessel_mix.get(z_key)
+            is_anomaly= vessel_mix.get(flag_key) == 1
+            is_total  = (label == "ALL VESSELS")
+
+            # Border colour: red for anomaly, teal for total, green for normal
+            if is_total:
+                border_color = "rgba(20,184,166,0.5)"   # teal — all-vessels summary
+                bg_color     = "rgba(20,184,166,0.04)"
+            elif is_anomaly:
+                border_color = "rgba(239,68,68,0.5)"
+                bg_color     = "rgba(239,68,68,0.04)"
+            else:
+                border_color = "rgba(34,197,94,0.4)"
+                bg_color     = "rgba(34,197,94,0.03)"
+
+            status_text  = "⚠ ANOMALY" if is_anomaly else "NORMAL"
+            status_color = "#ef4444"   if is_anomaly else "#22c55e"
+
+            today_str    = str(today)    if today    is not None else "—"
+            baseline_str = f"{baseline:.1f}" if baseline is not None else "—"
+            pct_str      = f"{pct:.1f}%" if pct      is not None else "—"
+            z_str        = f"{z:+.2f}"   if z        is not None else "—"
+
+            cards_html += f"""
+            <div style="background:{bg_color};border:1px solid {border_color};
+                        border-radius:8px;padding:0.85rem 0.9rem;
+                        font-family:'IBM Plex Sans',sans-serif;">
+                <div style="font-size:0.65rem;font-weight:600;letter-spacing:0.1em;
+                            text-transform:uppercase;color:#8a9bb5;margin-bottom:0.5rem;">
+                    {label}
+                </div>
+                <div style="display:flex;justify-content:space-between;
+                            margin-bottom:0.25rem;">
+                    <span style="font-size:0.7rem;color:#4a5a72;">Today</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem;
+                                font-weight:600;color:#e8edf5;">{today_str}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;
+                            margin-bottom:0.25rem;">
+                    <span style="font-size:0.7rem;color:#4a5a72;">Baseline</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;
+                                color:#8a9bb5;">{baseline_str}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;
+                            margin-bottom:0.25rem;">
+                    <span style="font-size:0.7rem;color:#4a5a72;">% Normal</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;
+                                color:#e8edf5;">{pct_str}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;
+                            margin-bottom:0.5rem;">
+                    <span style="font-size:0.7rem;color:#4a5a72;">Z-Score</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;
+                                color:#8a9bb5;">{z_str}</span>
+                </div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
+                            font-weight:600;color:{status_color};">
+                    {status_text}
+                </div>
+            </div>"""
+
+        cards_html += "</div>"
+        st.markdown(cards_html, unsafe_allow_html=True)
+
+        # Latest date label under the cards
+        mix_date = vessel_mix.get("latest_date") or "—"
+        st.markdown(f"""
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
+                        color:#4a5a72;margin-top:-0.75rem;margin-bottom:1.25rem;">
+                Baseline: full-year 2025 daily average &nbsp;·&nbsp;
+                Latest data: {mix_date} &nbsp;·&nbsp; Source: IMF PortWatch
+            </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        st.markdown('<div class="info-note">Vessel mix data not available.</div>',
+                    unsafe_allow_html=True)
+
+    # ── 4b — Vessel Mix Collapse Chart (grouped bar) ───────────────────────────
+    # Two bars per vessel type: baseline (muted) vs today (bright).
+    # Immediately shows which vessel types collapsed and which held on.
+
+    if vessel_mix:
+        st.markdown('<div class="section-header">Today vs Pre-Crisis Baseline — By Vessel Type</div>',
+                    unsafe_allow_html=True)
+
+        bar_labels    = ["Tanker", "Container", "Dry Bulk", "RoRo", "Gen. Cargo", "Total"]
+        baseline_vals = [
+            vessel_mix.get("baseline_tanker")        or 0,
+            vessel_mix.get("baseline_container")     or 0,
+            vessel_mix.get("baseline_dry_bulk")      or 0,
+            vessel_mix.get("baseline_roro")          or 0,
+            vessel_mix.get("baseline_general_cargo") or 0,
+            vessel_mix.get("baseline_total")         or 0,
+        ]
+        today_vals = [
+            vessel_mix.get("n_tanker")        or 0,
+            vessel_mix.get("n_container")     or 0,
+            vessel_mix.get("n_dry_bulk")      or 0,
+            vessel_mix.get("n_roro")          or 0,
+            vessel_mix.get("n_general_cargo") or 0,
+            vessel_mix.get("n_total")         or 0,
+        ]
+
+        fig_bar = go.Figure()
+
+        fig_bar.add_trace(go.Bar(
+            name="2025 Baseline (avg/day)",
+            x=bar_labels,
+            y=baseline_vals,
+            marker_color="rgba(74,90,114,0.55)",
+            marker_line=dict(color="rgba(74,90,114,0.8)", width=1),
+            hovertemplate="%{x}<br>Baseline: %{y:.1f} ships/day<extra></extra>",
+        ))
+
+        fig_bar.add_trace(go.Bar(
+            name="Today",
+            x=bar_labels,
+            y=today_vals,
+            marker_color=[
+                "#ef4444" if vessel_mix.get(f"anomaly_flag_{k}") == 1 else "#22c55e"
+                for k in ["tanker", "container", "dry_bulk", "roro",
+                          "general_cargo", "total"]
+            ],
+            marker_line=dict(color="rgba(255,255,255,0.1)", width=1),
+            hovertemplate="%{x}<br>Today: %{y} ships<extra></extra>",
+        ))
+
+        fig_bar.update_layout(
+            barmode="group",
+            bargap=0.25,
+            bargroupgap=0.08,
+            plot_bgcolor="#0a0e1a",
+            paper_bgcolor="#0a0e1a",
+            font=dict(family="IBM Plex Sans", color="#8a9bb5", size=13),
+            height=320,
+            margin=dict(l=10, r=10, t=20, b=10),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom", y=1.01,
+                xanchor="left", x=0,
+                font=dict(size=11, color="#8a9bb5"),
+                bgcolor="rgba(0,0,0,0)",
+            ),
+            xaxis=dict(
+                gridcolor="#1a2235",
+                linecolor="#2a3a55",
+                tickfont=dict(size=12, family="IBM Plex Sans"),
+            ),
+            yaxis=dict(
+                gridcolor="#1a2235",
+                linecolor="#2a3a55",
+                tickfont=dict(size=12, family="IBM Plex Mono"),
+                title=dict(text="Ships / day", font=dict(size=11)),
+            ),
+        )
+
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    # ── 4c — Historical Multi-Line Chart ──────────────────────────────────────
+    # One line per vessel type from Jan 2019 to latest.
+    # Crisis onset annotated. Shows the collapse and the pre-crisis normal.
+
+    if not vessel_mix_df.empty:
+        st.markdown('<div class="section-header">Historical Vessel Mix — Jan 2019 to Present</div>',
+                    unsafe_allow_html=True)
+
+        # Vessel type lines: label, column, color
+        VM_LINES = [
+            ("Tanker",        "n_tanker",        "#f59e0b"),  # amber  — primary signal
+            ("Container",     "n_container",     "#3b82f6"),  # blue
+            ("Dry Bulk",      "n_dry_bulk",       "#8b5cf6"),  # purple
+            ("RoRo",          "n_roro",           "#14b8a6"),  # teal
+            ("General Cargo", "n_general_cargo", "#f97316"),  # orange
+            ("Total",         "n_total",          "#e8edf5"),  # white — total always last
+        ]
+
+        fig_hist = go.Figure()
+
+        for line_label, col, color in VM_LINES:
+            # Total line is thicker and dashed to distinguish from type lines
+            is_total = (col == "n_total")
+            fig_hist.add_trace(go.Scatter(
+                x=vessel_mix_df["date"],
+                y=vessel_mix_df[col],
+                name=line_label,
+                line=dict(
+                    color=color,
+                    width=2.5 if is_total else 1.5,
+                    dash="dot" if is_total else "solid",
+                ),
+                hovertemplate=f"%{{x|%b %d, %Y}}<br>{line_label}: %{{y}}<extra></extra>",
+            ))
+
+        # Crisis onset vertical line
+        fig_hist.add_shape(
+            type="line",
+            x0="2026-03-01", x1="2026-03-01",
+            y0=0, y1=1,
+            xref="x", yref="paper",
+            line=dict(color="rgba(239,68,68,0.5)", width=1.5, dash="dot"),
+        )
+        fig_hist.add_annotation(
+            x="2026-03-01",
+            y=0.97,
+            xref="x", yref="paper",
+            text="Crisis onset",
+            showarrow=False,
+            font=dict(size=10, color="#ef4444", family="IBM Plex Mono"),
+            bgcolor="rgba(10,14,26,0.85)",
+            bordercolor="rgba(239,68,68,0.4)",
+            borderwidth=1,
+            borderpad=3,
+            yanchor="top",
+        )
+
+        fig_hist.update_layout(
+            plot_bgcolor="#0a0e1a",
+            paper_bgcolor="#0a0e1a",
+            font=dict(family="IBM Plex Sans", color="#8a9bb5", size=13),
+            height=400,
+            margin=dict(l=10, r=10, t=20, b=10),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom", y=1.01,
+                xanchor="left", x=0,
+                font=dict(size=11, color="#8a9bb5"),
+                bgcolor="rgba(0,0,0,0)",
+            ),
+            xaxis=dict(
+                gridcolor="#1a2235",
+                linecolor="#2a3a55",
+                tickfont=dict(size=12, family="IBM Plex Mono"),
+            ),
+            yaxis=dict(
+                gridcolor="#1a2235",
+                linecolor="#2a3a55",
+                tickfont=dict(size=12, family="IBM Plex Mono"),
+                title=dict(text="Ships / day", font=dict(size=11)),
+            ),
+            hovermode="x unified",
+        )
+
+        st.plotly_chart(fig_hist, use_container_width=True)
+
     st.markdown('<div class="section-header">Trend Extrapolation</div>', unsafe_allow_html=True)
 
     st.markdown("""
