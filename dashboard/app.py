@@ -501,6 +501,30 @@ table.supply-gap-table td { text-align: center !important; vertical-align: middl
 /* ── Streamlit dataframe override ───────────────────────────────── */
 .stDataFrame { background: var(--bg-card) !important; }
 
+/* ── Vessel mix checkboxes ──────────────────────────────────────── */
+/* Make checkbox labels readable on dark background */
+div[data-testid="stCheckbox"] label {
+    color: var(--text-secondary) !important;
+    font-family: var(--font-sans) !important;
+    font-size: var(--text-sm) !important;
+    font-weight: 600 !important;
+}
+/* Unchecked box — dark fill, amber border */
+div[data-testid="stCheckbox"] input[type="checkbox"] + div {
+    background-color: var(--bg-card) !important;
+    border: 1.5px solid var(--border) !important;
+    border-radius: 4px !important;
+}
+/* Checked box — amber fill */
+div[data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
+    background-color: var(--accent-amber) !important;
+    border-color: var(--accent-amber) !important;
+}
+/* Checked label — brighter text */
+div[data-testid="stCheckbox"] input[type="checkbox"]:checked ~ span {
+    color: var(--text-primary) !important;
+}
+
 /* ── Divider ────────────────────────────────────────────────────── */
 hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 
