@@ -1371,16 +1371,15 @@ with tab_tanker:
             is_anomaly= vessel_mix.get(flag_key) == 1
             is_total  = (label == "ALL VESSELS")
 
-            # Border colour: red for anomaly, teal for total, green for normal
+            # Border and background: standard border for all, teal for total
             if is_total:
-                border_color = "rgba(20,184,166,0.5)"   # teal — all-vessels summary
-                bg_color     = "rgba(20,184,166,0.04)"
-            elif is_anomaly:
-                border_color = "rgba(239,68,68,0.5)"
-                bg_color     = "rgba(239,68,68,0.04)"
+                border_color = "rgba(20,184,166,0.45)"
+                bg_color     = "rgba(20,184,166,0.06)"
+                label_color  = "#14b8a6"
             else:
-                border_color = "rgba(34,197,94,0.4)"
-                bg_color     = "rgba(34,197,94,0.03)"
+                border_color = "var(--border, #2a3a55)"
+                bg_color     = "#1e2840"   # slightly lighter than --bg-card
+                label_color  = "#8a9bb5"
 
             status_text  = "⚠ ANOMALY" if is_anomaly else "NORMAL"
             status_color = "#ef4444"   if is_anomaly else "#22c55e"
@@ -1390,37 +1389,40 @@ with tab_tanker:
             pct_str      = f"{pct:.1f}%" if pct      is not None else "—"
             z_str        = f"{z:+.2f}"   if z        is not None else "—"
 
+            # ALL VESSELS gets slightly more padding and bolder label to stand out
+            extra_style = "padding:1rem 1.1rem;" if is_total else "padding:0.85rem 0.9rem;"
+
             cards_html += f"""
             <div style="background:{bg_color};border:1px solid {border_color};
-                        border-radius:8px;padding:0.85rem 0.9rem;
+                        border-radius:8px;{extra_style}
                         font-family:'IBM Plex Sans',sans-serif;">
                 <div style="font-size:0.65rem;font-weight:600;letter-spacing:0.1em;
-                            text-transform:uppercase;color:#8a9bb5;margin-bottom:0.5rem;">
+                            text-transform:uppercase;color:{label_color};margin-bottom:0.6rem;">
                     {label}
                 </div>
-                <div style="display:flex;justify-content:space-between;
-                            margin-bottom:0.25rem;">
-                    <span style="font-size:0.7rem;color:#4a5a72;">Today</span>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;
+                            margin-bottom:0.28rem;">
+                    <span style="font-size:0.68rem;color:#4a5a72;min-width:4rem;">Today</span>
                     <span style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem;
                                 font-weight:600;color:#e8edf5;">{today_str}</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;
-                            margin-bottom:0.25rem;">
-                    <span style="font-size:0.7rem;color:#4a5a72;">Baseline</span>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;
+                            margin-bottom:0.28rem;">
+                    <span style="font-size:0.68rem;color:#4a5a72;min-width:4rem;">Baseline</span>
                     <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;
-                                color:#8a9bb5;">{baseline_str}</span>
+                                color:#6a7a94;">{baseline_str}</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;
-                            margin-bottom:0.25rem;">
-                    <span style="font-size:0.7rem;color:#4a5a72;">% Normal</span>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;
+                            margin-bottom:0.28rem;">
+                    <span style="font-size:0.68rem;color:#4a5a72;min-width:4rem;">% Normal</span>
                     <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;
                                 color:#e8edf5;">{pct_str}</span>
                 </div>
-                <div style="display:flex;justify-content:space-between;
-                            margin-bottom:0.5rem;">
-                    <span style="font-size:0.7rem;color:#4a5a72;">Z-Score</span>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;
+                            margin-bottom:0.55rem;">
+                    <span style="font-size:0.68rem;color:#4a5a72;min-width:4rem;">Z-Score</span>
                     <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;
-                                color:#8a9bb5;">{z_str}</span>
+                                color:#6a7a94;">{z_str}</span>
                 </div>
                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
                             font-weight:600;color:{status_color};">
