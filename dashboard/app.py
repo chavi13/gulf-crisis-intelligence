@@ -1225,7 +1225,8 @@ with tab_tanker:
         <div class="card card--sm">
             <div class="card-ta-label">Fujairah Queue</div>
             <div class="card-ta-value">{anchorage_count} <span style="font-size:var(--text-sm);font-weight:400;color:var(--text-secondary);">vessels</span></div>
-            <div class="card-ta-sub">{anchorage_badge} &nbsp;·&nbsp; {anchorage_status}</div>
+            <div class="card-ta-sub">{anchorage_badge}</div>
+            <div class="card-ta-sub" style="margin-top:0.4rem;">{anchorage_status}</div>
         </div>
         <div class="card card--sm card--muted">
             <div class="card-ta-label">Data Last Updated</div>
