@@ -953,12 +953,12 @@ with tab_overview:
         <div class="card-sub">Mb/d after bypass + SPR offsets</div>
     </div>
     <div class="card card--kpi">
-        <div class="card-label">LNG Gap (Asia) <span class="has-tooltip" style="cursor:help;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">Volume of LNG that would normally transit Hormuz to Asia daily, now offline. Derived: 10.8 Bcf/d normal Hormuz LNG flow (IEA 2025) × 90% Asia destination share × ~96% disruption rate. Bcf/d = billion cubic feet per day, the standard US gas flow unit.</span></span></div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">LNG Gap (Asia)<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">Volume of LNG that would normally transit Hormuz to Asia daily, now offline. Derived: 10.8 Bcf/d normal Hormuz LNG flow (IEA 2025) × 90% Asia destination share × ~96% disruption rate. Bcf/d = billion cubic feet per day, the standard US gas flow unit.</span></span></div>
         <div class="card-value-slot"><div class="card-value">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div></div>
         <div class="card-sub">Bcf/d — no pipeline bypass available</div>
     </div>
     <div class="card card--kpi">
-        <div class="card-label">EU Storage vs Seasonal <span class="has-tooltip" style="cursor:help;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">EU gas storage vs the 5-year seasonal average (2020–2024) for this calendar date. Not a fixed target — shows how far below where Europe normally is at this time of year. Normal mid-May storage is ~51–53%; current is ~36%.</span></span></div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">EU Storage vs Seasonal<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">EU gas storage vs the 5-year seasonal average (2020–2024) for this calendar date. Not a fixed target — shows how far below where Europe normally is at this time of year. Normal mid-May storage is ~51–53%; current is ~36%.</span></span></div>
         <div class="card-value-slot kpi-storage-row">
             <div class="card-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
             <span class="kpi-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
@@ -966,7 +966,7 @@ with tab_overview:
         <div class="card-sub">{safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg</div>
     </div>
     <div class="card card--kpi">
-        <div class="card-label">US LNG Utilization <span class="has-tooltip" style="cursor:help;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">Actual LNG exports as % of nameplate liquefaction capacity across 8 US terminals (EIA data, Feb 2026). Above 100% means terminals are exceeding their design baseline — less maintenance downtime, trains at peak output. No spare capacity remains to offset the Hormuz LNG loss.</span></span></div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">US LNG Utilization<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">Actual LNG exports as % of nameplate liquefaction capacity across 8 US terminals (EIA data, Feb 2026). Above 100% means terminals are exceeding their design baseline — less maintenance downtime, trains at peak output. No spare capacity remains to offset the Hormuz LNG loss.</span></span></div>
         <div class="card-value-slot"><div class="card-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div></div>
         <div class="card-sub">System at maximum — no relief capacity</div>
     </div>
