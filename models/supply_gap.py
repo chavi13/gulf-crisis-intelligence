@@ -374,12 +374,19 @@ def get_supply_gap_summary():
     }
 
 
+def _label_to_display(label):
+    """Convert internal RED/AMBER/GREEN labels to display vocabulary."""
+    mapping = {"RED": "CRITICAL", "AMBER": "ELEVATED", "GREEN": "STABLE"}
+    return mapping.get(label, label)
+
+
 def _build_thesis(crude_gap, lng_gap, risk_labels, trend_direction):
     """
     Generate a single committed thesis statement from current signal states.
     Uses if/elif on risk label combinations -- must commit to a position.
 
     A thesis that hedges all possibilities is not an intelligence output.
+    All display labels use CRITICAL/ELEVATED/STABLE vocabulary.
     """
     asia_crude  = risk_labels["Asia"]["crude"]
     asia_lng    = risk_labels["Asia"]["lng"]
@@ -389,6 +396,11 @@ def _build_thesis(crude_gap, lng_gap, risk_labels, trend_direction):
     routing     = lng_gap["routing_signal"]
     us_util     = lng_gap["us_utilization_pct"]
     days_behind = lng_gap["days_deficit"]
+
+    # Display labels -- CRITICAL/ELEVATED/STABLE
+    asia_crude_d = _label_to_display(asia_crude)
+    asia_lng_d   = _label_to_display(asia_lng)
+    europe_lng_d = _label_to_display(europe_lng)
 
     # Recovery note -- appended to all thesis variants
     if trend_direction in ("RECOVERING", "RECOVERING SLOWLY"):
@@ -406,15 +418,15 @@ def _build_thesis(crude_gap, lng_gap, risk_labels, trend_direction):
         thesis = (
             f"Crisis at maximum severity: Hormuz at {pct_normal}% of normal, "
             f"net crude gap {net_gap:.1f} Mb/d after bypass and SPR offsets. "
-            f"Asia faces acute crude shortage (RED); Europe faces critical LNG deficit (RED). "
+            f"Asia faces acute crude shortage ({asia_crude_d}); Europe faces critical LNG deficit ({europe_lng_d}). "
             f"{recovery}"
         )
 
     elif asia_lng == "RED" and europe_lng in ("RED", "AMBER"):
         thesis = (
-            f"LNG market under acute stress: Asia bearing {asia_lng} LNG risk "
+            f"LNG market under acute stress: Asia at {asia_lng_d} LNG risk "
             f"with Hormuz supplying 27% of Asian imports now offline. "
-            f"Europe at {europe_lng} LNG risk -- storage {days_behind:.1f} days "
+            f"Europe at {europe_lng_d} LNG risk -- storage {days_behind:.1f} days "
             f"behind required injection pace. "
             f"US system maxed at {us_util:.0f}% utilisation -- no additional relief available. "
             f"{recovery}"
@@ -423,7 +435,7 @@ def _build_thesis(crude_gap, lng_gap, risk_labels, trend_direction):
     elif asia_crude in ("RED", "AMBER") and europe_lng in ("RED", "AMBER"):
         thesis = (
             f"Disruption impact distributed but significant: net crude gap {net_gap:.1f} Mb/d "
-            f"with Asia at {asia_crude} crude risk and Europe at {europe_lng} LNG risk. "
+            f"with Asia at {asia_crude_d} crude risk and Europe at {europe_lng_d} LNG risk. "
             f"Routing signal {routing} -- "
             f"{'Atlantic Basin cargoes returning toward Europe.' if routing == 'NEUTRAL' else 'US cargoes still pulled east, compounding Europe deficit.'} "
             f"{recovery}"
@@ -431,7 +443,7 @@ def _build_thesis(crude_gap, lng_gap, risk_labels, trend_direction):
 
     elif asia_crude == "AMBER" and europe_lng == "GREEN":
         thesis = (
-            f"Disruption moderating: Asia crude at AMBER, Europe LNG risk resolved to GREEN. "
+            f"Disruption moderating: Asia crude at {asia_crude_d}, Europe LNG risk resolved to {europe_lng_d}. "
             f"Net crude gap {net_gap:.1f} Mb/d persists but storage deficits are closing. "
             f"{recovery}"
         )
@@ -439,18 +451,16 @@ def _build_thesis(crude_gap, lng_gap, risk_labels, trend_direction):
     elif asia_crude == "GREEN" and europe_lng == "GREEN":
         thesis = (
             f"Supply gap resolving: Hormuz at {pct_normal}% of normal, "
-            f"net crude gap {net_gap:.1f} Mb/d, both Asia crude and Europe LNG at GREEN. "
+            f"net crude gap {net_gap:.1f} Mb/d, both Asia crude and Europe LNG at {_label_to_display('GREEN')}. "
             f"Monitor mine clearance as the final structural constraint on full normalisation."
         )
 
     else:
         # Catch-all for any combination not explicitly covered above
         thesis = (
-            f"Asymmetric disruption: Asia crude {asia_crude}, Asia LNG {asia_lng}, "
-            f"Europe LNG {europe_lng}. Net crude gap {net_gap:.1f} Mb/d at "
+            f"Asymmetric disruption: Asia crude {asia_crude_d}, Asia LNG {asia_lng_d}, "
+            f"Europe LNG {europe_lng_d}. Net crude gap {net_gap:.1f} Mb/d at "
             f"{pct_normal}% Hormuz throughput. "
-            f"Crude and LNG recovery timelines are separate -- "
-            f"LNG has no bypass capacity; crude has partial pipeline alternatives. "
             f"{recovery}"
         )
 
