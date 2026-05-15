@@ -1855,15 +1855,24 @@ with tab_lng:
             (prices_df["date"].dt.date <= date_to_s)
         ]
 
+        # Merge event labels into filtered prices for hover display
+        events_df = pd.DataFrame([
+            {"date": pd.Timestamp(k), "event": f"⚑ {v}"}
+            for k, v in LNG_EVENTS.items()
+        ])
+        filtered_prices = filtered_prices.merge(events_df, on="date", how="left")
+        filtered_prices["event"] = filtered_prices["event"].fillna("")
+
         fig_spread = go.Figure()
 
-        # JKM price line
+        # JKM price line — include event in hover when present
         fig_spread.add_trace(go.Scatter(
             x=filtered_prices["date"],
             y=filtered_prices["JKM"],
             name="JKM (Asia)",
+            customdata=filtered_prices["event"],
             line=dict(color="#f59e0b", width=2),
-            hovertemplate="%{x|%b %d, %Y}<br>JKM $%{y:.2f}/MMBtu<extra></extra>",
+            hovertemplate="%{x|%b %d, %Y}<br>JKM $%{y:.2f}/MMBtu<br><span style='color:#ef4444'>%{customdata}</span><extra></extra>",
         ))
 
         # TTF price line
@@ -1913,7 +1922,11 @@ with tab_lng:
             if date_from_s <= date.fromisoformat(k) <= date_to_s
         }
 
+        # Stagger y positions to prevent overlap on clustered dates
+        y_positions = [0.97, 0.82, 0.67, 0.97, 0.82, 0.67, 0.97, 0.82]
+
         for i, (date_str, label) in enumerate(visible_lng_events.items(), 1):
+            y_pos = y_positions[(i - 1) % len(y_positions)]
             fig_spread.add_shape(
                 type="line",
                 x0=date_str, x1=date_str,
@@ -1922,7 +1935,7 @@ with tab_lng:
                 line=dict(color="rgba(239,68,68,0.3)", width=1, dash="dot"),
             )
             fig_spread.add_annotation(
-                x=date_str, y=0.97,
+                x=date_str, y=y_pos,
                 xref="x", yref="paper",
                 text=str(i),
                 showarrow=False,
