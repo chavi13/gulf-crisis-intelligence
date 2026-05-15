@@ -43,7 +43,7 @@ def get_latest_tanker_metrics() -> dict:
     Returns the Hormuz Transit Anomaly Index — the Phase 2 module output.
 
     Returns dict with keys:
-        run_date, transit_count, baseline_30d, z_score, anomaly_flag,
+        run_date, transit_count, baseline_annual, z_score, anomaly_flag,
         pct_of_normal, trend_direction, trend_slope, dark_events, logged_at
     Returns a dict of None values if the table is empty.
     """
@@ -51,7 +51,7 @@ def get_latest_tanker_metrics() -> dict:
         SELECT
             run_date,
             transit_count,
-            baseline_30d,
+            baseline_annual,
             z_score,
             anomaly_flag,
             pct_of_normal,
@@ -69,7 +69,7 @@ def get_latest_tanker_metrics() -> dict:
             row = conn.execute(query).fetchone()
             if row is None:
                 return {k: None for k in [
-                    "run_date", "transit_count", "baseline_30d", "z_score",
+                    "run_date", "transit_count", "baseline_annual", "z_score",
                     "anomaly_flag", "pct_of_normal", "trend_direction",
                     "trend_slope", "dark_events", "anchorage_count", "logged_at"
                 ]}
@@ -77,7 +77,7 @@ def get_latest_tanker_metrics() -> dict:
     except Exception as e:
         print(f"[db] get_latest_tanker_metrics error: {e}")
         return {k: None for k in [
-            "run_date", "transit_count", "baseline_30d", "z_score",
+            "run_date", "transit_count", "baseline_annual", "z_score",
             "anomaly_flag", "pct_of_normal", "trend_direction",
             "trend_slope", "dark_events", "anchorage_count", "logged_at"
         ]}
@@ -257,7 +257,7 @@ def get_transit_history() -> pd.DataFrame:
     This is the Kaggle dataset loaded in Phase 2 — Jan 1 to May 5 2026.
 
     Returns DataFrame with columns:
-        date (datetime), transit_count (int), baseline_30d (float)
+        date (datetime), transit_count (int), baseline_annual (float)
 
     Sorted ascending by date so charts render left-to-right correctly.
     """
@@ -265,7 +265,7 @@ def get_transit_history() -> pd.DataFrame:
         SELECT
             date,
             transit_count,
-            baseline_30d
+            baseline_annual
         FROM transit_events
         ORDER BY date ASC
     """
@@ -275,7 +275,7 @@ def get_transit_history() -> pd.DataFrame:
             return df
     except Exception as e:
         print(f"[db] get_transit_history error: {e}")
-        return pd.DataFrame(columns=["date", "transit_count", "baseline_30d"])
+        return pd.DataFrame(columns=["date", "transit_count", "baseline_annual"])
 
 
 def get_anomaly_log_history() -> pd.DataFrame:

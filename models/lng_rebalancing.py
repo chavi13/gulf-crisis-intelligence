@@ -539,98 +539,65 @@ def get_lng_rebalancing_score(utilization, spread, storage):
     peak_spread    = spread.get("peak_spread", 0)
 
     # ── Score logic ───────────────────────────────────────────────────────
-    # CRITICAL DEFICIT: all three signals pointing to maximum stress
-    # - US terminals maxed out (>100% utilization)
-    # - Cargoes routing to Asia (spread above threshold)
-    # - Europe seriously behind on storage (RED risk label)
-    if (us_util > UTILIZATION_HIGH and
-        routing == "ASIA" and
-        storage_risk == "RED"):
-        score = "CRITICAL DEFICIT"
+    # Three outcomes only: CRITICAL / ELEVATED / STABLE
+    # Two signals drive severity:
+    #   1. US utilization — is there any physical relief capacity left?
+    #   2. Storage risk   — is the damage already showing up in the market?
+    # Routing signal is recorded as context but does NOT affect the badge.
+    # It explains WHY storage is behind — it doesn't change how bad it is.
+    #
+    # CRITICAL: US terminals maxed AND storage seriously behind
+    #   → no supply relief available AND damage is severe
+    # ELEVATED: US terminals maxed AND storage moderately behind
+    #   → no supply relief available AND damage is accumulating
+    # STABLE: either spare capacity exists OR storage is on track
+    #   → system has at least one functioning buffer
+
+    if us_util > UTILIZATION_HIGH and storage_risk == "RED":
+        score = "CRITICAL"
         confidence = "HIGH"
 
-    # DEFICIT: two or more signals pointing to stress
-    # - US terminals at high utilization AND either Asia routing or Amber/Red storage
-    # - OR: Asia routing AND storage behind
-    elif (us_util > UTILIZATION_HIGH and
-          (routing == "ASIA" or storage_risk in ("RED", "AMBER"))):
-        score = "DEFICIT"
+    elif us_util > UTILIZATION_HIGH and storage_risk == "AMBER":
+        score = "ELEVATED"
         confidence = "HIGH"
 
-    elif (routing == "ASIA" and
-          storage_risk in ("RED", "AMBER")):
-        score = "DEFICIT"
+    elif us_util > UTILIZATION_HIGH and coverage == "BEHIND" and days_deficit >= STORAGE_DEFICIT_MODERATE:
+        score = "ELEVATED"
         confidence = "MEDIUM"
 
-    elif (us_util > UTILIZATION_HIGH and
-          coverage == "BEHIND" and
-          days_deficit >= STORAGE_DEFICIT_MODERATE):
-        score = "DEFICIT"
+    elif routing == "ASIA" and storage_risk in ("RED", "AMBER"):
+        # Cargoes still going wrong way + storage behind — elevated even if util not maxed
+        score = "ELEVATED"
         confidence = "MEDIUM"
 
-    # BALANCED: mixed signals — some stress but system coping
-    # - Routing transitioning (NEUTRAL) with moderate storage deficit
-    # - OR: utilization high but storage roughly on track
-    elif (routing == "NEUTRAL" and
-          storage_risk == "AMBER"):
-        score = "BALANCED"
-        confidence = "MEDIUM"
-
-    elif (routing in ("NEUTRAL", "EUROPE") and
-          storage_risk == "GREEN" and
-          us_util > UTILIZATION_NORMAL):
-        score = "BALANCED"
-        confidence = "MEDIUM"
-
-    # SURPLUS: all signals pointing to comfortable supply state
-    elif (routing == "EUROPE" and
-          storage_risk == "GREEN" and
-          coverage == "AHEAD"):
-        score = "SURPLUS"
-        confidence = "HIGH"
-
-    # Default — mixed signals that don't fit above categories
     else:
-        score = "BALANCED"
-        confidence = "LOW"
+        score = "STABLE"
+        confidence = "LOW" if storage_risk == "AMBER" else "MEDIUM"
 
     # ── Plain-English thesis ──────────────────────────────────────────────
     # This is what the dashboard displays as the "Current Market View"
     # It must commit to a position — not just describe the data
     # One or two sentences maximum
 
-    if score == "CRITICAL DEFICIT":
+    if score == "CRITICAL":
         thesis = (
             f"The Atlantic Basin is under maximum supply stress — US terminals at {us_util}% utilization "
-            f"with cargoes routing to Asia and European storage {days_deficit} days behind required pace."
+            f"with European storage {days_deficit} days behind required injection pace "
+            f"({storage.get('current_pct')}% vs {storage.get('seasonal_avg')}% seasonal average). "
+            f"No physical relief capacity remains. Routing signal: {routing}."
         )
-    elif score == "DEFICIT" and routing == "ASIA":
+    elif score == "ELEVATED":
         thesis = (
-            f"Supply rebalancing remains incomplete — US terminals at {us_util}% utilization are maxed out "
-            f"while the Asia routing signal pulls cargoes east, leaving Europe {days_deficit} days behind "
-            f"its November storage target."
-        )
-    elif score == "DEFICIT":
-        thesis = (
-            f"Atlantic Basin in deficit — US export capacity is near maximum at {us_util}% utilization "
+            f"Atlantic Basin in elevated deficit — US export capacity at {us_util}% utilization "
             f"and European storage is {days_deficit} days behind required injection pace "
-            f"({storage.get('current_pct')}% vs {storage.get('seasonal_avg')}% seasonal average)."
-        )
-    elif score == "BALANCED" and routing == "NEUTRAL":
-        thesis = (
-            f"Market transitioning toward balance — cargo routing signal has returned to neutral "
-            f"(7-day spread ${spread_val:.2f}/MMBtu) but European storage remains {days_deficit} days "
-            f"behind the November 90% target, reflecting damage from the peak crisis period."
-        )
-    elif score == "BALANCED":
-        thesis = (
-            f"Atlantic Basin broadly balanced — routing signal neutral, US utilization at {us_util}%, "
-            f"European storage tracking within acceptable range of seasonal norms."
+            f"({storage.get('current_pct')}% vs {storage.get('seasonal_avg')}% seasonal average). "
+            f"Routing signal: {routing}."
         )
     else:
         thesis = (
-            f"Atlantic Basin in surplus — cargoes routing toward Europe, storage on track, "
-            f"US utilization at {us_util}%."
+            f"Atlantic Basin broadly stable — US utilization at {us_util}%, "
+            f"routing signal {routing}, European storage tracking within acceptable range of seasonal norms "
+            f"({storage.get('current_pct')}% vs {storage.get('seasonal_avg')}% seasonal average)."
         )
 
     return {

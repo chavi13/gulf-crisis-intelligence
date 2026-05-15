@@ -164,12 +164,14 @@ def get_latest_index() -> dict:
         "anomaly_flag_total":  total_stats["anomaly_flag"],
         "pct_normal_total":    total_stats["pct_of_normal"],
 
-        # Backward-compatible keys — downstream code reads these
-        "transit_count": n_tanker,
-        "baseline_30d":  tanker_stats["baseline"],
-        "z_score":       tanker_stats["z_score"],
-        "anomaly_flag":  tanker_stats["anomaly_flag"],
-        "pct_of_normal": tanker_stats["pct_of_normal"],
+        # Primary keys — downstream code reads these
+        # NOTE: renamed from baseline_30d — this is the full-year 2025 average,
+        # NOT a 30-day rolling window. The old name was misleading.
+        "transit_count":   n_tanker,
+        "baseline_annual": tanker_stats["baseline"],
+        "z_score":         tanker_stats["z_score"],
+        "anomaly_flag":    tanker_stats["anomaly_flag"],
+        "pct_of_normal":   tanker_stats["pct_of_normal"],
     }
 
 # ── Function 2 — 7-Day Recovery Trend ────────────────────────────────────────
@@ -487,7 +489,7 @@ def log_to_db(index: dict, trend: dict, dark: dict, anchorage: dict):
     conn.execute(
         """
         INSERT INTO anomaly_log (
-            run_date, latest_data_date, transit_count, baseline_30d,
+            run_date, latest_data_date, transit_count, baseline_annual,
             z_score, anomaly_flag, pct_of_normal,
             trend_direction, trend_slope, dark_events, anchorage_count, logged_at
         )
@@ -497,7 +499,7 @@ def log_to_db(index: dict, trend: dict, dark: dict, anchorage: dict):
             datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             index.get("date"),
             index.get("transit_count"),
-            index.get("baseline_30d"),
+            index.get("baseline_annual"),
             index.get("z_score"),
             index.get("anomaly_flag"),
             index.get("pct_of_normal"),
