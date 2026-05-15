@@ -506,12 +506,12 @@ table.supply-gap-table td { text-align: center !important; vertical-align: middl
 /* ── Vessel mix checkboxes ──────────────────────────────────────── */
 /* Make checkbox labels readable on dark background */
 div[data-testid="stCheckbox"] label {
-    color: var(--text-secondary) !important;
+    color: var(--text-primary) !important;
     font-family: var(--font-sans) !important;
     font-size: var(--text-sm) !important;
     font-weight: 600 !important;
 }
-/* Unchecked box — dark fill, amber border */
+/* Unchecked box — dark fill, standard border */
 div[data-testid="stCheckbox"] input[type="checkbox"] + div {
     background-color: var(--bg-card) !important;
     border: 1.5px solid var(--border) !important;
@@ -522,9 +522,9 @@ div[data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
     background-color: var(--accent-amber) !important;
     border-color: var(--accent-amber) !important;
 }
-/* Checked label — brighter text */
+/* Checked label — amber text */
 div[data-testid="stCheckbox"] input[type="checkbox"]:checked ~ span {
-    color: var(--text-primary) !important;
+    color: var(--accent-amber) !important;
 }
 
 /* ── Divider ────────────────────────────────────────────────────── */
@@ -1594,11 +1594,6 @@ with tab_tanker:
                 checked = st.checkbox(vtype, value=(vtype == "Tanker"), key=f"vmix_type_{vtype}")
                 if checked:
                     active_types.append(vtype)
-                st.markdown(f"""<style>
-                    div[data-testid="stCheckbox"]:has(input[aria-label="{vtype}"]:checked) label {{
-                        color: {col_color} !important;
-                    }}
-                </style>""", unsafe_allow_html=True)
 
         if not active_types:
             active_types = ["Tanker"]
