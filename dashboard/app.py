@@ -1821,7 +1821,7 @@ with tab_lng:
     LNG_EVENTS = {
         "2026-03-01": "Ras Laffan attack",
         "2026-03-16": "JKM>TTF inflection",
-        "2026-04-08": "Ceasefire",
+        "2026-04-08": "Ceasefire agreed",
         "2026-04-15": "Spread peaks",
         "2026-04-16": "Ceasefire collapse",
     }
