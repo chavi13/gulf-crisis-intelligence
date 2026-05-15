@@ -1593,36 +1593,27 @@ with tab_tanker:
                         color:#4a5a72;margin-bottom:0.5rem;">Vessel Type</div>
         """, unsafe_allow_html=True)
 
-        type_cols = st.columns(len(VM_LINES))
+        # Narrow fixed columns + spacer keeps pills huddled left
+        type_cols = st.columns([1, 1, 1, 1, 1.2, 0.8, 3])
         for i, vtype in enumerate(VM_LINES.keys()):
             _, col_color = VM_LINES[vtype]
             is_on = vtype in st.session_state["vmix_active_types"]
             with type_cols[i]:
-                # Render active pills with colored border via inline style injection
                 label_html = f"● {vtype}" if is_on else vtype
-                if st.button(
-                    label_html,
-                    key=f"pill_type_{vtype}",
-                    help=None,
-                ):
+                if st.button(label_html, key=f"pill_type_{vtype}", help=None):
                     current = st.session_state["vmix_active_types"]
                     if vtype in current:
                         current.discard(vtype)
-                        if not current:           # always keep at least one
+                        if not current:
                             current.add("Tanker")
                     else:
                         current.add(vtype)
                     st.rerun()
-
-                # Active state visual — inject a style tag keyed to the button
                 if is_on:
                     st.markdown(f"""
                         <style>
                         div[data-testid="stButton"]:has(button[kind="secondary"][data-testid*="pill_type_{vtype}"]) button {{
-                            background: rgba({
-                                ','.join(str(int(col_color.lstrip('#')[i:i+2], 16))
-                                         for i in (0,2,4))
-                            },0.15) !important;
+                            background: rgba({','.join(str(int(col_color.lstrip('#')[j:j+2], 16)) for j in (0,2,4))},0.15) !important;
                             border-color: {col_color} !important;
                             color: {col_color} !important;
                         }}
@@ -1638,7 +1629,7 @@ with tab_tanker:
                         color:#4a5a72;margin-top:1rem;margin-bottom:0.5rem;">Timeline</div>
         """, unsafe_allow_html=True)
 
-        tl_cols = st.columns(len(TIMELINE_OPTIONS))
+        tl_cols = st.columns([0.8, 1, 1, 1.1, 5])
         for i, tl_label in enumerate(TIMELINE_OPTIONS.keys()):
             is_selected = st.session_state["vmix_timeline"] == tl_label
             with tl_cols[i]:
