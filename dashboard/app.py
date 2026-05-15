@@ -504,26 +504,17 @@ table.supply-gap-table td { text-align: center !important; vertical-align: middl
 .stDataFrame { background: var(--bg-card) !important; }
 
 /* ── Vessel mix checkboxes ──────────────────────────────────────── */
-/* Make checkbox labels readable on dark background */
-div[data-testid="stCheckbox"] label {
-    color: var(--text-primary) !important;
+/* Target the actual label node Streamlit renders */
+div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
+div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"] {
+    color: #e8edf5 !important;
     font-family: var(--font-sans) !important;
     font-size: var(--text-sm) !important;
     font-weight: 600 !important;
 }
-/* Unchecked box — dark fill, standard border */
-div[data-testid="stCheckbox"] input[type="checkbox"] + div {
-    background-color: var(--bg-card) !important;
-    border: 1.5px solid var(--border) !important;
-    border-radius: 4px !important;
-}
-/* Checked box — amber fill */
-div[data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
-    background-color: var(--accent-amber) !important;
-    border-color: var(--accent-amber) !important;
-}
-/* Checked label — amber text */
-div[data-testid="stCheckbox"] input[type="checkbox"]:checked ~ span {
+/* Checked state — amber label */
+div[data-testid="stCheckbox"]:has(input:checked) [data-testid="stWidgetLabel"] p,
+div[data-testid="stCheckbox"]:has(input:checked) [data-testid="stWidgetLabel"] {
     color: var(--accent-amber) !important;
 }
 
