@@ -1072,6 +1072,100 @@ tab_overview, tab_tanker, tab_gap, tab_lng = st.tabs([
     "🔥  LNG Module",
 ])
 
+# ── Sticky tab bar via JS ─────────────────────────────────────────────────────
+import streamlit.components.v1 as _components
+_components.html("""
+<style>
+#sticky-tab-clone {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99999;
+    background-color: #0f1624;
+    border-bottom: 1px solid #2a3a55;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+    padding: 0 1rem;
+}
+#sticky-tab-clone [data-baseweb="tab-list"] {
+    position: static !important;
+    box-shadow: none !important;
+    border-bottom: none !important;
+    background: transparent !important;
+}
+</style>
+<script>
+(function() {
+    function initStickyTabs() {
+        const doc = window.parent.document;
+        const scrollContainer =
+            doc.querySelector('[data-testid="stAppViewBlockContainer"]') ||
+            doc.querySelector('.main') ||
+            doc.body;
+
+        const tabList = doc.querySelector('[data-baseweb="tab-list"]');
+        if (!tabList) { setTimeout(initStickyTabs, 300); return; }
+
+        // Inject clone CSS into parent document head (once)
+        if (!doc.getElementById('sticky-tab-style')) {
+            const style = doc.createElement('style');
+            style.id = 'sticky-tab-style';
+            style.textContent = `
+                #sticky-tab-clone {
+                    display: none;
+                    position: fixed;
+                    top: 0; left: 0; right: 0;
+                    z-index: 99999;
+                    background-color: #0f1624;
+                    border-bottom: 1px solid #2a3a55;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+                    padding: 0 1rem;
+                }
+            `;
+            doc.head.appendChild(style);
+        }
+
+        // Create or reuse clone container
+        let clone = doc.getElementById('sticky-tab-clone');
+        if (!clone) {
+            clone = doc.createElement('div');
+            clone.id = 'sticky-tab-clone';
+            doc.body.appendChild(clone);
+        }
+
+        // Clone tab bar content
+        clone.innerHTML = '';
+        clone.appendChild(tabList.cloneNode(true));
+
+        // Forward clicks on clone tabs to real tabs
+        const cloneTabs = clone.querySelectorAll('[role="tab"]');
+        const realTabs  = tabList.querySelectorAll('[role="tab"]');
+        cloneTabs.forEach((t, i) => {
+            t.style.cursor = 'pointer';
+            t.addEventListener('click', () => { if (realTabs[i]) realTabs[i].click(); });
+        });
+
+        // Show/hide and sync active state on scroll
+        scrollContainer.addEventListener('scroll', function() {
+            if (tabList.getBoundingClientRect().top < 0) {
+                clone.style.display = 'block';
+                const activeIdx = Array.from(realTabs).findIndex(
+                    t => t.getAttribute('aria-selected') === 'true'
+                );
+                cloneTabs.forEach((t, i) => {
+                    t.setAttribute('aria-selected', i === activeIdx ? 'true' : 'false');
+                });
+            } else {
+                clone.style.display = 'none';
+            }
+        }, { passive: true });
+    }
+    setTimeout(initStickyTabs, 800);
+})();
+</script>
+""", height=0)
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # TAB 1 — OVERVIEW
