@@ -605,41 +605,61 @@ div[data-testid="stExpander"] summary    { color: var(--text-primary) !important
 # ══════════════════════════════════════════════════════════════════════════════
 
 def risk_badge(label: str) -> str:
-    """Return an HTML risk badge with custom hover tooltip."""
+    """
+    Unified badge function — one vocabulary for all three card types.
+    RED/AMBER/GREEN from DB map to CRITICAL/ELEVATED/STABLE for display.
+    Also accepts CRITICAL/ELEVATED/STABLE/NORMAL directly.
+    """
     TOOLTIPS = {
-        "RED":      "Severe disruption — transit or storage deficit exceeds emergency thresholds. Immediate market impact expected.",
-        "AMBER":    "Meaningful disruption — conditions are 5–15 days behind required pace or significantly below normal. Monitoring required.",
-        "GREEN":    "Within normal operating range — no significant disruption detected.",
-        "CRITICAL": "Historically extreme disruption — z-score below -20, more than 90% below the pre-crisis baseline of 103 ships/day.",
+        "CRITICAL": "Severe disruption — conditions exceed emergency thresholds. Immediate market impact expected.",
+        "ELEVATED": "Meaningful disruption — conditions are behind required pace or significantly below normal. Active monitoring required.",
+        "STABLE":   "Within normal operating range — no significant disruption detected.",
     }
     if label is None:
         return '<span class="has-tooltip"><span class="badge-amber">UNKNOWN</span><span class="tooltip-text">Status unknown — data may not yet be available.</span></span>'
     label = label.upper()
-    if label == "RED":
-        return f'<span class="has-tooltip"><span class="badge-red">CRITICAL</span><span class="tooltip-text">{TOOLTIPS["RED"]}</span></span>'
-    elif label == "AMBER":
-        return f'<span class="has-tooltip"><span class="badge-amber">ELEVATED</span><span class="tooltip-text">{TOOLTIPS["AMBER"]}</span></span>'
-    elif label == "GREEN":
-        return f'<span class="has-tooltip"><span class="badge-green">STABLE</span><span class="tooltip-text">{TOOLTIPS["GREEN"]}</span></span>'
-    elif label in ("CRITICAL", "YES"):
-        return f'<span class="has-tooltip"><span class="badge-critical">CRITICAL</span><span class="tooltip-text">{TOOLTIPS["CRITICAL"]}</span></span>'
+    if label in ("RED", "CRITICAL"):
+        tip = TOOLTIPS["CRITICAL"]
+        return f'<span class="has-tooltip"><span class="badge-critical">CRITICAL</span><span class="tooltip-text">{tip}</span></span>'
+    elif label in ("AMBER", "ELEVATED"):
+        tip = TOOLTIPS["ELEVATED"]
+        return f'<span class="has-tooltip"><span class="badge-amber">ELEVATED</span><span class="tooltip-text">{tip}</span></span>'
+    elif label in ("GREEN", "STABLE", "NORMAL"):
+        tip = TOOLTIPS["STABLE"]
+        return f'<span class="has-tooltip"><span class="badge-green">STABLE</span><span class="tooltip-text">{tip}</span></span>'
     else:
         return f'<span class="badge-amber">{label}</span>'
 
 
+def transit_badge(pct_of_normal) -> str:
+    """Maps pct_of_normal to CRITICAL/ELEVATED/STABLE badge."""
+    if pct_of_normal is None:
+        return risk_badge(None)
+    if pct_of_normal < 25:
+        return risk_badge("CRITICAL")
+    elif pct_of_normal <= 75:
+        return risk_badge("ELEVATED")
+    else:
+        return risk_badge("STABLE")
+
+
+def lng_score_badge(score: str) -> str:
+    """Maps LNG rebalancing score to unified badge."""
+    if score is None or score == "—":
+        return risk_badge(None)
+    s = str(score).upper()
+    if s == "CRITICAL":
+        return risk_badge("CRITICAL")
+    elif s in ("ELEVATED", "DEFICIT"):
+        return risk_badge("ELEVATED")
+    elif s in ("STABLE", "BALANCED"):
+        return risk_badge("STABLE")
+    return f'<span class="badge-amber">{score}</span>'
+
 
 def score_badge_fn(score: str) -> str:
-    """Return an HTML risk badge mapped from rebalancing score vocabulary."""
-    if score is None or score == "—":
-        return '<span class="badge-amber">UNKNOWN</span>'
-    s = str(score).upper()
-    if "CRITICAL" in s:
-        return '<span class="badge-critical">CRITICAL DEFICIT</span>'
-    if s == "DEFICIT":
-        return '<span class="badge-red">DEFICIT</span>'
-    if s == "BALANCED":
-        return '<span class="badge-green">BALANCED</span>'
-    return f'<span class="badge-amber">{score}</span>'
+    """Legacy alias — routes through lng_score_badge."""
+    return lng_score_badge(score)
 
 def fmt_timestamp(ts: str) -> str:
     """Format a logged_at ISO string to a readable label."""
@@ -840,26 +860,18 @@ with tab_overview:
     # ── Consolidated metrics row — 4 KPI cards below thesis block ────────────
 
     pct = safe(tanker.get("pct_of_normal"), "{:.1f}%")
-    flag = "CRITICAL" if tanker.get("anomaly_flag") == 1 else "NORMAL"
+    pct_val = tanker.get("pct_of_normal")
     trend = safe(tanker.get("trend_direction"), fallback="—")
     ts = fmt_timestamp(tanker.get("logged_at"))
-    baseline_ships = safe(tanker.get("baseline_30d"), "{:.0f}")
+    baseline_ships = safe(tanker.get("baseline_annual"), "{:.0f}")
 
     score = safe(lng.get("rebalancing_score"), fallback="—")
     confidence = safe(lng.get("confidence"), fallback="—")
     routing = safe(lng.get("routing_signal"), fallback="—")
     util = safe(lng.get("us_utilization"), "{:.1f}%")
     ts2 = fmt_timestamp(lng.get("logged_at"))
-    score_badge_sidebar = score_badge_fn(
-        "RED" if "CRITICAL" in str(score) else
-        "AMBER" if score == "DEFICIT" else
-        "GREEN"
-    )
-    score_kw = str(score) if score is not None else "—"
-    if "balanced" in score_kw.lower():
-        score_value_html = f'<span class="headline-keyword">{score_kw}</span>'
-    else:
-        score_value_html = score_kw
+    _transit_badge = transit_badge(pct_val)
+    _lng_badge = lng_score_badge(lng.get("rebalancing_score"))
 
     asia_crude = gap.get("asia_crude_risk") or "—"
     asia_lng   = gap.get("asia_lng_risk")   or "—"
@@ -878,18 +890,18 @@ with tab_overview:
         <div class="card-body">
             <div class="card-label">Hormuz Transit Index</div>
             <div class="card-value"><span class="headline-keyword">{pct}</span></div>
-            <div class="card-sub">of pre-crisis normal &nbsp;&nbsp; {risk_badge(flag)}</div>
+            <div class="card-sub">of pre-crisis normal &nbsp;&nbsp; {_transit_badge}</div>
             <div class="card-sub">Trend &nbsp;<span class="headline-mono-emphasis">{trend}</span></div>
-            <div class="card-sub">{safe(tanker.get('transit_count'))} ships/day vs {baseline_ships} baseline</div>
+            <div class="card-sub">{safe(tanker.get('transit_count'))} ships/day vs {baseline_ships} baseline (full-year 2025)</div>
         </div>
         <div class="card-timestamp">Updated {ts}</div>
     </div>
     <div class="card card--headline">
         <div class="card-body">
-            <div class="card-label">LNG Rebalancing Score</div>
-            <div class="card-value">{score_value_html}</div>
+            <div class="card-label">LNG Market State</div>
+            <div class="card-value"><span class="headline-keyword">{score}</span></div>
             <div class="card-sub">
-                Confidence {confidence} &nbsp;·&nbsp; {score_badge_sidebar}
+                {_lng_badge} &nbsp;·&nbsp; Confidence {confidence}
             </div>
             <div class="card-sub">Routing signal &nbsp;<span class="headline-mono-emphasis">{routing}</span></div>
             <div class="card-sub">US utilization <span class="headline-mono-emphasis">{util}</span></div>
@@ -992,8 +1004,7 @@ with tab_tanker:
         risk_badge("AMBER") if anchorage_count > 0   else
         risk_badge("GREEN")
     )
-    _is_critical = tanker.get("anomaly_flag") == 1
-    _flag_badge  = risk_badge("CRITICAL" if _is_critical else "NORMAL")
+    _flag_badge  = transit_badge(tanker.get("pct_of_normal"))
     st.markdown(f"""
 <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr;gap:1rem;align-items:stretch;margin-bottom:1.5rem;">
     <div class="card card--primary">
@@ -1002,7 +1013,7 @@ with tab_tanker:
             <span class="card-ta-big-value">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}</span>
             {_flag_badge}
         </div>
-        <div class="card-ta-sub">of pre-crisis normal &nbsp;·&nbsp; {safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_30d"), "{:.0f}")} baseline</div>
+        <div class="card-ta-sub">of pre-crisis normal &nbsp;·&nbsp; {safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_annual"), "{:.0f}")} baseline (full-year 2025)</div>
         <div class="card-ta-sub">z-score {safe(tanker.get("z_score"), "{:.1f}")}</div>
     </div>
     <div class="card" style="min-height:unset;">
@@ -1036,7 +1047,7 @@ with tab_tanker:
         # Baseline reference line
         fig_transit.add_trace(go.Scatter(
             x=transit_df["date"],
-            y=transit_df["baseline_30d"],
+            y=transit_df["baseline_annual"],
             name="Pre-crisis baseline",
             line=dict(color="#4a5a72", width=1.5, dash="dash"),
             hovertemplate="%{y:.0f} ships/day<extra>Baseline</extra>",
@@ -1483,7 +1494,7 @@ with tab_tanker:
     # Arithmetic extrapolation from current values
     current_count   = tanker.get("transit_count") or 0
     slope           = tanker.get("trend_slope") or 0.0
-    baseline        = tanker.get("baseline_30d") or 102.69
+    baseline        = tanker.get("baseline_annual") or 53.2
 
     proj_2w  = max(0, current_count + slope * 14)
     proj_4w  = max(0, current_count + slope * 28)
@@ -1522,7 +1533,7 @@ with tab_tanker:
             <div class="interpretation-label">Analyst Interpretation</div>
             <div class="interpretation-text">
                 Hormuz is operating at <strong style="color:#f59e0b;">{safe(tanker.get("pct_of_normal"), "{:.1f}%")} of pre-crisis
-                normal</strong> — {safe(tanker.get("transit_count"))} ships per day versus a baseline of {safe(tanker.get("baseline_30d"), "{:.0f}")}.
+                normal</strong> — {safe(tanker.get("transit_count"))} ships per day versus a baseline of {safe(tanker.get("baseline_annual"), "{:.0f}")}.
                 The z-score of {safe(tanker.get("z_score"), "{:.1f}")} confirms this is a historically extreme deviation,
                 not a routine fluctuation. The 7-day trend shows slow recovery at
                 +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day, but this pace is structurally constrained by
@@ -1545,17 +1556,17 @@ with tab_lng:
     import plotly.graph_objects as go
 
     # ── Section 1 — Headline metric cards ─────────────────────────────────────
-    st.markdown('<div class="section-header" style="margin-top:0.5rem;">LNG Rebalancing Score</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" style="margin-top:0.5rem;">LNG Market State</div>', unsafe_allow_html=True)
 
     lc1, lc2, lc3 = st.columns(3)
     with lc1:
         score = safe(lng.get("rebalancing_score"), fallback="—")
-        score_badge_html = score_badge_fn(lng.get("rebalancing_score"))
+        _lng_tab_badge = lng_score_badge(lng.get("rebalancing_score"))
         st.markdown(f"""
             <div class="card card--kpi">
-                <div class="card-label">Rebalancing Score</div>
+                <div class="card-label">LNG Market State</div>
                 <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">{score}</div></div>
-                <div class="card-sub" style="margin-top:0.3rem;">{score_badge_html}</div>
+                <div class="card-sub" style="margin-top:0.3rem;">{_lng_tab_badge}</div>
                 <div class="card-sub">Confidence {safe(lng.get("confidence"))}</div>
             </div>
         """, unsafe_allow_html=True)
@@ -2271,7 +2282,7 @@ with tab_gap:
 
     # Project forward using tanker recovery slope
     slope      = tanker.get("trend_slope") or 0.5
-    baseline_t = tanker.get("baseline_30d") or 102.69
+    baseline_t = tanker.get("baseline_annual") or 53.2
 
     def project_gap(days_forward):
         proj_count   = min(current_thru * (baseline_t / normal_flow) + slope * days_forward,
