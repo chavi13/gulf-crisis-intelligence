@@ -101,10 +101,9 @@ st.markdown("""
 footer    { visibility: hidden; }
 header    { visibility: hidden; }
 
-/* ── Tighten top margin */
+/* ── Tighten top margin — kill ALL top spacing ──────────────────── */
 [data-testid="stHeader"]     { display: none !important; height: 0 !important; }
 [data-testid="stDecoration"] { display: none !important; }
-/* Make markdown containers stretch to fill their Streamlit column */
 [data-testid="stMarkdownContainer"] { height: 100%; }
 section.main > div.block-container,
 .main > div.block-container {
@@ -112,28 +111,31 @@ section.main > div.block-container,
     padding-bottom: 2rem !important;
     max-width: 100% !important;
 }
-/* Kill the extra space Streamlit adds above the first element */
 .stApp > div:first-child { padding-top: 0 !important; }
 section.main { padding-top: 0 !important; }
-div[data-testid="stAppViewContainer"] > section > div:first-child {
-    padding-top: 0 !important;
-}
+div[data-testid="stAppViewContainer"] > section > div:first-child { padding-top: 0 !important; }
+div[data-testid="stAppViewBlockContainer"] { padding-top: 0 !important; }
+div[data-testid="stVerticalBlock"] > div:first-child { padding-top: 0 !important; }
 
-/* ── Tabs — sticky bar while scrolling ──────────────────────────── */
+/* ── Sticky tabs — fix for Streamlit's inner scroll container ────── */
+div[data-testid="stAppViewContainer"] {
+    overflow: visible !important;
+}
+section.main {
+    overflow: visible !important;
+}
 .stTabs [data-baseweb="tab-list"] {
+    position: -webkit-sticky;
     position: sticky;
     top: 0;
     z-index: 9999;
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-secondary) !important;
     border-bottom: 1px solid var(--border);
     gap: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
     margin-top: 0 !important;
     padding-top: 0 !important;
-}
-/* Push tab content down so it's not hidden behind sticky bar */
-.stTabs [data-baseweb="tab-panel"] {
-    padding-top: 1rem !important;
+    width: 100%;
 }
 .stTabs [data-baseweb="tab"] {
     background-color: transparent;
@@ -150,6 +152,9 @@ div[data-testid="stAppViewContainer"] > section > div:first-child {
     color: var(--accent-amber) !important;
     border-bottom: 2px solid var(--accent-amber) !important;
     background-color: transparent !important;
+}
+.stTabs [data-baseweb="tab-panel"] {
+    padding-top: 1rem !important;
 }
 section[data-testid="stSidebar"] {
     background-color: var(--bg-secondary);
