@@ -1834,12 +1834,33 @@ with tab_lng:
     }
 
     if not prices_df.empty:
+
+        # ── Date range slider ─────────────────────────────────────────────────
+        from datetime import date
+        prices_df["date"] = pd.to_datetime(prices_df["date"])
+        min_date = prices_df["date"].min().date()
+        max_date = prices_df["date"].max().date()
+
+        slider_range = st.slider(
+            "Date range",
+            min_value=min_date,
+            max_value=max_date,
+            value=(date(2025, 5, 1), max_date),
+            format="MMM YYYY",
+            label_visibility="collapsed",
+        )
+        date_from_s, date_to_s = slider_range
+        filtered_prices = prices_df[
+            (prices_df["date"].dt.date >= date_from_s) &
+            (prices_df["date"].dt.date <= date_to_s)
+        ]
+
         fig_spread = go.Figure()
 
         # JKM price line
         fig_spread.add_trace(go.Scatter(
-            x=prices_df["date"],
-            y=prices_df["JKM"],
+            x=filtered_prices["date"],
+            y=filtered_prices["JKM"],
             name="JKM (Asia)",
             line=dict(color="#f59e0b", width=2),
             hovertemplate="%{x|%b %d, %Y}<br>JKM $%{y:.2f}/MMBtu<extra></extra>",
@@ -1847,8 +1868,8 @@ with tab_lng:
 
         # TTF price line
         fig_spread.add_trace(go.Scatter(
-            x=prices_df["date"],
-            y=prices_df["TTF"],
+            x=filtered_prices["date"],
+            y=filtered_prices["TTF"],
             name="TTF (Europe)",
             line=dict(color="#3b82f6", width=2),
             hovertemplate="%{x|%b %d, %Y}<br>TTF $%{y:.2f}/MMBtu<extra></extra>",
@@ -1856,8 +1877,8 @@ with tab_lng:
 
         # Spread as filled area on secondary y-axis
         fig_spread.add_trace(go.Scatter(
-            x=prices_df["date"],
-            y=prices_df["spread"],
+            x=filtered_prices["date"],
+            y=filtered_prices["spread"],
             name="JKM–TTF Spread",
             line=dict(color="#14b8a6", width=1.5),
             fill="tozeroy",
@@ -1869,14 +1890,14 @@ with tab_lng:
         # $2 routing threshold line on secondary axis
         fig_spread.add_shape(
             type="line",
-            x0=prices_df["date"].min(),
-            x1=prices_df["date"].max(),
+            x0=filtered_prices["date"].min(),
+            x1=filtered_prices["date"].max(),
             y0=2.0, y1=2.0,
             xref="x", yref="y2",
             line=dict(color="rgba(239,68,68,0.5)", width=1, dash="dash"),
         )
         fig_spread.add_annotation(
-            x=prices_df["date"].max(),
+            x=filtered_prices["date"].max(),
             y=2.0,
             xref="x", yref="y2",
             text="$2.00 routing threshold",
@@ -1886,8 +1907,13 @@ with tab_lng:
             yanchor="bottom",
         )
 
-        # Crisis event vertical lines — numbered markers
-        for i, (date_str, label) in enumerate(LNG_EVENTS.items(), 1):
+        # Only show event annotations within the selected date range
+        visible_lng_events = {
+            k: v for k, v in LNG_EVENTS.items()
+            if date_from_s <= date.fromisoformat(k) <= date_to_s
+        }
+
+        for i, (date_str, label) in enumerate(visible_lng_events.items(), 1):
             fig_spread.add_shape(
                 type="line",
                 x0=date_str, x1=date_str,
@@ -1925,7 +1951,6 @@ with tab_lng:
                 gridcolor="#1a2235",
                 linecolor="#2a3a55",
                 tickfont=dict(size=12, family="IBM Plex Mono"),
-                range=["2025-05-01", prices_df["date"].max().strftime("%Y-%m-%d")],
             ),
             yaxis=dict(
                 gridcolor="#1a2235",
@@ -1947,17 +1972,18 @@ with tab_lng:
 
         st.plotly_chart(fig_spread, use_container_width=True)
 
-        # Numbered event legend — auto-generated from LNG_EVENTS dict (single source of truth)
-        lng_legend_spans = "".join(
-            f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{label}</span>'
-            for i, (_, label) in enumerate(LNG_EVENTS.items(), 1)
-        )
-        st.markdown(f"""
-            <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.5rem;
-                        font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#8a9bb5;">
-                {lng_legend_spans}
-            </div>
-        """, unsafe_allow_html=True)
+        # Numbered event legend — only show visible events
+        if visible_lng_events:
+            lng_legend_spans = "".join(
+                f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{label}</span>'
+                for i, (_, label) in enumerate(visible_lng_events.items(), 1)
+            )
+            st.markdown(f"""
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.5rem;
+                            font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#8a9bb5;">
+                    {lng_legend_spans}
+                </div>
+            """, unsafe_allow_html=True)
 
         st.markdown("""
             <div class="info-note">
