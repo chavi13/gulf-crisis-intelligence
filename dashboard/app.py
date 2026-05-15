@@ -1221,7 +1221,7 @@ with tab_tanker:
         <div class="card-ta-value">{safe(tanker.get("trend_direction"))}</div>
         <div class="card-ta-sub">Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day</div>
     </div>
-    <div style="display:flex;flex-direction:column;justify-content:space-between;gap:0.75rem;height:100%;">
+    <div style="display:flex;flex-direction:column;justify-content:space-between;min-height:320px;">
         <div class="card card--sm">
             <div class="card-ta-label">Fujairah Queue</div>
             <div class="card-ta-value">{anchorage_count} <span style="font-size:var(--text-sm);font-weight:400;color:var(--text-secondary);">vessels</span></div>
