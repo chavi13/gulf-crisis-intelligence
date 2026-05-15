@@ -601,6 +601,32 @@ div[data-testid="stExpander"] details    { background-color: var(--bg-card) !imp
 div[data-testid="stExpander"] div[role="region"] { background-color: var(--bg-card) !important; }
 div[data-testid="stExpander"] summary    { color: var(--text-primary) !important; background-color: var(--bg-card) !important; }
 
+/* ── Pill toggles — vessel type & timeline ──────────────────────── */
+div[data-testid="stButton"] button {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 20px !important;
+    color: var(--text-secondary) !important;
+    font-family: var(--font-sans) !important;
+    font-size: var(--text-xs) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.06em !important;
+    padding: 0.3rem 0.9rem !important;
+    transition: all 0.15s ease !important;
+    white-space: nowrap !important;
+}
+div[data-testid="stButton"] button:hover {
+    border-color: var(--accent-amber) !important;
+    color: var(--accent-amber) !important;
+    background: rgba(245,158,11,0.08) !important;
+}
+/* Active pill — set via a data attribute trick using key naming */
+div[data-testid="stButton"].pill-active button {
+    background: rgba(245,158,11,0.15) !important;
+    border-color: var(--accent-amber) !important;
+    color: var(--accent-amber) !important;
+}
+
 /* ── Signal breakdown panel (DEFICIT / LNG confidence explainer) ── */
 details.signal-panel {
     margin-top: 0.6rem;
@@ -1547,56 +1573,91 @@ with tab_tanker:
             "Total":         ("n_total",         "#e8edf5"),
         }
 
-        # ── Vessel type toggles ───────────────────────────────────────────────
+        TIMELINE_OPTIONS = {
+            "2026":       "2026-01-01",
+            "2025–2026":  "2025-01-01",
+            "2023–2026":  "2023-01-01",
+            "All (2019+)":"2019-01-01",
+        }
+
+        # ── Initialise session state ──────────────────────────────────────────
+        if "vmix_active_types" not in st.session_state:
+            st.session_state["vmix_active_types"] = {"Tanker"}
+        if "vmix_timeline" not in st.session_state:
+            st.session_state["vmix_timeline"] = "2026"
+
+        # ── Vessel type pills ─────────────────────────────────────────────────
         st.markdown("""
             <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.65rem;
                         font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
-                        color:#4a5a72;margin-bottom:0.4rem;">Vessel Type</div>
+                        color:#4a5a72;margin-bottom:0.5rem;">Vessel Type</div>
         """, unsafe_allow_html=True)
 
         type_cols = st.columns(len(VM_LINES))
-        active_types = []
         for i, vtype in enumerate(VM_LINES.keys()):
+            _, col_color = VM_LINES[vtype]
+            is_on = vtype in st.session_state["vmix_active_types"]
             with type_cols[i]:
-                _, col_color = VM_LINES[vtype]
-                default_on = (vtype == "Tanker")
-                checked = st.checkbox(
-                    vtype,
-                    value=default_on,
-                    key=f"vmix_type_{vtype}",
-                )
-                if checked:
-                    active_types.append(vtype)
+                # Render active pills with colored border via inline style injection
+                label_html = f"● {vtype}" if is_on else vtype
+                if st.button(
+                    label_html,
+                    key=f"pill_type_{vtype}",
+                    help=None,
+                ):
+                    current = st.session_state["vmix_active_types"]
+                    if vtype in current:
+                        current.discard(vtype)
+                        if not current:           # always keep at least one
+                            current.add("Tanker")
+                    else:
+                        current.add(vtype)
+                    st.rerun()
 
-        if not active_types:
-            active_types = ["Tanker"]
+                # Active state visual — inject a style tag keyed to the button
+                if is_on:
+                    st.markdown(f"""
+                        <style>
+                        div[data-testid="stButton"]:has(button[kind="secondary"][data-testid*="pill_type_{vtype}"]) button {{
+                            background: rgba({
+                                ','.join(str(int(col_color.lstrip('#')[i:i+2], 16))
+                                         for i in (0,2,4))
+                            },0.15) !important;
+                            border-color: {col_color} !important;
+                            color: {col_color} !important;
+                        }}
+                        </style>
+                    """, unsafe_allow_html=True)
 
-        # ── Timeline toggles ──────────────────────────────────────────────────
+        active_types = list(st.session_state["vmix_active_types"])
+
+        # ── Timeline pills ────────────────────────────────────────────────────
         st.markdown("""
             <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.65rem;
                         font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
-                        color:#4a5a72;margin-top:0.75rem;margin-bottom:0.4rem;">Timeline</div>
+                        color:#4a5a72;margin-top:1rem;margin-bottom:0.5rem;">Timeline</div>
         """, unsafe_allow_html=True)
 
-        TIMELINE_OPTIONS = {
-            "2026":      ("2026-01-01", None),
-            "2025–2026": ("2025-01-01", None),
-            "2023–2026": ("2023-01-01", None),
-            "All (2019+)":("2019-01-01", None),
-        }
-
         tl_cols = st.columns(len(TIMELINE_OPTIONS))
-        selected_timeline = "2026"
         for i, tl_label in enumerate(TIMELINE_OPTIONS.keys()):
+            is_selected = st.session_state["vmix_timeline"] == tl_label
             with tl_cols[i]:
-                if st.checkbox(
-                    tl_label,
-                    value=(tl_label == "2026"),
-                    key=f"vmix_tl_{tl_label}",
-                ):
-                    selected_timeline = tl_label
+                label_html = f"● {tl_label}" if is_selected else tl_label
+                if st.button(label_html, key=f"pill_tl_{tl_label}"):
+                    st.session_state["vmix_timeline"] = tl_label
+                    st.rerun()
+                if is_selected:
+                    st.markdown(f"""
+                        <style>
+                        div[data-testid="stButton"]:has(button[kind="secondary"][data-testid*="pill_tl_{tl_label}"]) button {{
+                            background: rgba(245,158,11,0.15) !important;
+                            border-color: #f59e0b !important;
+                            color: #f59e0b !important;
+                        }}
+                        </style>
+                    """, unsafe_allow_html=True)
 
-        date_from, _ = TIMELINE_OPTIONS[selected_timeline]
+        date_from = TIMELINE_OPTIONS[st.session_state["vmix_timeline"]]
         plot_df = vessel_mix_df[vessel_mix_df["date"] >= date_from]
 
         # ── Build chart ───────────────────────────────────────────────────────
