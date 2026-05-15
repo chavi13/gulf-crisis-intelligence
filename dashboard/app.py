@@ -101,9 +101,11 @@ st.markdown("""
 footer    { visibility: hidden; }
 header    { visibility: hidden; }
 
-/* Tighten top margin */
+/* ── Tighten top margin */
 [data-testid="stHeader"]     { display: none !important; height: 0 !important; }
 [data-testid="stDecoration"] { display: none !important; }
+/* Make markdown containers stretch to fill their Streamlit column */
+[data-testid="stMarkdownContainer"] { height: 100%; }
 section.main > div.block-container,
 .main > div.block-container {
     padding-top: 0.75rem !important;
@@ -1219,7 +1221,7 @@ with tab_tanker:
         <div class="card-ta-value">{safe(tanker.get("trend_direction"))}</div>
         <div class="card-ta-sub">Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day</div>
     </div>
-    <div style="display:flex;flex-direction:column;justify-content:space-between;gap:0.75rem;height:100%;align-self:stretch;">
+    <div style="display:flex;flex-direction:column;justify-content:space-between;gap:0.75rem;height:100%;">
         <div class="card card--sm">
             <div class="card-ta-label">Fujairah Queue</div>
             <div class="card-ta-value">{anchorage_count} <span style="font-size:var(--text-sm);font-weight:400;color:var(--text-secondary);">vessels</span></div>
