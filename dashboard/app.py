@@ -1489,7 +1489,8 @@ with tab_tanker:
             x=bar_labels,
             y=today_vals,
             marker_color=[
-                "#ef4444" if vessel_mix.get(f"anomaly_flag_{k}") == 1 else "#22c55e"
+                "#f59e0b" if vessel_mix.get(f"anomaly_flag_{k}") == 1 else "#22c55e"
+                if k != "total" else "#14b8a6"
                 for k in ["tanker", "container", "dry_bulk", "roro",
                           "general_cargo", "total"]
             ],
