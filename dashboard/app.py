@@ -1775,7 +1775,7 @@ with tab_lng:
         score = safe(lng.get("rebalancing_score"), fallback="—")
         _lng_tab_badge = lng_score_badge(lng.get("rebalancing_score"))
         st.markdown(f"""
-            <div class="card card--kpi">
+            <div class="card card--kpi" style="min-height:220px;">
                 <div class="card-label">LNG Market State</div>
                 <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">{score}</div></div>
                 <div class="card-sub" style="margin-top:0.3rem;">{_lng_tab_badge}</div>
@@ -1785,7 +1785,7 @@ with tab_lng:
         """, unsafe_allow_html=True)
     with lc2:
         st.markdown(f"""
-            <div class="card card--kpi">
+            <div class="card card--kpi" style="min-height:220px;">
                 <div class="card-label">JKM–TTF Spread (7-day avg)</div>
                 <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">${safe(lng.get("spread_7d"), "{:.3f}")}</div></div>
                 <div class="card-sub" style="margin-top:0.3rem;">
@@ -1801,14 +1801,17 @@ with tab_lng:
         """, unsafe_allow_html=True)
     with lc3:
         st.markdown(f"""
-            <div class="card card--kpi">
-                <div class="card-label">EU Storage Coverage</div>
+            <div class="card card--kpi" style="min-height:220px;">
+                <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;white-space:nowrap;">EU Storage Coverage</div>
                 <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">{safe(lng.get("storage_pct"), "{:.1f}%")}</div></div>
                 <div class="card-sub" style="margin-top:0.3rem;">
                     {risk_badge(lng.get("storage_risk"))}
                 </div>
                 <div class="card-sub">
                     {safe(lng.get("days_deficit"), "{:.1f} days")} behind required pace
+                </div>
+                <div class="card-sub" style="margin-top:0.3rem;">
+                    {safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg
                 </div>
             </div>
         """, unsafe_allow_html=True)
