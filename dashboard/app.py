@@ -108,11 +108,49 @@ header    { visibility: hidden; }
 [data-testid="stMarkdownContainer"] { height: 100%; }
 section.main > div.block-container,
 .main > div.block-container {
-    padding-top: 0.75rem !important;
+    padding-top: 0 !important;
     padding-bottom: 2rem !important;
+    max-width: 100% !important;
+}
+/* Kill the extra space Streamlit adds above the first element */
+.stApp > div:first-child { padding-top: 0 !important; }
+section.main { padding-top: 0 !important; }
+div[data-testid="stAppViewContainer"] > section > div:first-child {
+    padding-top: 0 !important;
 }
 
-/* ── Sidebar ────────────────────────────────────────────────────── */
+/* ── Tabs — sticky bar while scrolling ──────────────────────────── */
+.stTabs [data-baseweb="tab-list"] {
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    gap: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+/* Push tab content down so it's not hidden behind sticky bar */
+.stTabs [data-baseweb="tab-panel"] {
+    padding-top: 1rem !important;
+}
+.stTabs [data-baseweb="tab"] {
+    background-color: transparent;
+    color: var(--text-secondary) !important;
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 2px solid transparent;
+}
+.stTabs [aria-selected="true"] {
+    color: var(--accent-amber) !important;
+    border-bottom: 2px solid var(--accent-amber) !important;
+    background-color: transparent !important;
+}
 section[data-testid="stSidebar"] {
     background-color: var(--bg-secondary);
     border-right: 1px solid var(--border);
@@ -144,33 +182,6 @@ button[kind="header"]:hover {
 [data-testid="stSidebarCollapseButton"] button svg {
     fill: var(--accent-amber) !important;
     stroke: var(--accent-amber) !important;
-}
-
-/* ── Tabs — sticky bar while scrolling ──────────────────────────── */
-.stTabs [data-baseweb="tab-list"] {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-    gap: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
-}
-.stTabs [data-baseweb="tab"] {
-    background-color: transparent;
-    color: var(--text-secondary) !important;
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 0.75rem 1.5rem;
-    border-bottom: 2px solid transparent;
-}
-.stTabs [aria-selected="true"] {
-    color: var(--accent-amber) !important;
-    border-bottom: 2px solid var(--accent-amber) !important;
-    background-color: transparent !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════
