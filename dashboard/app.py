@@ -1580,27 +1580,49 @@ with tab_tanker:
             "All (2019+)":"2019-01-01",
         }
 
+        import streamlit.components.v1 as components
+
         # ── Initialise session state ──────────────────────────────────────────
         if "vmix_active_types" not in st.session_state:
             st.session_state["vmix_active_types"] = {"Tanker"}
         if "vmix_timeline" not in st.session_state:
             st.session_state["vmix_timeline"] = "2026"
 
-        # ── Vessel type pills ─────────────────────────────────────────────────
+        # ── Vessel type pills — pure HTML flex row ────────────────────────────
+        def pill_row(items, active_set, color_map, key_prefix):
+            pills = ""
+            for label, color in color_map.items():
+                is_on = label in active_set
+                bg    = f"rgba({','.join(str(int(color.lstrip('#')[j:j+2],16)) for j in (0,2,4))},0.15)" if is_on else "transparent"
+                bc    = color if is_on else "#2a3a55"
+                tc    = color if is_on else "#8a9bb5"
+                dot   = f'<span style="margin-right:5px;font-size:8px;">●</span>' if is_on else ""
+                pills += f"""<span style="display:inline-flex;align-items:center;
+                    padding:0.3rem 0.85rem;border-radius:20px;border:1px solid {bc};
+                    background:{bg};color:{tc};font-family:'IBM Plex Sans',sans-serif;
+                    font-size:0.72rem;font-weight:600;letter-spacing:0.04em;
+                    cursor:default;white-space:nowrap;">{dot}{label}</span>"""
+            return f'<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">{pills}</div>'
+
+        TYPE_COLORS = {k: v[1] for k, v in VM_LINES.items()}
+        TL_COLORS   = {k: "#f59e0b" if k == st.session_state["vmix_timeline"] else "#2a3a55"
+                       for k in TIMELINE_OPTIONS}
+
         st.markdown("""
             <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.65rem;
                         font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
                         color:#4a5a72;margin-bottom:0.5rem;">Vessel Type</div>
         """, unsafe_allow_html=True)
+        st.markdown(pill_row(VM_LINES.keys(), st.session_state["vmix_active_types"], TYPE_COLORS, "type"), unsafe_allow_html=True)
 
-        # Narrow fixed columns + spacer keeps pills huddled left
-        type_cols = st.columns([1, 1, 1, 1, 1.2, 0.8, 3])
+        # Actual clickable buttons hidden — one per vessel type
+        type_btn_cols = st.columns(len(VM_LINES))
         for i, vtype in enumerate(VM_LINES.keys()):
             _, col_color = VM_LINES[vtype]
             is_on = vtype in st.session_state["vmix_active_types"]
-            with type_cols[i]:
-                label_html = f"● {vtype}" if is_on else vtype
-                if st.button(label_html, key=f"pill_type_{vtype}", help=None):
+            with type_btn_cols[i]:
+                st.markdown(f'<style>div[data-testid="stButton"]:has(button[data-testid*="xbtn_type_{vtype}"]) {{ display:none; }}</style>', unsafe_allow_html=True)
+                if st.button("x", key=f"xbtn_type_{vtype}"):
                     current = st.session_state["vmix_active_types"]
                     if vtype in current:
                         current.discard(vtype)
@@ -1609,44 +1631,26 @@ with tab_tanker:
                     else:
                         current.add(vtype)
                     st.rerun()
-                if is_on:
-                    st.markdown(f"""
-                        <style>
-                        div[data-testid="stButton"]:has(button[kind="secondary"][data-testid*="pill_type_{vtype}"]) button {{
-                            background: rgba({','.join(str(int(col_color.lstrip('#')[j:j+2], 16)) for j in (0,2,4))},0.15) !important;
-                            border-color: {col_color} !important;
-                            color: {col_color} !important;
-                        }}
-                        </style>
-                    """, unsafe_allow_html=True)
 
         active_types = list(st.session_state["vmix_active_types"])
 
-        # ── Timeline pills ────────────────────────────────────────────────────
         st.markdown("""
             <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.65rem;
                         font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
                         color:#4a5a72;margin-top:1rem;margin-bottom:0.5rem;">Timeline</div>
         """, unsafe_allow_html=True)
 
-        tl_cols = st.columns([0.8, 1, 1, 1.1, 5])
+        TL_COLOR_MAP = {k: "#f59e0b" for k in TIMELINE_OPTIONS}
+        tl_active = {st.session_state["vmix_timeline"]}
+        st.markdown(pill_row(TIMELINE_OPTIONS.keys(), tl_active, TL_COLOR_MAP, "tl"), unsafe_allow_html=True)
+
+        tl_btn_cols = st.columns(len(TIMELINE_OPTIONS))
         for i, tl_label in enumerate(TIMELINE_OPTIONS.keys()):
-            is_selected = st.session_state["vmix_timeline"] == tl_label
-            with tl_cols[i]:
-                label_html = f"● {tl_label}" if is_selected else tl_label
-                if st.button(label_html, key=f"pill_tl_{tl_label}"):
+            with tl_btn_cols[i]:
+                st.markdown(f'<style>div[data-testid="stButton"]:has(button[data-testid*="xbtn_tl_{i}"]) {{ display:none; }}</style>', unsafe_allow_html=True)
+                if st.button("x", key=f"xbtn_tl_{i}"):
                     st.session_state["vmix_timeline"] = tl_label
                     st.rerun()
-                if is_selected:
-                    st.markdown(f"""
-                        <style>
-                        div[data-testid="stButton"]:has(button[kind="secondary"][data-testid*="pill_tl_{tl_label}"]) button {{
-                            background: rgba(245,158,11,0.15) !important;
-                            border-color: #f59e0b !important;
-                            color: #f59e0b !important;
-                        }}
-                        </style>
-                    """, unsafe_allow_html=True)
 
         date_from = TIMELINE_OPTIONS[st.session_state["vmix_timeline"]]
         plot_df = vessel_mix_df[vessel_mix_df["date"] >= date_from]
