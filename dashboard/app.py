@@ -1579,7 +1579,7 @@ with tab_tanker:
         """, unsafe_allow_html=True)
 
         active_types = []
-        type_cols = st.columns(len(VM_LINES))
+        type_cols = st.columns([1, 1, 1, 1, 1.3, 1, 3])
         for i, (vtype, (_, col_color)) in enumerate(VM_LINES.items()):
             with type_cols[i]:
                 checked = st.checkbox(vtype, value=(vtype == "Tanker"), key=f"vmix_type_{vtype}")
