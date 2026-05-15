@@ -1579,7 +1579,7 @@ with tab_tanker:
         """, unsafe_allow_html=True)
 
         active_types = []
-        type_cols = st.columns([1, 1, 1, 1, 1, 1, 2])
+        type_cols = st.columns([1.2, 1.2, 1.2, 1, 1.5, 1, 6])
         for i, (vtype, (_, col_color)) in enumerate(VM_LINES.items()):
             with type_cols[i]:
                 checked = st.checkbox(vtype, value=(vtype == "Tanker"), key=f"vmix_type_{vtype}")
@@ -1597,7 +1597,7 @@ with tab_tanker:
         """, unsafe_allow_html=True)
 
         selected_timeline = "2026"
-        tl_cols = st.columns([1, 1, 1, 1, 4])
+        tl_cols = st.columns([0.8, 1.1, 1.1, 1.2, 8])
         for i, tl_label in enumerate(TIMELINE_OPTIONS.keys()):
             with tl_cols[i]:
                 if st.checkbox(tl_label, value=(tl_label == "2026"), key=f"vmix_tl_{tl_label}"):
