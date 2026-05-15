@@ -1205,6 +1205,7 @@ with tab_tanker:
         "2026-03-20": "IEA 400M bbl SPR release",
         "2026-04-08": "Ceasefire agreed",
         "2026-04-13": "US naval blockade",
+        "2026-04-16": "Ceasefire collapse",
     }
 
     # ── Section 1 — Current reading metric card ───────────────────────────────
@@ -1820,8 +1821,11 @@ with tab_lng:
     # LNG crisis events relevant to the spread chart
     LNG_EVENTS = {
         "2026-03-01": "Ras Laffan attack",
+        "2026-03-02": "Strait declared closed",
+        "2026-03-05": "P&I insurance withdrawn",
         "2026-03-16": "JKM>TTF inflection",
         "2026-04-08": "Ceasefire agreed",
+        "2026-04-13": "US naval blockade",
         "2026-04-15": "Spread peaks",
         "2026-04-16": "Ceasefire collapse",
     }
