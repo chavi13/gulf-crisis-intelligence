@@ -1629,7 +1629,15 @@ with tab_tanker:
                     selected_timeline = tl_label
 
         date_from = TIMELINE_OPTIONS[selected_timeline]
-        plot_df = vessel_mix_df[vessel_mix_df["date"] >= date_from]
+        plot_df = vessel_mix_df[vessel_mix_df["date"] >= date_from].copy()
+
+        # Merge crisis events for hover display
+        crisis_events_df = pd.DataFrame([
+            {"date": pd.Timestamp(k), "event": f"⚑ {v}"}
+            for k, v in CRISIS_EVENTS.items()
+        ])
+        plot_df = plot_df.merge(crisis_events_df, on="date", how="left")
+        plot_df["event"] = plot_df["event"].fillna("")
 
         # ── Build chart ───────────────────────────────────────────────────────
         fig_hist = go.Figure()
@@ -1646,7 +1654,8 @@ with tab_tanker:
                     width=2.5 if is_total else 2,
                     dash="dot" if is_total else "solid",
                 ),
-                hovertemplate=f"%{{x|%b %d, %Y}}<br>{line_label}: %{{y}}<extra></extra>",
+                customdata=plot_df["event"],
+                hovertemplate=f"<b>%{{x|%b %d, %Y}}</b><br>{line_label}: %{{y}}<br>%{{customdata}}<extra></extra>",
             ))
 
         # Crisis event annotations — only render if date is in visible range
@@ -1697,7 +1706,7 @@ with tab_tanker:
                 tickfont=dict(size=12, family="IBM Plex Mono"),
                 title=dict(text="Ships / day", font=dict(size=11)),
             ),
-            hovermode="x unified",
+            hovermode="closest",
         )
 
         st.plotly_chart(fig_hist, use_container_width=True)
