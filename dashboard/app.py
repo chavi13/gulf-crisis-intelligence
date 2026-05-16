@@ -825,16 +825,14 @@ def render_signal_panel(lng: dict, panel_id: str = "signals") -> str:
     )
 
     # ── Signal 2: EU storage pace ─────────────────────────────────────────────
-    sig2_on = storage_risk in ("AMBER", "RED")
+    sig2_on = storage_risk in ("AMBER", "RED", "ELEVATED", "CRITICAL")
     sig2_check = "signal-check-on" if sig2_on else "signal-check-off"
     sig2_icon  = "&#9745;" if sig2_on else "&#9744;"
     sig2_outcome_cls = "signal-outcome--stress" if sig2_on else "signal-outcome--easing"
-    if storage_risk == "RED":
-        sig2_outcome_txt = "RED risk"
-    elif storage_risk == "AMBER":
-        sig2_outcome_txt = "AMBER risk"
-    else:
-        sig2_outcome_txt = "on pace"
+    # Map internal DB vocabulary (RED/AMBER/GREEN) to display vocabulary
+    _risk_display = {"RED": "CRITICAL", "AMBER": "ELEVATED", "GREEN": "STABLE",
+                     "CRITICAL": "CRITICAL", "ELEVATED": "ELEVATED", "STABLE": "STABLE"}
+    sig2_outcome_txt = f"{_risk_display.get(storage_risk, storage_risk)} risk" if sig2_on else "on pace"
     sig2_text = (
         f"<strong>{storage_pct:.1f}%</strong> EU storage, "
         f"<strong>{days_def:.1f} days</strong> behind pace "
