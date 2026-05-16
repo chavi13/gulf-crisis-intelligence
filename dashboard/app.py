@@ -1653,7 +1653,7 @@ with tab_tanker:
                     name=line_label,
                     line=dict(color=color, width=2.5 if is_total else 2, dash="dot" if is_total else "solid"),
                     customdata=plot_df["event"],
-                    hovertemplate=f"<b>%{{x|%b %d, %Y}}</b><br>{line_label}: %{{y}}<br>%{{customdata}}<extra></extra>",
+                    hovertemplate=f"<b>%{{x|%b %d, %Y}}</b><br>{line_label}: %{{y}}<br><b>%{{customdata}}</b><extra></extra>",
                 ))
             else:
                 fig_hist.add_trace(go.Scatter(
