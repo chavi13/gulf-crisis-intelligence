@@ -1306,7 +1306,7 @@ with tab_tanker:
             fill="tozeroy",
             fillcolor="rgba(245,158,11,0.08)",
             customdata=transit_df["event"],
-            hovertemplate="%{x|%b %d, %Y}<br>%{y} ships<br><span style='color:#ef4444'>%{customdata}</span><extra>Transits</extra>",
+            hovertemplate="<b>%{x|%b %d, %Y}</b><br>%{y} ships/day<br>%{customdata}<extra></extra>",
         ))
 
         # Crisis event vertical lines — numbered markers instead of rotated text
@@ -1356,10 +1356,8 @@ with tab_tanker:
                 tickfont=dict(size=12, family="IBM Plex Mono"),
                 title=dict(text="Ships / day", font=dict(size=11)),
             ),
-            hovermode="x unified",
+            hovermode="closest",
         )
-
-        st.plotly_chart(fig_transit, use_container_width=True)
 
         # Numbered event legend — generated from CRISIS_EVENTS dict
         legend_spans = "".join(
