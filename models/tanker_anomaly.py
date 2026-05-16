@@ -510,6 +510,7 @@ def log_to_db(index: dict, trend: dict, dark: dict, anchorage: dict):
             datetime.now(timezone.utc).isoformat(),
         )
     )
+    conn.execute("UPDATE crisis_context SET last_updated = date('now')")
     conn.commit()
     conn.close()
 
