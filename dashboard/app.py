@@ -1280,6 +1280,14 @@ with tab_tanker:
     if not transit_df.empty:
         fig_transit = go.Figure()
 
+        # Merge crisis events into transit_df for hover display
+        crisis_events_df = pd.DataFrame([
+            {"date": pd.Timestamp(k), "event": f"⚑ {v}"}
+            for k, v in CRISIS_EVENTS.items()
+        ])
+        transit_df = transit_df.merge(crisis_events_df, on="date", how="left")
+        transit_df["event"] = transit_df["event"].fillna("")
+
         # Baseline reference line
         fig_transit.add_trace(go.Scatter(
             x=transit_df["date"],
@@ -1289,7 +1297,7 @@ with tab_tanker:
             hovertemplate="%{y:.0f} ships/day<extra>Baseline</extra>",
         ))
 
-        # Actual transit count — color changes at crisis threshold
+        # Actual transit count with event hover
         fig_transit.add_trace(go.Scatter(
             x=transit_df["date"],
             y=transit_df["transit_count"],
@@ -1297,7 +1305,8 @@ with tab_tanker:
             line=dict(color="#f59e0b", width=2.5),
             fill="tozeroy",
             fillcolor="rgba(245,158,11,0.08)",
-            hovertemplate="%{x|%b %d, %Y}<br>%{y} ships<extra>Transits</extra>",
+            customdata=transit_df["event"],
+            hovertemplate="%{x|%b %d, %Y}<br>%{y} ships<br><span style='color:#ef4444'>%{customdata}</span><extra>Transits</extra>",
         ))
 
         # Crisis event vertical lines — numbered markers instead of rotated text
