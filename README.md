@@ -25,14 +25,15 @@ Each metric has a defined methodology, a validated output, and a plain-English i
 ## System Architecture
 
 ```
-External APIs (EIA, GIE AGSI+, yfinance, AISStream)
+External APIs (EIA, GIE AGSI+, yfinance, AISStream, IMF PortWatch)
         │
         ▼
 ingestion/          ← fetch and store raw data only
     eia_ingestor.py
     gie_ingestor.py
     prices_ingestor.py
-    ais_ingestor.py  ← continuous background process
+    ais_ingestor.py       ← continuous background process
+    portwatch_ingestor.py ← weekly Hormuz transit counts (replaces Kaggle CSV)
         │
         ▼
 data/processed/gulf_data.db   ← SQLite, 7 tables
@@ -57,19 +58,19 @@ Ingestion and model logic are strictly separated. Ingestion scripts never comput
 
 ### Module 1 — Tanker Routing & AIS Anomaly Detection
 
-Tracks daily vessel transits through the Hormuz strait corridor using AIS position data. Computes a rolling 30-day baseline and flags z-score deviations above 2.0 as anomalous.
+Tracks daily vessel transits through the Hormuz strait corridor using AIS position data. Computes a full-year 2025 daily average baseline and flags z-score deviations above 1.5 as anomalous. Transit data sourced from IMF PortWatch ArcGIS API (2,687 rows, Jan 2019–present), which replaced the static Kaggle CSV in Phase 6.
 
 **Current reading (May 2026)**: 3.8% of normal. 2 ships/day vs. a pre-crisis baseline of 53. z-score of −4.5. Recovery trend: +0.3 transits/day. The ceasefire collapsed on April 16 and the US naval blockade announced April 13 remains active — both are suppressing the limited recovery that had been underway. Mine clearance — not diplomacy — is the binding constraint: Iran confirmed sea mines in the strait on April 8, and mine clearance is a physical process independent of ceasefire status.
 
-**Key metric**: `pct_of_normal` — daily transit count ÷ 30-day pre-crisis baseline × 100
+**Key metric**: `pct_of_normal` — daily transit count ÷ full-year 2025 daily average baseline × 100
 
-**Anomaly threshold**: z-score > 2.0 → ANOMALY; > 3.0 → CRITICAL
+**Anomaly threshold**: z-score > 1.5 → ANOMALY
 
 ### Module 2 — LNG Cargo Flow & Atlantic Basin Rebalancing
 
 Tracks the JKM-TTF price spread as the primary cargo routing signal. When JKM exceeds TTF by more than $2.00/MMBtu, US LNG cargoes are economically incentivised toward Asia rather than Europe. Monitors US export terminal utilization (8 terminals via EIA) and European gas storage (GIE AGSI+ daily data) as demand proxies.
 
-**Current reading (May 2026)**: Rebalancing score ELEVATED, confidence HIGH. JKM-TTF spread $1.219/MMBtu — below the $2.00 routing threshold, so routing signal is NEUTRAL. EU storage at 35.8%, 13.1 days behind seasonal pace. At current refill rate, the shortfall widens to ~15.7 days by mid-June, crossing the RED threshold. EU storage pace is deteriorating — 2.8 days behind pace added in 4 days (May 12→16). US terminal utilization at 113.6% — system running above nameplate capacity across 5 of 8 terminals.
+**Current reading (May 2026)**: Rebalancing score ELEVATED, confidence HIGH. JKM-TTF spread $1.219/MMBtu — below the $2.00 routing threshold, so routing signal is NEUTRAL. EU storage at 35.8%, 13.1 days behind seasonal pace. At current refill rate, the shortfall widens to ~15.7 days by mid-June, crossing the CRITICAL threshold. EU storage pace is deteriorating — 2.8 days behind pace added in 4 days (May 12→16). US terminal utilization at 113.6% — system running above nameplate capacity across 5 of 8 terminals.
 
 **Key metric**: LNG Cargo Pull Score — composite of spread direction, spread magnitude vs. threshold, and storage trajectory
 
@@ -93,7 +94,7 @@ Regional distribution (IEA destination shares):
   US:     small crude importer from Hormuz → STABLE
 ```
 
-**Risk labels**: RED = >15 days below seasonal norm; AMBER = 5–15 days; GREEN = within 5 days. These thresholds are documented analytical judgments, not industry standards.
+**EU storage risk labels** (applied to days-behind-pace metric): CRITICAL = >15 days below seasonal norm; ELEVATED = 5–15 days; STABLE = within 5 days. These thresholds are documented analytical judgments, not industry standards. Regional crude/LNG risk labels (Asia, Europe, US) are derived separately from gap magnitude relative to estimated total imports.
 
 ---
 
@@ -105,7 +106,8 @@ Regional distribution (IEA destination shares):
 | GIE AGSI+ API | European gas storage by country, daily | Free API key | 1–2 days |
 | yfinance | JKM futures, TTF futures, Brent crude | Free, no key | Same day |
 | AISStream.io | Vessel position messages, Gulf region | Free API key | Near real-time |
-| Kaggle AIS dataset | Historical AIS backfill (Jan–May 2026) | Free download | Static |
+| IMF PortWatch ArcGIS API | Hormuz daily transit counts by vessel type, Jan 2019–present | Free, no key | ~4 days |
+| Kaggle AIS dataset | Historical AIS backfill (Jan–May 2026) — static snapshot, retired as primary transit source | Free download | Static |
 | IEA Strait of Hormuz Factsheet | Baseline flow figures, destination shares, bypass capacity | Public PDF | Feb 2026 |
 
 ---
@@ -129,8 +131,8 @@ Regional distribution (IEA destination shares):
 **Known limitations:**
 
 - **EIA publication lag**: `lng_export_volumes` data stops at February 2026. Crisis-period US export data is not yet published. Terminal utilization chart reflects pre-crisis state only — labeled clearly in the dashboard.
-- **AIS vessel positions sparse**: Free-tier AISStream provides limited historical depth. Dark event detection logic is complete; output will populate as data accumulates. The transit index uses a Kaggle historical dataset as backfill.
-- **No vessel type split**: AIS PositionReport messages do not include ShipType. The 7.8% pct_of_normal figure covers all vessel types, not tankers exclusively. LNG carriers and crude tankers may have been disrupted at different rates.
+- **AIS vessel positions sparse**: Free-tier AISStream provides limited historical depth. Dark event detection logic is complete; output will populate as data accumulates. The transit index uses IMF PortWatch API data (2,687 rows, Jan 2019–present) — Kaggle CSV retired in Phase 6.
+- **No vessel-level data from PortWatch**: IMF PortWatch provides aggregate daily counts by vessel type only — no MMSI, vessel names, or individual positions. Vessel type breakdown (tanker, container, dry bulk, RoRo, general cargo) is available; individual vessel tracking is not.
 - **Asia risk labels are proxy estimates**: No free-tier Asian LNG or crude storage data is available. Asia risk labels are derived from gap magnitude relative to estimated total imports, not measured storage. Europe uses real GIE AGSI+ data.
 - **Bypass pipeline data is static**: No live throughput feed exists for the Saudi East-West Pipeline or UAE ADCOP. Model uses IEA's stated available capacity range and documents this explicitly.
 - **SPR rate is announced, not confirmed live**: The 3.0 Mb/d IEA total release is the planned rate. Actual delivery lags 2–4 weeks from announcement.
@@ -148,10 +150,11 @@ gulf-crisis-intelligence/
 │       ├── geofences.py            ← Hormuz strait polygon definitions
 │       └── lng_terminals.py        ← terminal nameplate capacities
 ├── ingestion/
-│   ├── ais_ingestor.py
+│   ├── ais_ingestor.py             ← continuous background process
 │   ├── eia_ingestor.py
 │   ├── gie_ingestor.py
 │   ├── prices_ingestor.py
+│   ├── portwatch_ingestor.py       ← IMF PortWatch transit data (replaces Kaggle CSV)
 │   ├── run_all.py                  ← daily scheduler
 │   └── setupdb.py                  ← schema initialisation
 ├── models/
@@ -186,6 +189,8 @@ The Streamlit dashboard (`dashboard/app.py`) has four tabs — Overview, Tanker 
 **Cross-module event consistency** — Crisis events are now consistent across the Tanker and LNG charts. Shared geopolitical events (Strait declared closed, P&I insurance withdrawn, Ceasefire agreed, US naval blockade, Ceasefire collapse) appear on both charts. Module-specific events (Brent peaks, SPR release on tanker; JKM inflection, Spread peaks on LNG) remain separate.
 
 ---
+
+## Running Locally
 
 ```bash
 git clone https://github.com/chavi13/gulf-crisis-intelligence.git
