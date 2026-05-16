@@ -1041,7 +1041,7 @@ with st.sidebar:
         <div class="section-header" style="margin-top:0;">Data Sources</div>
         <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.78rem;
                     color:#8a9bb5;line-height:1.8;">
-            AIS transit data — Kaggle / IMF PortWatch<br>
+            AIS transit data — IMF PortWatch<br>
             LNG prices — yfinance (JKM=F, TTF)<br>
             US LNG exports — EIA Open Data API<br>
             EU gas storage — GIE AGSI+<br>
