@@ -2645,11 +2645,11 @@ with tab_gap:
             <br><br>
 
             <b style="color:#e8edf5;">Risk label thresholds (analytical judgment):</b><br>
-            RED: &gt;15 days below seasonal norm |
-            AMBER: 5–15 days below seasonal norm |
-            GREEN: within 5 days of seasonal norm.<br>
+            CRITICAL: &gt;15 days below seasonal norm |
+            ELEVATED: 5–15 days below seasonal norm |
+            STABLE: within 5 days of seasonal norm.<br>
             These are documented judgment calls, not externally defined standards.
-            The 15-day RED threshold is consistent with EU energy emergency
+            The 15-day CRITICAL threshold is consistent with EU energy emergency
             framework alert-level guidance.
             <br><br>
 
@@ -2659,8 +2659,9 @@ with tab_gap:
             • Europe LNG risk uses real GIE AGSI+ storage data.<br>
             • Bypass pipeline capacity is static reference data — no live
             throughput feed available.<br>
-            • Same pct_of_normal applied to both crude and LNG disruption —
-            vessel-type split unavailable on free tier.<br>
+            • Vessel-type breakdown (tanker, container, dry bulk, RoRo, general cargo)
+            is available via IMF PortWatch — but individual vessel-level data
+            (MMSI, positions, names) is not available on the free tier.<br>
             • SPR rate is the announced planned rate, not confirmed live delivery.
 
             </div>
