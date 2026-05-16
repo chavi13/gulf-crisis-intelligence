@@ -1642,21 +1642,27 @@ with tab_tanker:
         # ── Build chart ───────────────────────────────────────────────────────
         fig_hist = go.Figure()
 
-        for line_label in active_types:
+        for idx, line_label in enumerate(active_types):
             col, color = VM_LINES[line_label]
             is_total = (col == "n_total")
-            fig_hist.add_trace(go.Scatter(
-                x=plot_df["date"],
-                y=plot_df[col],
-                name=line_label,
-                line=dict(
-                    color=color,
-                    width=2.5 if is_total else 2,
-                    dash="dot" if is_total else "solid",
-                ),
-                customdata=plot_df["event"],
-                hovertemplate=f"<b>%{{x|%b %d, %Y}}</b><br>{line_label}: %{{y}}<br>%{{customdata}}<extra></extra>",
-            ))
+            # Show event label only on first trace to avoid repetition in unified hover
+            if idx == 0:
+                fig_hist.add_trace(go.Scatter(
+                    x=plot_df["date"],
+                    y=plot_df[col],
+                    name=line_label,
+                    line=dict(color=color, width=2.5 if is_total else 2, dash="dot" if is_total else "solid"),
+                    customdata=plot_df["event"],
+                    hovertemplate=f"<b>%{{x|%b %d, %Y}}</b><br>{line_label}: %{{y}}<br>%{{customdata}}<extra></extra>",
+                ))
+            else:
+                fig_hist.add_trace(go.Scatter(
+                    x=plot_df["date"],
+                    y=plot_df[col],
+                    name=line_label,
+                    line=dict(color=color, width=2.5 if is_total else 2, dash="dot" if is_total else "solid"),
+                    hovertemplate=f"{line_label}: %{{y}}<extra></extra>",
+                ))
 
         # Crisis event annotations — only render if date is in visible range
         for i, (date_str, label) in enumerate(CRISIS_EVENTS.items(), 1):
@@ -1706,7 +1712,7 @@ with tab_tanker:
                 tickfont=dict(size=12, family="IBM Plex Mono"),
                 title=dict(text="Ships / day", font=dict(size=11)),
             ),
-            hovermode="closest",
+            hovermode="x unified",
         )
 
         st.plotly_chart(fig_hist, use_container_width=True)
