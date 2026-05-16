@@ -1,5 +1,7 @@
 # Gulf Crisis Supply Intelligence System
 
+*Last updated: May 16, 2026*
+
 A multi-module supply intelligence dashboard tracking tanker routing anomalies, LNG cargo rebalancing, and regional supply gap quantification during the 2026 Strait of Hormuz crisis.
 
 **Live dashboard**: [gulf-crisis-intelligence.streamlit.app](https://gulf-crisis-intelligence.streamlit.app)
@@ -57,7 +59,7 @@ Ingestion and model logic are strictly separated. Ingestion scripts never comput
 
 Tracks daily vessel transits through the Hormuz strait corridor using AIS position data. Computes a rolling 30-day baseline and flags z-score deviations above 2.0 as anomalous.
 
-**Current reading (May 2026)**: 7.8% of normal. 8 ships/day vs. a pre-crisis baseline of 102.69. z-score of −22.2 — historically extreme. Recovery trend: +0.5 transits/day. At this rate, 50% of normal traffic would not resume for approximately 190 days. Mine clearance — not diplomacy — is the binding constraint: Iran confirmed sea mines in the strait on April 8, and mine clearance is a physical process independent of ceasefire status.
+**Current reading (May 2026)**: 3.8% of normal. 2 ships/day vs. a pre-crisis baseline of 53. z-score of −4.5. Recovery trend: +0.3 transits/day. The ceasefire collapsed on April 16 and the US naval blockade announced April 13 remains active — both are suppressing the limited recovery that had been underway. Mine clearance — not diplomacy — is the binding constraint: Iran confirmed sea mines in the strait on April 8, and mine clearance is a physical process independent of ceasefire status.
 
 **Key metric**: `pct_of_normal` — daily transit count ÷ 30-day pre-crisis baseline × 100
 
@@ -67,7 +69,7 @@ Tracks daily vessel transits through the Hormuz strait corridor using AIS positi
 
 Tracks the JKM-TTF price spread as the primary cargo routing signal. When JKM exceeds TTF by more than $2.00/MMBtu, US LNG cargoes are economically incentivised toward Asia rather than Europe. Monitors US export terminal utilization (8 terminals via EIA) and European gas storage (GIE AGSI+ daily data) as demand proxies.
 
-**Current reading (May 2026)**: Rebalancing score DEFICIT, confidence HIGH. JKM-TTF spread $1.198/MMBtu — below the $2.00 routing threshold, so routing signal is NEUTRAL. EU storage at 35.0%, 10.3 days behind seasonal pace. At current refill rate, the shortfall widens to ~15.7 days by mid-June, crossing the RED threshold. US terminal utilization at 113.6% — system running above nameplate capacity across 5 of 8 terminals.
+**Current reading (May 2026)**: Rebalancing score ELEVATED, confidence HIGH. JKM-TTF spread $1.219/MMBtu — below the $2.00 routing threshold, so routing signal is NEUTRAL. EU storage at 35.8%, 13.1 days behind seasonal pace. At current refill rate, the shortfall widens to ~15.7 days by mid-June, crossing the RED threshold. EU storage pace is deteriorating — 2.8 days behind pace added in 4 days (May 12→16). US terminal utilization at 113.6% — system running above nameplate capacity across 5 of 8 terminals.
 
 **Key metric**: LNG Cargo Pull Score — composite of spread direction, spread magnitude vs. threshold, and storage trajectory
 
@@ -80,15 +82,15 @@ Capacity accounting, not prediction. Takes the current Hormuz throughput (from M
 **Formula**:
 ```
 Normal Hormuz crude flow: 15.0 Mb/d (IEA)
-× Current disruption: 7.8% flowing = 12.3 Mb/d disrupted volume
+× Current disruption: 3.8% flowing = ~14.4 Mb/d disrupted volume
 − Bypass capacity: 3.5–5.5 Mb/d available (IEA) → midpoint 4.5 Mb/d
 − SPR release: 3.0 Mb/d total IEA (US Energy Secretary, CERAWeek March 23 2026)
-= Net crude gap: ~6.3 Mb/d
+= Net crude gap: ~6.93 Mb/d
 
 Regional distribution (IEA destination shares):
-  Asia:   80% crude → ~5.0 Mb/d shortfall → RED
-  Europe:  4% crude → ~0.25 Mb/d shortfall → AMBER (disproportionate LNG exposure)
-  US:     small crude importer from Hormuz → GREEN
+  Asia:   80% crude → ~5.0 Mb/d shortfall → CRITICAL
+  Europe:  4% crude → ~0.25 Mb/d shortfall → ELEVATED (disproportionate LNG exposure)
+  US:     small crude importer from Hormuz → STABLE
 ```
 
 **Risk labels**: RED = >15 days below seasonal norm; AMBER = 5–15 days; GREEN = within 5 days. These thresholds are documented analytical judgments, not industry standards.
@@ -167,7 +169,23 @@ gulf-crisis-intelligence/
 
 ---
 
-## Running Locally
+## Dashboard Features
+
+The Streamlit dashboard (`dashboard/app.py`) has four tabs — Overview, Tanker Module, Supply Gap, LNG Module — with the following notable features:
+
+**Signal breakdown panel** — The LNG Market State card includes an expandable "Why ELEVATED · HIGH confidence" panel showing the three signals that produced the score (US utilization threshold, EU storage pace, routing signal), each with a checkbox indicating whether it is stressed. Confidence level is derived automatically from how many signals are in the stress direction.
+
+**Interactive tooltips** — Three KPI cards (LNG Gap, EU Storage, US Utilization) include ⓘ tooltip icons explaining the methodology behind each metric.
+
+**Date range slider** — The JKM–TTF spread chart includes a draggable date range slider. Narrowing to a specific period (e.g. March 2026) spreads out clustered event annotations for readability. The event legend below the chart filters to match the selected range.
+
+**Event hover tooltips** — Hovering on any date in the JKM–TTF chart that coincides with a crisis event shows the event name in the price tooltip (e.g. `⚑ Strait declared closed`).
+
+**Vessel type checkboxes** — The Historical Transit chart allows toggling individual vessel types (Tanker, Container, Dry Bulk, RoRo, General Cargo, Total) and timeline range via checkboxes.
+
+**Cross-module event consistency** — Crisis events are now consistent across the Tanker and LNG charts. Shared geopolitical events (Strait declared closed, P&I insurance withdrawn, Ceasefire agreed, US naval blockade, Ceasefire collapse) appear on both charts. Module-specific events (Brent peaks, SPR release on tanker; JKM inflection, Spread peaks on LNG) remain separate.
+
+---
 
 ```bash
 git clone https://github.com/chavi13/gulf-crisis-intelligence.git
@@ -204,4 +222,6 @@ A GitHub Actions workflow (`.github/workflows/daily_update.yml`) runs the full i
 | 2026-03-20 | IEA coordinates 400M bbl SPR release |
 | 2026-04-08 | Ceasefire agreed |
 | 2026-04-13 | US naval blockade of Iranian ports announced |
-| May 2026 | Ship traffic still >90% below pre-crisis levels; mine clearance ongoing |
+| 2026-04-15 | JKM–TTF spread peaks at $4.86/MMBtu |
+| 2026-04-16 | Ceasefire collapse — diplomatic progress reset |
+| May 2026 | Ship traffic still >96% below pre-crisis levels; mine clearance ongoing; US naval blockade active |
