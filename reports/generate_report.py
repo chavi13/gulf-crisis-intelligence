@@ -145,7 +145,8 @@ def _styles():
             fontName="Helvetica-Bold",
             fontSize=16,
             textColor=AMBER,
-            spaceAfter=1,
+            leading=20,
+            spaceAfter=6,
             alignment=TA_CENTER,
         ),
         "metric_label": ParagraphStyle(
