@@ -254,7 +254,7 @@ button[kind="header"]:hover {
 .card--kpi .card-label {
     margin-bottom: 0.3rem;
     flex-shrink: 0;
-    min-height: 2.4rem;
+    min-height: 3.2rem;
     display: flex;
     align-items: flex-start;
 }
@@ -1211,7 +1211,7 @@ with tab_overview:
         <div class="card-sub">Bcf/d — no pipeline bypass available</div>
     </div>
     <div class="card card--kpi">
-        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;white-space:nowrap;">EU Storage vs Seasonal<span class="has-tooltip" style="cursor:help;flex-shrink:0;white-space:nowrap;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">EU gas storage vs the 5-year seasonal average (2020–2024) for this calendar date. Not a fixed target — shows how far below where Europe normally is at this time of year. Normal mid-May storage is ~51–53%; current is ~36%.</span></span></div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">EU Storage vs Seasonal<span class="has-tooltip" style="cursor:help;flex-shrink:0;white-space:nowrap;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">EU gas storage vs the 5-year seasonal average (2020–2024) for this calendar date. Not a fixed target — shows how far below where Europe normally is at this time of year. Normal mid-May storage is ~51–53%; current is ~36%.</span></span></div>
         <div class="card-value-slot kpi-storage-row">
             <div class="card-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
             <span class="kpi-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
