@@ -102,7 +102,7 @@ def _styles():
             textColor=TEXT_PRIMARY,
             spaceAfter=2,
             spaceBefore=0,
-            leading=26,
+            leading=28,
             alignment=TA_LEFT,
         ),
         "report_subtitle": ParagraphStyle(
@@ -252,7 +252,7 @@ def _badge_cell(label, S):
 
 
 def _hr():
-    return HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceAfter=6, spaceBefore=6)
+    return HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceAfter=6, spaceBefore=14)
 
 
 def _section(title, S):
