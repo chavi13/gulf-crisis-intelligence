@@ -1089,7 +1089,7 @@ with st.sidebar:
 
 tab_overview, tab_tanker, tab_gap, tab_lng = st.tabs([
     "⬡  Overview",
-    "🚢  Tanker Module",
+    "🚢  Vessel Transits",
     "📊  Supply Gap",
     "🔥  LNG Module",
 ])
@@ -1446,7 +1446,7 @@ with tab_tanker:
                 label_color  = "#8a9bb5"
 
             status_text  = "⚠ ANOMALY" if is_anomaly else "NORMAL"
-            status_color = "#ef4444"   if is_anomaly else "#22c55e"
+            status_color = "#f59e0b"   if is_anomaly else "#22c55e"
 
             today_str    = str(today)    if today    is not None else "—"
             baseline_str = f"{baseline:.1f}" if baseline is not None else "—"
@@ -1650,9 +1650,27 @@ with tab_tanker:
                 if st.checkbox(tl_label, value=(tl_label == "2026"), key=f"vmix_tl_{tl_label}"):
                     selected_timeline = tl_label
 
-        date_from = TIMELINE_OPTIONS[selected_timeline]
-        plot_df = vessel_mix_df[vessel_mix_df["date"] >= date_from].copy()
+       
 
+        from datetime import date as _date
+        date_from = TIMELINE_OPTIONS[selected_timeline]
+        _min_date = pd.to_datetime(date_from).date()
+        _max_date = vessel_mix_df["date"].max().date() if not vessel_mix_df.empty else _date.today()
+
+        tanker_slider_range = st.slider(
+            "Date range",
+            min_value=_min_date,
+            max_value=_max_date,
+            value=(_min_date, _max_date),
+            format="MMM YYYY",
+            label_visibility="collapsed",
+            key="tanker_date_range",
+        )
+        _t_from, _t_to = tanker_slider_range
+        plot_df = vessel_mix_df[
+            (vessel_mix_df["date"] >= pd.Timestamp(_t_from)) &
+            (vessel_mix_df["date"] <= pd.Timestamp(_t_to))
+        ].copy()
         # Merge crisis events for hover display
         crisis_events_df = pd.DataFrame([
             {"date": pd.Timestamp(k), "event": f"⚑ {v}"}
@@ -1688,7 +1706,8 @@ with tab_tanker:
 
         # Crisis event annotations — only render if date is in visible range
         for i, (date_str, label) in enumerate(CRISIS_EVENTS.items(), 1):
-            if date_str >= date_from:
+            if _t_from <= pd.Timestamp(date_str).date() <= _t_to:
+
                 fig_hist.add_shape(
                     type="line",
                     x0=date_str, x1=date_str,
@@ -1740,7 +1759,8 @@ with tab_tanker:
         st.plotly_chart(fig_hist, use_container_width=True)
 
         # Numbered event legend — only for visible events
-        visible_events = [(i, label) for i, (date_str, label) in enumerate(CRISIS_EVENTS.items(), 1) if date_str >= date_from]
+        visible_events = [(i, label) for i, (date_str, label) in enumerate(CRISIS_EVENTS.items(), 1) if _t_from <= pd.Timestamp(date_str).date() <= _t_to
+]
         if visible_events:
             legend_spans = "".join(
                 f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{label}</span>'
