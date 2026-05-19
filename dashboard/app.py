@@ -54,7 +54,6 @@ st.set_page_config(
 # ══════════════════════════════════════════════════════════════════════════════
 # STYLING — dark terminal theme injected via markdown
 # ══════════════════════════════════════════════════════════════════════════════
-
 st.markdown("""
 <style>
 /* ── Google Font import ─────────────────────────────────────────── */
@@ -150,6 +149,7 @@ section.main {
     text-transform: uppercase;
     padding: 0.75rem 1.5rem;
     border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-bottom-color 0.2s ease; /* ✦ ANIMATION — smooth tab colour shift */
 }
 .stTabs [aria-selected="true"] {
     color: var(--accent-amber) !important;
@@ -159,6 +159,16 @@ section.main {
 .stTabs [data-baseweb="tab-panel"] {
     padding-top: 1rem !important;
 }
+
+/* ✦ ANIMATION — fade-in when tab content loads */
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.stTabs [data-baseweb="tab-panel"] > div {
+    animation: fadein 0.3s ease forwards;
+}
+
 section[data-testid="stSidebar"] {
     background-color: var(--bg-secondary);
     border-right: 1px solid var(--border);
@@ -214,6 +224,11 @@ button[kind="header"]:hover {
     overflow: visible;
     display: flex;
     flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* ✦ ANIMATION — hover lift */
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 
 /* Primary — tanker anomaly hero (red-tint border, dark gradient) */
@@ -443,6 +458,17 @@ table.supply-gap-table td { text-align: center !important; vertical-align: middl
     line-height: 1.7;
 }
 
+/* ✦ ANIMATION — blinking terminal cursor (append ▌ span inside thesis-text in Python) */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+}
+.thesis-cursor {
+    animation: blink 1s step-end infinite;
+    color: var(--accent-amber);
+    font-weight: 300;
+}
+
 /* ── Risk badges ────────────────────────────────────────────────── */
 .badge-red, .badge-amber, .badge-green, .badge-critical {
     display: inline-block;
@@ -456,7 +482,14 @@ table.supply-gap-table td { text-align: center !important; vertical-align: middl
 .badge-red      { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.4);  }
 .badge-amber    { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.4); }
 .badge-green    { background: rgba(34,197,94,0.15);  color: #22c55e; border: 1px solid rgba(34,197,94,0.4);  }
-.badge-critical { background: rgba(239,68,68,0.25);  color: #ff6b6b; border: 1px solid rgba(239,68,68,0.6);  }
+.badge-critical { background: rgba(239,68,68,0.25);  color: #ff6b6b; border: 1px solid rgba(239,68,68,0.6);
+                  animation: pulse-critical 2s ease-in-out infinite; } /* ✦ ANIMATION — pulsing glow */
+
+/* ✦ ANIMATION — pulse keyframe for critical badge */
+@keyframes pulse-critical {
+    0%, 100% { box-shadow: 0 0 4px rgba(239,68,68,0.4); }
+    50%       { box-shadow: 0 0 14px rgba(239,68,68,0.85); }
+}
 
 /* ── Section headers ────────────────────────────────────────────── */
 .section-header {
@@ -738,7 +771,6 @@ details.signal-panel summary:hover { color: var(--text-primary); }
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HELPERS
