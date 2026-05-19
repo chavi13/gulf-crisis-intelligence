@@ -723,6 +723,19 @@ details.signal-panel summary:hover { color: var(--text-primary); }
     letter-spacing: 0.04em;
 }
 .signal-panel-footer strong { color: var(--text-secondary); }
+
+/* ── Download button — amber ────────────────────────────────────── */
+[data-testid="stDownloadButton"] > button {
+    background-color: #f59e0b !important;
+    color: #0a0e1a !important;
+    border: none !important;
+    font-weight: 600 !important;
+    width: 100% !important;
+}
+[data-testid="stDownloadButton"] > button:hover {
+    background-color: #d97706 !important;
+    color: #0a0e1a !important;
+}
 </style>
 """, unsafe_allow_html=True)
 

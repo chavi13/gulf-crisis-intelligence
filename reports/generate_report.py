@@ -98,17 +98,21 @@ def _styles():
         "report_title": ParagraphStyle(
             "report_title",
             fontName="Helvetica-Bold",
-            fontSize=18,
+            fontSize=20,
             textColor=TEXT_PRIMARY,
-            spaceAfter=2,
+            spaceAfter=6,
+            spaceBefore=0,
+            leading=24,
             alignment=TA_LEFT,
         ),
         "report_subtitle": ParagraphStyle(
             "report_subtitle",
             fontName="Helvetica",
-            fontSize=9,
+            fontSize=8,
             textColor=TEXT_SEC,
-            spaceAfter=6,
+            spaceAfter=10,
+            spaceBefore=2,
+            leading=12,
             alignment=TA_LEFT,
         ),
         "section_header": ParagraphStyle(
@@ -116,8 +120,8 @@ def _styles():
             fontName="Helvetica-Bold",
             fontSize=7,
             textColor=AMBER,
-            spaceBefore=10,
-            spaceAfter=4,
+            spaceBefore=14,
+            spaceAfter=3,
             letterSpacing=1.5,
         ),
         "thesis_text": ParagraphStyle(
@@ -133,8 +137,8 @@ def _styles():
             fontName="Helvetica",
             fontSize=8,
             textColor=TEXT_SEC,
-            leading=12,
-            spaceAfter=4,
+            leading=13,
+            spaceAfter=5,
         ),
         "metric_value": ParagraphStyle(
             "metric_value",
@@ -456,11 +460,17 @@ def _build_page1(story, S, tanker, lng, gap, crisis, report_date):
 
     # ── Report header ──────────────────────────────────────────────────────────
     story.append(Paragraph("Gulf Crisis Supply Intelligence", S["report_title"]))
+    # Format raw ISO timestamp to readable form e.g. "2026-05-19 07:26 UTC"
+    raw_ts = tanker.get("logged_at") or ""
+    try:
+        ts_clean = raw_ts[:16].replace("T", " ") + " UTC" if raw_ts else "unknown"
+    except Exception:
+        ts_clean = raw_ts
     story.append(Paragraph(
-        f"Weekly Situation Report  ·  {report_date}  ·  "
-        f"Data pipeline last run: {tanker.get('logged_at', 'N/A')}",
+        f"Weekly Situation Report  ·  {report_date}  ·  Pipeline last run: {ts_clean}",
         S["report_subtitle"]
     ))
+    story.append(Spacer(1, 4))
     story.append(_hr())
 
     # ── Crisis context summary ─────────────────────────────────────────────────
