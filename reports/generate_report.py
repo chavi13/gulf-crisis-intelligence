@@ -100,9 +100,9 @@ def _styles():
             fontName="Helvetica-Bold",
             fontSize=20,
             textColor=TEXT_PRIMARY,
-            spaceAfter=6,
+            spaceAfter=2,
             spaceBefore=0,
-            leading=24,
+            leading=26,
             alignment=TA_LEFT,
         ),
         "report_subtitle": ParagraphStyle(
@@ -111,8 +111,8 @@ def _styles():
             fontSize=8,
             textColor=TEXT_SEC,
             spaceAfter=10,
-            spaceBefore=2,
-            leading=12,
+            spaceBefore=4,
+            leading=14,
             alignment=TA_LEFT,
         ),
         "section_header": ParagraphStyle(
