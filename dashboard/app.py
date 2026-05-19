@@ -836,7 +836,7 @@ def render_signal_panel(lng: dict, panel_id: str = "signals") -> str:
     sig2_text = (
         f"<strong>{storage_pct:.1f}%</strong> EU storage, "
         f"<strong>{days_def:.1f} days</strong> behind pace "
-        f"<span style='color:#4a5a72;'>&rarr; {seasonal_def:.1f} pts below seasonal avg</span>"
+        f"<span style='color:#4a5a72;'>&rarr; {seasonal_def:.1f} % below seasonal avg</span>"
     )
 
     # ── Signal 3: Routing signal ──────────────────────────────────────────────
@@ -1185,20 +1185,20 @@ with tab_overview:
         <div class="card-sub">Mb/d after bypass + SPR offsets</div>
     </div>
     <div class="card card--kpi">
-        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">LNG Gap (Asia)<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">Volume of LNG that would normally transit Hormuz to Asia daily, now offline. Derived: 10.8 Bcf/d normal Hormuz LNG flow (IEA 2025) × 90% Asia destination share × ~96% disruption rate. Bcf/d = billion cubic feet per day, the standard US gas flow unit.</span></span></div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">LNG Gap (Asia)<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">Volume of LNG that would normally transit Hormuz to Asia daily, now offline. Derived: 10.8 Bcf/d normal Hormuz LNG flow (IEA 2025) × 90% Asia destination share × ~96% disruption rate. Bcf/d = billion cubic feet per day, the standard US gas flow unit.</span></span></div>
         <div class="card-value-slot"><div class="card-value">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div></div>
         <div class="card-sub">Bcf/d — no pipeline bypass available</div>
     </div>
     <div class="card card--kpi">
-        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;white-space:nowrap;">EU Storage vs Seasonal<span class="has-tooltip" style="cursor:help;flex-shrink:0;white-space:nowrap;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">EU gas storage vs the 5-year seasonal average (2020–2024) for this calendar date. Not a fixed target — shows how far below where Europe normally is at this time of year. Normal mid-May storage is ~51–53%; current is ~36%.</span></span></div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;white-space:nowrap;">EU Storage vs Seasonal<span class="has-tooltip" style="cursor:help;flex-shrink:0;white-space:nowrap;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">EU gas storage vs the 5-year seasonal average (2020–2024) for this calendar date. Not a fixed target — shows how far below where Europe normally is at this time of year. Normal mid-May storage is ~51–53%; current is ~36%.</span></span></div>
         <div class="card-value-slot kpi-storage-row">
             <div class="card-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
             <span class="kpi-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
         </div>
-        <div class="card-sub">{safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg</div>
+        <div class="card-sub">{safe(lng.get("seasonal_deficit"), "{:.1f} %")} below seasonal avg</div>
     </div>
     <div class="card card--kpi">
-        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">US LNG Utilization<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.65rem;color:var(--text-muted);border:1px solid var(--text-muted);border-radius:50%;padding:0 0.28rem;">i</span><span class="tooltip-text" style="width:260px;">Actual LNG exports as % of nameplate liquefaction capacity across 8 US terminals (EIA data, Feb 2026). Above 100% means terminals are exceeding their design baseline — less maintenance downtime, trains at peak output. No spare capacity remains to offset the Hormuz LNG loss.</span></span></div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">US LNG Utilization<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">Actual LNG exports as % of nameplate liquefaction capacity across 8 US terminals (EIA data, Feb 2026). Above 100% means terminals are exceeding their design baseline — less maintenance downtime, trains at peak output. No spare capacity remains to offset the Hormuz LNG loss.</span></span></div>
         <div class="card-value-slot"><div class="card-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div></div>
         <div class="card-sub">System at maximum — no relief capacity</div>
     </div>
@@ -1850,7 +1850,7 @@ with tab_lng:
                     {safe(lng.get("days_deficit"), "{:.1f} days")} behind required pace
                 </div>
                 <div class="card-sub" style="margin-top:0.3rem;">
-                    {safe(lng.get("seasonal_deficit"), "{:.1f} pts")} below seasonal avg
+                    {safe(lng.get("seasonal_deficit"), "{:.1f} %")} below seasonal avg
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -2318,7 +2318,7 @@ with tab_lng:
                     </div>
                     <b style="color:#e8edf5;">Why November 1?</b> EU law requires storage at 90% before winter. This buffer covers
                     demand spikes and supply disruptions. Missing it means higher prices, potential rationing, and
-                    greater vulnerability to geopolitical pressure. Currently 35% — 17 pts below seasonal average
+                    greater vulnerability to geopolitical pressure. Currently 35% — 17 % below seasonal average
                     and 10.3 days behind the required injection pace to meet the EU's 90% by November 1 mandate.
                     <br><br>
                     <b style="color:#a78bfa;">Year-on-year comparison:</b> Storage on the same date last year (May 11, 2025)
