@@ -1086,54 +1086,54 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Weekly Report download ────────────────────────────────────────────
-st.markdown("""
-    <div class="section-header" style="margin-top:0;">Weekly Report</div>
-""", unsafe_allow_html=True)
+    st.markdown("""
+        <div class="section-header" style="margin-top:0;">Weekly Report</div>
+    """, unsafe_allow_html=True)
 
-if st.button("📄 Generate PDF Report", use_container_width=True):
-    with st.spinner("Building report..."):
-        try:
-            _proj_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            if _proj_root not in sys.path:
-                sys.path.insert(0, _proj_root)
-            from reports.generate_report import build_report_bytes
-            pdf_bytes = build_report_bytes()
-            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            st.download_button(
-                label="⬇ Download Report",
-                data=pdf_bytes,
-                file_name=f"gulf_crisis_weekly_{date_str}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-            )
-        except ImportError as e:
-            st.error(f"Missing dependency: {e}\n\nRun: pip install reportlab plotly kaleido")
-        except Exception as e:
-            st.error(f"Report generation failed: {e}")
-
-# ── Past Reports archive ──────────────────────────────────────────────
-from pathlib import Path as _Path
-_archive_dir = _Path(__file__).resolve().parent.parent / "reports" / "archive"
-if _archive_dir.exists():
-    _past = sorted(_archive_dir.glob("gulf_crisis_weekly_*.pdf"), reverse=True)
-    if _past:
-        st.markdown("""
-            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.75rem;
-                        color:#8a9bb5;margin-top:0.75rem;margin-bottom:0.4rem;">
-                Past Reports
-            </div>
-        """, unsafe_allow_html=True)
-        for _pdf in _past[:8]:
-            _label = _pdf.stem.replace("gulf_crisis_weekly_", "")
-            with open(_pdf, "rb") as _f:
+    if st.button("📄 Generate PDF Report", use_container_width=True):
+        with st.spinner("Building report..."):
+            try:
+                _proj_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if _proj_root not in sys.path:
+                    sys.path.insert(0, _proj_root)
+                from reports.generate_report import build_report_bytes
+                pdf_bytes = build_report_bytes()
+                date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
                 st.download_button(
-                    label=f"⬇ {_label}",
-                    data=_f.read(),
-                    file_name=_pdf.name,
+                    label="⬇ Download Report",
+                    data=pdf_bytes,
+                    file_name=f"gulf_crisis_weekly_{date_str}.pdf",
                     mime="application/pdf",
                     use_container_width=True,
-                    key=f"past_report_{_label}",
                 )
+            except ImportError as e:
+                st.error(f"Missing dependency: {e}\n\nRun: pip install reportlab plotly kaleido")
+            except Exception as e:
+                st.error(f"Report generation failed: {e}")
+
+    # ── Past Reports archive ──────────────────────────────────────────────
+    from pathlib import Path as _Path
+    _archive_dir = _Path(__file__).resolve().parent.parent / "reports" / "archive"
+    if _archive_dir.exists():
+        _past = sorted(_archive_dir.glob("gulf_crisis_weekly_*.pdf"), reverse=True)
+        if _past:
+            st.markdown("""
+                <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.75rem;
+                            color:#8a9bb5;margin-top:0.75rem;margin-bottom:0.4rem;">
+                    Past Reports
+                </div>
+            """, unsafe_allow_html=True)
+            for _pdf in _past[:8]:
+                _label = _pdf.stem.replace("gulf_crisis_weekly_", "")
+                with open(_pdf, "rb") as _f:
+                    st.download_button(
+                        label=f"⬇ {_label}",
+                        data=_f.read(),
+                        file_name=_pdf.name,
+                        mime="application/pdf",
+                        use_container_width=True,
+                        key=f"past_report_{_label}",
+                    )
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
