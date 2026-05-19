@@ -15,6 +15,9 @@ Hormuz transit index: **3.8% of normal** (2 ships/day vs. 53-ship pre-crisis bas
 
 Recovery trend is positive but insufficient: +0.3 transits/day slope over the past 7 days. At this rate, transit volumes reach 50% of normal well beyond a 6-month horizon. The April 8 ceasefire produced no step-change, and its collapse has reinforced mine clearance as the only pathway to normalisation. P&I insurance remains withdrawn from the corridor.
 
+LSEG's Global Crude Report (May 11, 2026) confirms Saudi-UAE bypass pipelines are running at **~5.7 Mb/d**, within the IEA's 3.5–5.5 Mb/d documented range. LSEG also reports global oil stocks fell 85 million barrels in March, with Asian country inventories down 31 million barrels — consistent with the model's Asia RED crude risk label.
+
+
 *Implication*: Crude supply disruption is not self-correcting on a short-term horizon. The physical constraint outlasts any diplomatic agreement reached without confirmed mine clearance progress. The US naval blockade adds a second structural constraint on top of the mining.
 
 ---
@@ -26,6 +29,9 @@ JKM-TTF spread: **$1.219/MMBtu** — below the $2.00/MMBtu routing threshold. Ro
 US LNG terminal utilization: **113.6%** — the system is running above nameplate capacity across 5 of 8 terminals. Export infrastructure is not the bottleneck; cargo destination economics are.
 
 European gas storage: **35.8% full**, 13.1 days behind seasonal pace. At current refill rates, the shortfall widens to approximately 15.7 days by mid-June — crossing the CRITICAL threshold. Europe needs the JKM-TTF spread to remain below $2.00 to retain Atlantic Basin cargo priority. If Asian demand strengthens and pulls the spread above threshold again, EU storage trajectory deteriorates sharply.
+
+LSEG's LNG Monthly Update (April 22, 2026) shows global LNG exports at 1,512 mcm/d, down 22% from the one-year high of 1,938 mcm/d — consistent with the model's disruption estimate. Ras Laffan has partially restarted production, but LNG floating storage sits at 2.15 bcm near a one-year high. Gas is being produced but not delivered — indicating Hormuz remains effectively closed to LNG carrier traffic and the supply gap estimate holds.
+
 
 *Implication*: Europe's storage risk is worsening, not stable. The days-behind-pace figure has increased from 10.3 (May 12) to 13.1 (May 16) — a 2.8-day deterioration in four days. The routing signal provides 1–2 weeks of lead time before storage impact is visible in GIE data.
 

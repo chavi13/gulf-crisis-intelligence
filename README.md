@@ -136,6 +136,12 @@ Regional distribution (IEA destination shares):
 - **Asia risk labels are proxy estimates**: No free-tier Asian LNG or crude storage data is available. Asia risk labels are derived from gap magnitude relative to estimated total imports, not measured storage. Europe uses real GIE AGSI+ data.
 - **Bypass pipeline data is static**: No live throughput feed exists for the Saudi East-West Pipeline or UAE ADCOP. Model uses IEA's stated available capacity range and documents this explicitly.
 - **SPR rate is announced, not confirmed live**: The 3.0 Mb/d IEA total release is the planned rate. Actual delivery lags 2–4 weeks from announcement.
+- **Bypass pipeline utilization tracking toward upper bound**: Bypass pipeline utilization — external corroboration
+LSEG Global Crude Report (May 11, 2026) reports combined Saudi Petroline and UAE Fujairah bypass at ~5.7 Mb/d — consistent with the upper end of the IEA's 3.5–5.5 Mb/d range. Model uses IEA midpoint (4.5 Mb/d) per crisis-onset documentation.
+
+
+
+
 
 ---
 
