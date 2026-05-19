@@ -1184,82 +1184,7 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN TABS
 # ══════════════════════════════════════════════════════════════════════════════
-# ── Ticker tape ───────────────────────────────────────────────────────────────
-_ticker_pct    = f"{tanker.get('pct_of_normal') or 0:.1f}%"
-_ticker_spread = f"${lng.get('spread_7d') or 0:.2f}/MMBtu"
-_ticker_util   = f"{lng.get('us_utilization') or 0:.1f}%"
-_ticker_asia_c = f"{gap.get('asia_crude_gap_mbd') or 0:.2f} Mb/d"
-_ticker_eur_c  = f"{gap.get('europe_crude_gap_mbd') or 0:.2f} Mb/d"
-_ticker_stor   = f"{lng.get('storage_pct') or 0:.1f}%"
 
-st.markdown(f"""
-<style>
-.ticker-wrap {{
-    width: 100%;
-    overflow: hidden;
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
-    border-top: 1px solid var(--border);
-    padding: 0.35rem 0;
-}}
-.ticker-track {{
-    display: inline-flex;
-    white-space: nowrap;
-    animation: ticker-scroll 35s linear infinite;
-}}
-.ticker-track:hover {{ animation-play-state: paused; }}
-@keyframes ticker-scroll {{
-    0%   {{ transform: translateX(0); }}
-    100% {{ transform: translateX(-50%); }}
-}}
-.ticker-item {{
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    color: var(--text-secondary);
-    padding: 0 2rem;
-}}
-.ticker-item span.tk-label {{ color: var(--text-muted); font-weight: 400; }}
-.ticker-item span.tk-val   {{ color: var(--text-primary); }}
-.ticker-item span.tk-red   {{ color: #ef4444; }}
-.ticker-item span.tk-amber {{ color: #f59e0b; }}
-.ticker-sep {{
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--border);
-    padding: 0 0.5rem;
-}}
-</style>
-<div class="ticker-wrap">
-  <div class="ticker-track">
-    <span class="ticker-item"><span class="tk-label">HORMUZ TRANSIT </span><span class="tk-red">{_ticker_pct}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">JKM–TTF SPREAD </span><span class="tk-amber">{_ticker_spread}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">US LNG UTIL </span><span class="tk-val">{_ticker_util}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">ASIA CRUDE GAP </span><span class="tk-red">{_ticker_asia_c}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">EU CRUDE GAP </span><span class="tk-amber">{_ticker_eur_c}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">EU GAS STORAGE </span><span class="tk-val">{_ticker_stor}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">HORMUZ TRANSIT </span><span class="tk-red">{_ticker_pct}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">JKM–TTF SPREAD </span><span class="tk-amber">{_ticker_spread}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">US LNG UTIL </span><span class="tk-val">{_ticker_util}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">ASIA CRUDE GAP </span><span class="tk-red">{_ticker_asia_c}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">EU CRUDE GAP </span><span class="tk-amber">{_ticker_eur_c}</span></span>
-    <span class="ticker-sep">·</span>
-    <span class="ticker-item"><span class="tk-label">EU GAS STORAGE </span><span class="tk-val">{_ticker_stor}</span></span>
-    <span class="ticker-sep">·</span>
-  </div>
-</div>
-""", unsafe_allow_html=True)
 
 tab_overview, tab_tanker, tab_gap, tab_lng = st.tabs([
     "⬡  Overview",
@@ -1308,6 +1233,123 @@ with tab_overview:
         }})();
         </script>
     """, height=0)
+
+        # ── Gauge needle — Hormuz Transit Index ──────────────────────────────────
+    _gauge_val = tanker.get("pct_of_normal") or 0
+    import streamlit.components.v1 as components
+    components.html(f"""
+    <div style="display:flex;flex-direction:column;align-items:center;
+                margin-bottom:1.5rem;margin-top:0.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
+                    font-weight:600;letter-spacing:0.12em;text-transform:uppercase;
+                    color:#4a5a72;margin-bottom:0.5rem;">
+            Hormuz Transit Index
+        </div>
+        <svg viewBox="0 0 220 130" width="320" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%"   stop-color="#ef4444"/>
+                    <stop offset="50%"  stop-color="#f59e0b"/>
+                    <stop offset="100%" stop-color="#22c55e"/>
+                </linearGradient>
+            </defs>
+ 
+            <!-- Background arc track -->
+            <path d="M 20 110 A 90 90 0 0 1 200 110"
+                  fill="none" stroke="#1a2235" stroke-width="18" stroke-linecap="round"/>
+ 
+            <!-- Coloured arc (always full, gives context) -->
+            <path d="M 20 110 A 90 90 0 0 1 200 110"
+                  fill="none" stroke="url(#arcGrad)" stroke-width="18"
+                  stroke-linecap="round" opacity="0.25"/>
+ 
+            <!-- Tick marks at 0, 25, 50, 75, 100 -->
+            <g stroke="#2a3a55" stroke-width="1.5">
+                <!-- 0% -->
+                <line x1="20" y1="110" x2="13" y2="110"/>
+                <!-- 25% -->
+                <line x1="47" y1="46.3" x2="41.6" y2="42.4"/>
+                <!-- 50% -->
+                <line x1="110" y1="20" x2="110" y2="13"/>
+                <!-- 75% -->
+                <line x1="173" y1="46.3" x2="178.4" y2="42.4"/>
+                <!-- 100% -->
+                <line x1="200" y1="110" x2="207" y2="110"/>
+            </g>
+ 
+            <!-- Tick labels -->
+            <g font-family="IBM Plex Mono" font-size="9" fill="#4a5a72">
+                <text x="10"  y="124" text-anchor="middle">0</text>
+                <text x="35"  y="40"  text-anchor="middle">25</text>
+                <text x="110" y="10"  text-anchor="middle">50</text>
+                <text x="185" y="40"  text-anchor="middle">75</text>
+                <text x="210" y="124" text-anchor="middle">100</text>
+            </g>
+ 
+            <!-- Needle — animates from 0 to current value -->
+            <g id="needle-group" transform="rotate(-90, 110, 110)">
+                <line id="gauge-needle"
+                      x1="110" y1="110"
+                      x2="110" y2="28"
+                      stroke="#e8edf5" stroke-width="2.5"
+                      stroke-linecap="round"/>
+                <circle cx="110" cy="110" r="6"
+                        fill="#1a2235" stroke="#e8edf5" stroke-width="2"/>
+            </g>
+ 
+            <!-- Centre value text -->
+            <text id="gauge-label" x="110" y="100"
+                  text-anchor="middle"
+                  font-family="IBM Plex Mono" font-size="22" font-weight="600"
+                  fill="#e8edf5">0%</text>
+            <text x="110" y="118"
+                  text-anchor="middle"
+                  font-family="IBM Plex Sans" font-size="9" fill="#4a5a72">
+                of pre-crisis normal
+            </text>
+        </svg>
+    </div>
+ 
+    <script>
+    (function() {{
+        const target  = {_gauge_val};
+        const needle  = document.getElementById('needle-group');
+        const label   = document.getElementById('gauge-label');
+        if (!needle || !label) return;
+ 
+        // Map 0–100% → -90deg to +90deg (needle starts pointing left at 0%)
+        function pctToDeg(p) {{ return -90 + (p / 100) * 180; }}
+ 
+        // Pick colour based on value
+        function valColor(p) {{
+            if (p < 30)  return '#ef4444';
+            if (p < 70)  return '#f59e0b';
+            return '#22c55e';
+        }}
+ 
+        let current = 0;
+        const duration = 1200;
+        const start = performance.now();
+ 
+        function animate(now) {{
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            current = target * eased;
+ 
+            const deg = pctToDeg(current);
+            needle.setAttribute('transform', `rotate(${{deg}}, 110, 110)`);
+            label.textContent = current.toFixed(1) + '%';
+            label.setAttribute('fill', valColor(current));
+ 
+            if (progress < 1) requestAnimationFrame(animate);
+        }}
+ 
+        requestAnimationFrame(animate);
+    }})();
+    </script>
+    """, height=200)
 
     # ── Consolidated metrics row — 4 KPI cards below thesis block ────────────
 
@@ -1447,7 +1489,192 @@ with tab_tanker:
 
     # ── Section 1 — Current reading metric card ───────────────────────────────
     st.markdown('<div class="section-header" style="margin-top:0.5rem;">Hormuz Transit Anomaly Index</div>', unsafe_allow_html=True)
-
+    # ── Hormuz strait map with animated vessels ───────────────────────────────
+    _map_pct = tanker.get("pct_of_normal") or 0
+    # Speed: at 100% normal = fast, at 0% = stopped. Range 0–100 → 8s–60s animation
+    _ship_speed = max(8, 60 - int((_map_pct / 100) * 52))
+    # Number of visible ships scales with transit %: 1 at 0–20%, up to 4 at 80%+
+    _n_ships = 1 if _map_pct < 20 else 2 if _map_pct < 50 else 3 if _map_pct < 80 else 4
+ 
+    import streamlit.components.v1 as components
+    components.html(f"""
+    <div style="margin-bottom:1.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+                    letter-spacing:0.1em;text-transform:uppercase;color:#4a5a72;
+                    margin-bottom:0.4rem;">
+            Live Transit Model · Strait of Hormuz
+            <span style="color:#2a3a55;margin:0 0.5rem;">|</span>
+            <span style="color:#{'ef4444' if _map_pct < 30 else 'f59e0b' if _map_pct < 70 else '22c55e'};">
+                {_map_pct:.1f}% of normal
+            </span>
+        </div>
+ 
+        <svg viewBox="0 0 700 200" width="100%" xmlns="http://www.w3.org/2000/svg"
+             style="background:#0a0e1a;border:1px solid #1a2235;border-radius:8px;">
+ 
+            <!-- ── Water body (Gulf + strait) ── -->
+            <!-- Persian Gulf body -->
+            <path d="M 0 60 Q 100 40 200 55 Q 280 65 320 80
+                       Q 340 88 360 95 Q 380 100 400 95
+                       Q 420 90 440 85 Q 480 75 520 78
+                       Q 560 82 600 88 Q 650 95 700 100
+                       L 700 200 L 0 200 Z"
+                  fill="#0d1f35" opacity="0.9"/>
+ 
+            <!-- Gulf of Oman (right side after strait) -->
+            <path d="M 480 0 Q 540 10 600 30 Q 650 50 700 70
+                       L 700 200 L 480 200 Z"
+                  fill="#0d1f35" opacity="0.7"/>
+ 
+            <!-- ── Land masses ── -->
+            <!-- Iran (top) -->
+            <path d="M 0 0 L 700 0 L 700 55 Q 620 25 540 18
+                       Q 460 12 400 20 Q 340 28 300 40
+                       Q 250 52 200 48 Q 120 42 60 30 Z"
+                  fill="#111827"/>
+            <!-- Arabia / UAE / Oman (bottom) -->
+            <path d="M 0 200 L 0 130 Q 80 120 160 128
+                       Q 240 136 300 140 Q 340 142 370 138
+                       Q 400 133 430 128 Q 460 122 490 118
+                       L 490 200 Z"
+                  fill="#111827"/>
+            <!-- Oman peninsula (Musandam — the pointy bit into the strait) -->
+            <path d="M 430 128 Q 455 108 470 90 Q 478 76 482 60
+                       Q 484 50 488 42 Q 492 30 498 20
+                       L 510 0 L 700 0 L 700 70
+                       Q 650 50 600 30 Q 540 10 490 118 Z"
+                  fill="#111827"/>
+ 
+            <!-- ── Labels ── -->
+            <text x="180" y="170" font-family="IBM Plex Sans" font-size="11"
+                  fill="#2a3a55" letter-spacing="1">PERSIAN GULF</text>
+            <text x="560" y="50"  font-family="IBM Plex Sans" font-size="10"
+                  fill="#2a3a55" letter-spacing="1">GULF OF OMAN</text>
+            <text x="270" y="30"  font-family="IBM Plex Sans" font-size="9"
+                  fill="#1e3a5f">IRAN</text>
+            <text x="150" y="155" font-family="IBM Plex Sans" font-size="9"
+                  fill="#1e3a5f">UAE / ARABIA</text>
+            <text x="450" y="155" font-family="IBM Plex Sans" font-size="9"
+                  fill="#1e3a5f">OMAN</text>
+ 
+            <!-- ── Strait channel marker ── -->
+            <text x="370" y="75" font-family="IBM Plex Mono" font-size="8"
+                  fill="#3b82f6" opacity="0.7" text-anchor="middle"
+                  letter-spacing="0.5">STRAIT OF HORMUZ</text>
+            <!-- Dotted channel line -->
+            <line x1="320" y1="85" x2="490" y2="60"
+                  stroke="#1e3a5f" stroke-width="1" stroke-dasharray="4,4"/>
+ 
+            <!-- ── Ship definitions ── -->
+            <!-- Ship icon: simple silhouette pointing right -->
+            <defs>
+                <g id="ship-icon">
+                    <!-- Hull -->
+                    <rect x="-10" y="-3" width="20" height="6"
+                          rx="3" fill="#f59e0b"/>
+                    <!-- Bridge -->
+                    <rect x="-2" y="-7" width="7" height="5"
+                          rx="1" fill="#f59e0b" opacity="0.8"/>
+                    <!-- Wake dots -->
+                    <circle cx="-13" cy="0" r="1.2" fill="#3b82f6" opacity="0.5"/>
+                    <circle cx="-17" cy="0" r="0.8" fill="#3b82f6" opacity="0.3"/>
+                </g>
+ 
+                <!-- Ship moving the other direction (inbound, flipped) -->
+                <g id="ship-icon-in">
+                    <rect x="-10" y="-3" width="20" height="6"
+                          rx="3" fill="#14b8a6"/>
+                    <rect x="-5"  y="-7" width="7" height="5"
+                          rx="1" fill="#14b8a6" opacity="0.8"/>
+                    <circle cx="13" cy="0" r="1.2" fill="#3b82f6" opacity="0.5"/>
+                    <circle cx="17" cy="0" r="0.8" fill="#3b82f6" opacity="0.3"/>
+                </g>
+            </defs>
+ 
+            <!-- ── Outbound ships (Gulf → Oman, amber) ── -->
+            <!-- Ship 1 — always visible -->
+            <g opacity="1">
+                <animateTransform
+                    attributeName="transform" type="translate"
+                    values="60,130; 200,115; 340,95; 430,80; 560,60; 700,40"
+                    keyTimes="0;0.2;0.4;0.6;0.8;1"
+                    dur="{_ship_speed}s" repeatCount="indefinite"
+                    calcMode="linear"/>
+                <use href="#ship-icon"/>
+            </g>
+ 
+            <!-- Ship 2 — offset start, visible if _n_ships >= 2 -->
+            <g opacity="{'1' if _n_ships >= 2 else '0'}">
+                <animateTransform
+                    attributeName="transform" type="translate"
+                    values="60,118; 200,103; 340,83; 430,68; 560,48; 700,28"
+                    keyTimes="0;0.2;0.4;0.6;0.8;1"
+                    dur="{_ship_speed}s" begin="{int(_ship_speed*0.33)}s"
+                    repeatCount="indefinite" calcMode="linear"/>
+                <use href="#ship-icon"/>
+            </g>
+ 
+            <!-- Ship 3 — offset, visible if _n_ships >= 3 -->
+            <g opacity="{'1' if _n_ships >= 3 else '0'}">
+                <animateTransform
+                    attributeName="transform" type="translate"
+                    values="60,142; 200,127; 340,107; 430,92; 560,72; 700,52"
+                    keyTimes="0;0.2;0.4;0.6;0.8;1"
+                    dur="{_ship_speed}s" begin="{int(_ship_speed*0.66)}s"
+                    repeatCount="indefinite" calcMode="linear"/>
+                <use href="#ship-icon"/>
+            </g>
+ 
+            <!-- ── Inbound ships (Oman → Gulf, teal) ── -->
+            <!-- Inbound ship 1 — always visible -->
+            <g opacity="1">
+                <animateTransform
+                    attributeName="transform" type="translate"
+                    values="700,100; 560,88; 430,100; 340,115; 200,128; 60,140"
+                    keyTimes="0;0.2;0.4;0.6;0.8;1"
+                    dur="{int(_ship_speed * 1.2)}s" begin="{int(_ship_speed*0.5)}s"
+                    repeatCount="indefinite" calcMode="linear"/>
+                <use href="#ship-icon-in"/>
+            </g>
+ 
+            <!-- Inbound ship 2 — visible if _n_ships >= 3 -->
+            <g opacity="{'1' if _n_ships >= 3 else '0'}">
+                <animateTransform
+                    attributeName="transform" type="translate"
+                    values="700,112; 560,100; 430,112; 340,127; 200,140; 60,152"
+                    keyTimes="0;0.2;0.4;0.6;0.8;1"
+                    dur="{int(_ship_speed * 1.2)}s" begin="{int(_ship_speed*0.15)}s"
+                    repeatCount="indefinite" calcMode="linear"/>
+                <use href="#ship-icon-in"/>
+            </g>
+ 
+            <!-- ── Crisis indicator dot at strait chokepoint ── -->
+            <circle cx="430" cy="85" r="5"
+                    fill="{'#ef4444' if _map_pct < 30 else '#f59e0b' if _map_pct < 70 else '#22c55e'}"
+                    opacity="0.9">
+                <animate attributeName="r"
+                         values="5;9;5" dur="2s" repeatCount="indefinite"/>
+                <animate attributeName="opacity"
+                         values="0.9;0.3;0.9" dur="2s" repeatCount="indefinite"/>
+            </circle>
+ 
+            <!-- Legend -->
+            <rect x="10" y="10" width="8" height="5" rx="2" fill="#f59e0b"/>
+            <text x="22" y="16" font-family="IBM Plex Sans" font-size="8"
+                  fill="#4a5a72">Outbound (exports)</text>
+            <rect x="10" y="22" width="8" height="5" rx="2" fill="#14b8a6"/>
+            <text x="22" y="28" font-family="IBM Plex Sans" font-size="8"
+                  fill="#4a5a72">Inbound (imports)</text>
+        </svg>
+ 
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+                    color:#2a3a55;margin-top:0.3rem;">
+            ▲ Vessel speed and count reflect current transit index.
+            Not real AIS positions — illustrative model only.
+        </div>
+    </div>
+    """, height=240)
+ 
     anchorage_count = tanker.get("anchorage_count") or 0
     anchorage_status = (
         "ELEVATED — possible Hormuz queue" if anchorage_count >= 15
