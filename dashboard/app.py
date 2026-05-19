@@ -1872,27 +1872,30 @@ with tab_lng:
                 <div class="card-sub" style="margin-top:0.3rem;">
                     {risk_badge("GREEN" if safe(lng.get("routing_signal")) == "NEUTRAL" else "AMBER")}
                 </div>
-                <div class="card-sub">
-                    /MMBtu &nbsp;·&nbsp; routing signal:
+                <div class="card-sub" style="margin-top:0.45rem;">
+                    <span style="color:var(--text-muted);">/MMBtu</span>
+                </div>
+                <div class="card-sub" style="margin-top:0.2rem;">
+                    Routing signal:
                     <span style="font-family:'IBM Plex Mono',monospace;
-                    color:#e8edf5;">{safe(lng.get("routing_signal"))}</span>
-                    &nbsp;·&nbsp; threshold $2.00
+                    color:#e8edf5;font-weight:600;">{safe(lng.get("routing_signal"))}</span>
+                    &nbsp;·&nbsp; threshold <span style="font-family:'IBM Plex Mono',monospace;color:#e8edf5;">$2.00</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
     with lc3:
         st.markdown(f"""
             <div class="card card--kpi" style="min-height:220px;">
-                <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;white-space:nowrap;">EU Storage Coverage</div>
+                <div class="card-label">EU Storage Coverage</div>
                 <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">{safe(lng.get("storage_pct"), "{:.1f}%")}</div></div>
                 <div class="card-sub" style="margin-top:0.3rem;">
                     {risk_badge(lng.get("storage_risk"))}
                 </div>
-                <div class="card-sub">
+                <div class="card-sub" style="margin-top:0.45rem;">
                     {safe(lng.get("days_deficit"), "{:.1f} days")} behind required pace
                 </div>
-                <div class="card-sub" style="margin-top:0.3rem;">
-                    {safe(lng.get("seasonal_deficit"), "{:.1f} %")} below seasonal avg
+                <div class="card-sub" style="margin-top:0.2rem;">
+                    {safe(lng.get("seasonal_deficit"), "{:.1f}%")} below seasonal avg
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -1922,12 +1925,13 @@ with tab_lng:
         min_date = prices_df["date"].min().date()
         max_date = prices_df["date"].max().date()
 
+        _default_start = max(min_date, date(2026, 2, 15))
         slider_range = st.slider(
             "Date range",
             min_value=min_date,
             max_value=max_date,
-            value=(date(2025, 5, 1), max_date),
-            format="MMM YYYY",
+            value=(_default_start, max_date),
+            format="MMM D, YYYY",
             label_visibility="collapsed",
         )
         date_from_s, date_to_s = slider_range
