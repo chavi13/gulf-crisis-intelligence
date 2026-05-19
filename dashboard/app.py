@@ -1946,11 +1946,21 @@ with tab_lng:
             (prices_df["date"].dt.date <= date_to_s)
         ]
 
-        # Merge event labels into filtered prices for hover display
+        # Merge event labels into filtered prices for hover display.
+        # Snap weekend dates to the next available trading day so the label
+        # actually lands on a data point (e.g. Mar 01 Sun -> Mar 02 Mon).
+        _trading_dates = set(prices_df["date"])
+        def _snap_to_trading_day(ts):
+            while ts not in _trading_dates:
+                ts += pd.Timedelta(days=1)
+            return ts
+
         events_df = pd.DataFrame([
-            {"date": pd.Timestamp(k), "event": f"⚑ {v}"}
+            {"date": _snap_to_trading_day(pd.Timestamp(k)), "event": f"⚑ {v}"}
             for k, v in LNG_EVENTS.items()
         ])
+        # If two events snap to the same date, combine them
+        events_df = events_df.groupby("date")["event"].apply(lambda x: "  ".join(x)).reset_index()
         filtered_prices = filtered_prices.merge(events_df, on="date", how="left")
         filtered_prices["event"] = filtered_prices["event"].fillna("")
 
