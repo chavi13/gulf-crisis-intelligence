@@ -758,6 +758,27 @@ def risk_badge(label: str) -> str:
         return f'<span class="badge-amber">{label}</span>'
 
 
+def europe_crude_badge(label: str) -> str:
+    """
+    Specialised badge for Europe crude risk only.
+    Adds fragility caveat to STABLE tooltip — Europe's crude gap is covered
+    by contingent US SPR crude exports, not structural protection.
+    Falls back to risk_badge() for non-STABLE labels.
+    """
+    if label is None or label.upper() not in ("GREEN", "STABLE", "NORMAL"):
+        return risk_badge(label)
+    tip = (
+        "Europe receives only 4% of Hormuz crude (IEA Factsheet, Feb 2026) — a structural fact. "
+        "The residual 0.25 Mb/d crude gap is currently covered by US SPR crude exports to Europe "
+        "(~0.17 Mb/d observed through May 8 — 9 of 11 Mb of US SPR crude exported went to Europe, "
+        "per IEA OMR/Kpler, May 13 2026). "
+        "This is a contingent crisis response, not permanent structural protection: "
+        "it depends on US export capacity staying high, freight economics remaining favourable, "
+        "and SPR drawdown continuing. If any of those change, Europe's crude coverage narrows."
+    )
+    return f'<span class="has-tooltip"><span class="badge-green">STABLE</span><span class="tooltip-text" style="width:300px;">{tip}</span></span>'
+
+
 def transit_badge(pct_of_normal) -> str:
     """Maps pct_of_normal to CRITICAL/ELEVATED/STABLE badge."""
     if pct_of_normal is None:
@@ -2549,7 +2570,7 @@ with tab_gap:
         {
             "Region": "Europe",
             "Crude Gap (Mb/d)": f"{safe(gap.get('europe_crude_gap_mbd'), '{:.2f}')}",
-            "Crude Risk": risk_badge(gap.get("europe_crude_risk")),
+            "Crude Risk": europe_crude_badge(gap.get("europe_crude_risk")),
             "LNG Gap (Bcf/d)": f"{safe(gap.get('europe_lng_gap_bcfd'), '{:.2f}')}",
             "LNG Risk": risk_badge(gap.get("europe_lng_risk")),
         },
@@ -2648,10 +2669,25 @@ with tab_gap:
             One test load in late 2024 — no further exports since.
             <br><br>
 
-            <b style="color:#e8edf5;">IEA SPR release rate: 3.0 Mb/d total
+            <b style="color:#e8edf5;">IEA SPR release: 426 Mb total committed; 3.0 Mb/d announced rate
             (1.0–1.5 Mb/d US)</b><br>
-            S&P Global CERAWeek, March 23, 2026. US Energy Secretary Chris Wright
-            confirmed rate. First barrels flowed March 17.
+            Total confirmed at 426 Mb — IEA collective action Excel, March 19 2026
+            (supersedes preliminary 412 Mb from March 15 press release).
+            Regional breakdown: Americas 199.7 Mb, Asia-Oceania 108.7 Mb, Europe 117.6 Mb.
+            Announced rate: S&amp;P Global CERAWeek, March 23 2026 (US Energy Secretary Wright).
+            Actual observed: 164 Mb released in first 52 days (avg 3.15 Mb/d);
+            April government stock rate 2.1 Mb/d (IEA OMR, May 13 2026).
+            Release is front-loaded, not a flat daily rate. First barrels flowed March 17.
+            <br><br>
+
+            <b style="color:#e8edf5;">Europe crude gap — coverage mechanism:</b><br>
+            Europe's 117.6 Mb SPR contribution is primarily refined products (gasoline,
+            middle distillates), not crude. Europe's 0.25 Mb/d crude gap is covered by
+            US SPR crude exports to Europe (~0.17 Mb/d observed through May 8 —
+            9 of 11 Mb of US SPR crude exported went to Europe, per IEA OMR/Kpler).
+            Europe's own confirmed crude SPR component is 18.72 Mb floor
+            (France/Germany/Netherlands crude breakdown marked "details not yet available"
+            in IEA Excel). Coverage is contingent on US exports continuing, not structural.
             <br><br>
 
             <b style="color:#e8edf5;">Destination shares — crude:</b>
@@ -2681,10 +2717,15 @@ with tab_gap:
             • Europe LNG risk uses real GIE AGSI+ storage data.<br>
             • Bypass pipeline capacity is static reference data — no live
             throughput feed available.<br>
-            • Vessel-type breakdown (tanker, container, dry bulk, RoRo, general cargo)
-            is available via IMF PortWatch — but individual vessel-level data
-            (MMSI, positions, names) is not available on the free tier.<br>
-            • SPR rate is the announced planned rate, not confirmed live delivery.
+            • IMF PortWatch <code>n_tanker</code> counts all tanker types (crude, LNG,
+            product, chemical) in one bucket — crude and LNG carrier disruption rates
+            cannot be separated on the free tier. Both gap calculations use the same
+            pct_of_normal, which is a documented assumption.<br>
+            • Europe STABLE crude label depends on continued US SPR crude exports to
+            Europe. If US exports slow or SPR drawdown ends, coverage narrows.
+            The 4% Hormuz destination share is structural; the coverage mechanism is not.<br>
+            • SPR release is front-loaded, not a flat daily rate. Europe-specific
+            daily crude release rate is not published by the IEA.
 
             </div>
         """, unsafe_allow_html=True)
