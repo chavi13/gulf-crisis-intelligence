@@ -74,18 +74,20 @@ import plotly.graph_objects as go
 # COLOUR PALETTE — mirrors dashboard CSS variables
 # ══════════════════════════════════════════════════════════════════════════════
 
-BG_PRIMARY   = colors.HexColor("#0a0e1a")
-BG_SECONDARY = colors.HexColor("#111827")
-BG_CARD      = colors.HexColor("#1a2235")
-BORDER       = colors.HexColor("#2a3a55")
-TEXT_PRIMARY = colors.HexColor("#e8edf5")
-TEXT_SEC     = colors.HexColor("#8a9bb5")
-TEXT_MUTED   = colors.HexColor("#4a5a72")
-AMBER        = colors.HexColor("#f59e0b")
-RED          = colors.HexColor("#ef4444")
-GREEN        = colors.HexColor("#22c55e")
-BLUE         = colors.HexColor("#3b82f6")
-TEAL         = colors.HexColor("#14b8a6")
+# Light-mode palette — reliable across all PDF viewers
+# Dark PDFs require background canvas tricks that fail in some renderers.
+BG_PRIMARY   = colors.white
+BG_SECONDARY = colors.HexColor("#f1f5f9")
+BG_CARD      = colors.HexColor("#f8fafc")
+BORDER       = colors.HexColor("#cbd5e1")
+TEXT_PRIMARY = colors.HexColor("#0f172a")
+TEXT_SEC     = colors.HexColor("#475569")
+TEXT_MUTED   = colors.HexColor("#94a3b8")
+AMBER        = colors.HexColor("#b45309")   # darker amber — readable on white
+RED          = colors.HexColor("#dc2626")
+GREEN        = colors.HexColor("#16a34a")
+BLUE         = colors.HexColor("#1d4ed8")
+TEAL         = colors.HexColor("#0f766e")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PARAGRAPH STYLES
@@ -261,10 +263,10 @@ def _section(title, S):
 # CHART RENDERERS — return BytesIO PNG via kaleido
 # ══════════════════════════════════════════════════════════════════════════════
 
-_CHART_BG    = "#0a0e1a"
-_CHART_PAPER = "#111827"
-_CHART_GRID  = "#2a3a55"
-_FONT_COLOR  = "#8a9bb5"
+_CHART_BG    = "#ffffff"
+_CHART_PAPER = "#f8fafc"
+_CHART_GRID  = "#e2e8f0"
+_FONT_COLOR  = "#475569"
 _CRISIS_DATE = "2026-03-01"
 
 def _fig_to_image(fig, width_mm=170, height_mm=55):
@@ -339,7 +341,7 @@ def build_transit_chart():
             x=transit_df["date"],
             y=transit_df["n_tanker"],
             name="Tanker Transits",
-            line=dict(color="#f59e0b", width=1.2),
+            line=dict(color="#b45309", width=1.2),
         ))
 
     # ── 2025 pre-crisis baseline (from anomaly_log.baseline_annual) ────────
@@ -387,15 +389,15 @@ def build_spread_chart():
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df["date"], y=df["JKM"],
-        name="JKM (Asia)", line=dict(color="#f59e0b", width=1.5),
+        name="JKM (Asia)", line=dict(color="#b45309", width=1.5),
     ))
     fig.add_trace(go.Scatter(
         x=df["date"], y=df["TTF"],
-        name="TTF (Europe)", line=dict(color="#3b82f6", width=1.5),
+        name="TTF (Europe)", line=dict(color="#1d4ed8", width=1.5),
     ))
     fig.add_trace(go.Scatter(
         x=df["date"], y=df["spread"],
-        name="JKM-TTF Spread", line=dict(color="#14b8a6", width=1, dash="dot"),
+        name="JKM-TTF Spread", line=dict(color="#0f766e", width=1, dash="dot"),
     ))
     fig.add_shape(type="line", x0=_CRISIS_DATE, x1=_CRISIS_DATE,
                   y0=0, y1=1, yref="paper",
@@ -428,7 +430,7 @@ def build_storage_chart():
         baseline_df = baseline_df.dropna(subset=["date"])
         fig.add_trace(go.Scatter(
             x=baseline_df["date"], y=baseline_df["avg_pct_full"],
-            name="5yr Avg (2020-24)", line=dict(color="#22c55e", width=1, dash="dash"),
+            name="5yr Avg (2020-24)", line=dict(color="#16a34a", width=1, dash="dash"),
         ))
 
     # Last 18 months of actual storage
@@ -436,8 +438,8 @@ def build_storage_chart():
     recent = storage_df[storage_df["date"] >= cutoff]
     fig.add_trace(go.Scatter(
         x=recent["date"], y=recent["pct_full"],
-        name="EU Storage (% full)", line=dict(color="#3b82f6", width=1.5),
-        fill="tozeroy", fillcolor="rgba(59,130,246,0.06)",
+        name="EU Storage (% full)", line=dict(color="#1d4ed8", width=1.5),
+        fill="tozeroy", fillcolor="rgba(29,78,216,0.06)",
     ))
 
     _chart_layout(fig, "EU Gas Storage vs Seasonal Baseline (%)")
@@ -841,19 +843,12 @@ def build_report_bytes() -> bytes:
         author="Gulf Crisis Supply Intelligence System",
     )
 
-    # Dark background on every page
-    def _dark_background(canvas, doc):
-        canvas.saveState()
-        canvas.setFillColor(BG_PRIMARY)
-        canvas.rect(0, 0, A4[0], A4[1], fill=1, stroke=0)
-        canvas.restoreState()
-
     story = []
     _build_page1(story, S, tanker, lng, gap, crisis, report_date)
     _build_page2(story, S)
     _build_page3(story, S, gap, tanker, report_date)
 
-    doc.build(story, onFirstPage=_dark_background, onLaterPages=_dark_background)
+    doc.build(story)
     return buf.getvalue()
 
 
