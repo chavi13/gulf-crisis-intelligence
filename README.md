@@ -187,6 +187,8 @@ The Streamlit dashboard (`dashboard/app.py`) has four tabs — Overview, Vessel 
 
 **Cross-module event consistency** — Crisis events are now consistent across the Tanker and LNG charts. Shared geopolitical events (Strait declared closed, P&I insurance withdrawn, Ceasefire agreed, US naval blockade, Ceasefire collapse) appear on both charts. Module-specific events (Brent peaks, SPR release on tanker; JKM inflection, Spread peaks on LNG) remain separate.
 
+**Hormuz chokepoint map** — A static SVG map of the Strait of Hormuz on the Vessel Transits tab showing the chokepoint location, key ports (Fujairah, Bandar Abbas, Ras Laffan), and flow direction arrows. The pulsing status dot is colour-coded red/amber/green directly from the live transit index.
+
 ---
 
 ## Running Locally

@@ -198,7 +198,8 @@ def _styles():
             fontSize=8,
             textColor=TEXT_SEC,
             spaceBefore=8,
-            spaceAfter=2,
+            
+spaceAfter=20,
         ),
     }
 
