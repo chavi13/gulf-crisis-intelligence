@@ -1219,7 +1219,7 @@ with tab_overview:
         <div class="card-sub">{safe(lng.get("seasonal_deficit"), "{:.1f} %")} below seasonal avg</div>
     </div>
     <div class="card card--kpi">
-        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">US LNG Utilization<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">Actual LNG exports as % of nameplate liquefaction capacity across 8 US terminals (EIA data, Feb 2026). Above 100% means terminals are exceeding their design baseline — less maintenance downtime, trains at peak output. No spare capacity remains to offset the Hormuz LNG loss.</span></span></div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">US export terminal utilization<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">Actual LNG exports as % of nameplate liquefaction capacity across 8 US terminals (EIA data, Feb 2026). Above 100% means terminals are exceeding their design baseline — less maintenance downtime, trains at peak output. No spare capacity remains to offset the Hormuz LNG loss.</span></span></div>
         <div class="card-value-slot"><div class="card-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div></div>
         <div class="card-sub">System at maximum — no relief capacity</div>
 <div class="card-sub" style="margin-top:0.25rem;color:var(--text-muted);font-size:0.62rem;">Latest available: Feb 2026 (EIA 6–8 week lag)</div>
