@@ -100,9 +100,9 @@ def _styles():
             fontName="Helvetica-Bold",
             fontSize=20,
             textColor=TEXT_PRIMARY,
-            spaceAfter=6,
+            spaceAfter=12,
             spaceBefore=0,
-            leading=40,
+            leading=26,
             alignment=TA_LEFT,
         ),
         "report_subtitle": ParagraphStyle(
@@ -111,7 +111,7 @@ def _styles():
             fontSize=8,
             textColor=TEXT_SEC,
             spaceAfter=10,
-            spaceBefore=4,
+            spaceBefore=0,
             leading=14,
             alignment=TA_LEFT,
         ),
@@ -461,7 +461,6 @@ def _build_page1(story, S, tanker, lng, gap, crisis, report_date):
 
     # ── Report header ──────────────────────────────────────────────────────────
     story.append(Paragraph("Gulf Crisis Supply Intelligence", S["report_title"]))
-    story.append(Spacer(1, 20))
     # Format raw ISO timestamp to readable form e.g. "2026-05-19 07:26 UTC"
     raw_ts = tanker.get("logged_at") or ""
     try:
@@ -639,7 +638,7 @@ def _build_page1(story, S, tanker, lng, gap, crisis, report_date):
 def _build_page2(story, S):
     """Page 2: charts."""
     story.append(Paragraph("Charts — Market Intelligence", S["report_title"]))
-    story.append(Spacer(1, 20))
+    
     story.append(Paragraph(
         "Visual summary of transit disruption, LNG price dynamics, and European gas storage.",
         S["report_subtitle"]
@@ -669,7 +668,7 @@ def _build_page3(story, S, gap, tanker, report_date):
     """Page 3: regional risk table, trend extrapolation, data sources."""
     story.append(PageBreak())
     story.append(Paragraph("Regional Risk & Trend Extrapolation", S["report_title"]))
-    story.append(Spacer(1, 20))
+    
     story.append(Paragraph(
         "Supply gap model output and short-term trend projections.",
         S["report_subtitle"]
