@@ -461,18 +461,20 @@ def _build_page1(story, S, tanker, lng, gap, crisis, report_date):
 
     # ── Report header ──────────────────────────────────────────────────────────
     story.append(Paragraph("Gulf Crisis Supply Intelligence", S["report_title"]))
+    story.append(Spacer(1, 14))
     # Format raw ISO timestamp to readable form e.g. "2026-05-19 07:26 UTC"
     raw_ts = tanker.get("logged_at") or ""
     try:
-        ts_clean = raw_ts[:16].replace("T", " ") + " UTC" if raw_ts else "unknown"
+        ts_clean = str(raw_ts)[:16].replace("T", " ") + " UTC" if raw_ts else "unknown"
     except Exception:
-        ts_clean = raw_ts
+        ts_clean = "unknown"
     story.append(Paragraph(
-        f"Weekly Situation Report  ·  {report_date}  ·  Pipeline last run: {ts_clean}",
+        f"Weekly Situation Report · {report_date} · Pipeline last run: {ts_clean}",
         S["report_subtitle"]
     ))
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 10))
     story.append(_hr())
+
 
     # ── Crisis context summary ─────────────────────────────────────────────────
     if crisis and crisis.get("as_of_date"):
@@ -638,11 +640,12 @@ def _build_page1(story, S, tanker, lng, gap, crisis, report_date):
 def _build_page2(story, S):
     """Page 2: charts."""
     story.append(Paragraph("Charts — Market Intelligence", S["report_title"]))
-    
+    story.append(Spacer(1, 14))
     story.append(Paragraph(
         "Visual summary of transit disruption, LNG price dynamics, and European gas storage.",
         S["report_subtitle"]
     ))
+    story.append(Spacer(1, 10))
     story.append(_hr())
 
     charts = [
@@ -668,11 +671,12 @@ def _build_page3(story, S, gap, tanker, report_date):
     """Page 3: regional risk table, trend extrapolation, data sources."""
     story.append(PageBreak())
     story.append(Paragraph("Regional Risk & Trend Extrapolation", S["report_title"]))
-    
+    story.append(Spacer(1, 14))
     story.append(Paragraph(
         "Supply gap model output and short-term trend projections.",
         S["report_subtitle"]
     ))
+    story.append(Spacer(1, 10))
     story.append(_hr())
 
     # ── Regional risk table ────────────────────────────────────────────────────
