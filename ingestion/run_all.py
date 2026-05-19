@@ -41,7 +41,7 @@ if datetime.now().weekday() == 0:   # 0 = Monday
     print("\nGenerating weekly PDF report...")
     try:
         from reports.generate_report import generate_report_file
-        path = generate_report_file(output_dir="reports")
+        path = generate_report_file(output_dir="reports/archive")
         print(f"  [OK] {path}")
     except Exception as e:
         print(f"  [FAILED] Report generation error: {e}")
