@@ -36,32 +36,51 @@ for candidate in [_HERE.parent / "dashboard", _HERE / "dashboard"]:
         sys.path.insert(0, str(candidate))
         break
 
-from dashboard.db import (
+from db import (
     get_latest_tanker_metrics,
     get_latest_lng_metrics,
     get_latest_supply_gap_metrics,
     get_crisis_context,
-    get_transit_history,
+    # NOTE: get_transit_history() is NOT imported.
+    # It reads transit_count + baseline_annual from transit_events —
+    # those columns were removed in Phase 6 when Kaggle CSV was replaced
+    # by PortWatch. transit_events now stores n_tanker, n_total, etc.
+    # The chart uses get_vessel_mix_history() + get_anomaly_log_history() instead.
     get_anomaly_log_history,
     get_price_history,
     get_european_storage,
     get_storage_seasonal_baseline,
     get_vessel_mix_latest,
+    get_vessel_mix_history,
 )
 
-# ── ReportLab imports ──────────────────────────────────────────────────────────
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
-from reportlab.lib import colors
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable, Image, PageBreak, KeepTogether,
-)
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+# ── ReportLab imports — explicit error if not installed ───────────────────────
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.lib import colors
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.platypus import (
+        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+        HRFlowable, Image, PageBreak, KeepTogether,
+    )
+    from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+except ImportError:
+    raise ImportError(
+        "reportlab is required for PDF generation.\n"
+        "Install it in the same Python environment as Streamlit:\n"
+        "    pip install reportlab\n"
+        "If using a venv, activate it first."
+    )
 
-# ── Plotly imports ─────────────────────────────────────────────────────────────
-import plotly.graph_objects as go
+# ── Plotly + kaleido — explicit error if not installed ───────────────────────
+try:
+    import plotly.graph_objects as go
+except ImportError:
+    raise ImportError(
+        "plotly is required for chart generation.\n"
+        "Install it: pip install plotly kaleido"
+    )
 
 # ══════════════════════════════════════════════════════════════════════════════
 # COLOUR PALETTE — mirrors dashboard CSS variables
@@ -195,13 +214,24 @@ def _styles():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _safe(val, fmt="{:.2f}", fallback="N/A"):
-    """Format a numeric value safely; return fallback if None or error."""
+    """
+    Format a numeric value safely.
+
+    Returns fallback only if val is genuinely None (field missing from DB row
+    because the model hasn't run yet, or the table is empty).
+
+    Does NOT catch TypeError silently — if val is an unexpected type (e.g. a
+    string where a float is expected, which would indicate a schema mismatch),
+    we let it surface so the error is visible rather than masked as 'N/A'.
+    """
     if val is None:
         return fallback
     try:
         return fmt.format(float(val))
-    except (TypeError, ValueError):
-        return str(val)
+    except (ValueError, TypeError) as e:
+        # Log schema-type mismatches explicitly — don't swallow them
+        print(f"[report/_safe] Cannot format value={val!r} with fmt={fmt!r}: {e}")
+        return fallback
 
 
 def _risk_color(label):
@@ -278,35 +308,86 @@ def _chart_layout(fig, title="", height_mm=55):
 
 
 def build_transit_chart():
-    """Transit count vs baseline line chart with crisis annotation."""
-    df = get_transit_history()
-    if df.empty:
+    """
+    Transit count vs baseline line chart with crisis annotation.
+
+    Data sources:
+      - n_total from transit_events via get_vessel_mix_history()
+        (Phase 6 schema: transit_events stores n_tanker, n_total, etc.
+         The old transit_count + baseline_annual columns were removed
+         when Kaggle CSV was replaced by PortWatch in Phase 6.)
+      - baseline_annual from anomaly_log via get_anomaly_log_history()
+        (baseline is computed by tanker_anomaly.py and stored there —
+         it is NOT stored in transit_events any more.)
+
+    Bug fixed: previous version called get_transit_history() which read
+    transit_count and baseline_annual from transit_events — columns that
+    no longer exist in the Phase 6 schema. This caused a silent schema
+    error masked by the fallback empty DataFrame return.
+    """
+    # Raw daily totals — all 2,687 rows from PortWatch
+    transit_df = get_vessel_mix_history()
+    # Computed baseline (one row per anomaly model run)
+    anomaly_df = get_anomaly_log_history()
+
+    if transit_df.empty:
         return None
-    # Use n_total if available, fall back to transit_count
-    y_col = "n_total" if "n_total" in df.columns and df["n_total"].notna().any() else "transit_count"
-    b_col = "baseline_annual" if "baseline_annual" in df.columns else None
 
     fig = go.Figure()
+
+    # ── Daily total transits (n_total) ─────────────────────────────────────
     fig.add_trace(go.Scatter(
-        x=df["date"], y=df[y_col],
-        name="Daily Transits",
+        x=transit_df["date"],
+        y=transit_df["n_total"],
+        name="Daily Transits (all types)",
         line=dict(color="#3b82f6", width=1.5),
-        fill="tozeroy", fillcolor="rgba(59,130,246,0.08)",
+        fill="tozeroy",
+        fillcolor="rgba(59,130,246,0.08)",
     ))
-    if b_col and df[b_col].notna().any():
+
+    # ── Tanker-only line for signal clarity ────────────────────────────────
+    if "n_tanker" in transit_df.columns and transit_df["n_tanker"].notna().any():
         fig.add_trace(go.Scatter(
-            x=df["date"], y=df[b_col],
-            name="2025 Baseline",
-            line=dict(color="#22c55e", width=1, dash="dash"),
+            x=transit_df["date"],
+            y=transit_df["n_tanker"],
+            name="Tanker Transits",
+            line=dict(color="#f59e0b", width=1.2),
         ))
-    # Crisis onset annotation
+
+    # ── 2025 pre-crisis baseline (from anomaly_log.baseline_annual) ────────
+    # baseline_annual is a single computed value (53.1/day) stored in each
+    # anomaly_log row — draw as a flat reference line using the latest value.
+    if not anomaly_df.empty and "pct_of_normal" in anomaly_df.columns:
+        # Get baseline_annual if exposed, otherwise approximate from pct_of_normal + transit_count
+        # anomaly_log stores transit_count (= n_tanker, not n_total) so baseline here is tanker baseline
+        latest_anomaly = anomaly_df.iloc[-1]
+        pct = latest_anomaly.get("pct_of_normal")
+        tc  = latest_anomaly.get("transit_count")
+        if pct and tc and pct > 0:
+            baseline_val = round(tc / (pct / 100), 1)
+            fig.add_shape(
+                type="line",
+                x0=transit_df["date"].min(), x1=transit_df["date"].max(),
+                y0=baseline_val, y1=baseline_val,
+                line=dict(color="#22c55e", width=1, dash="dash"),
+            )
+            fig.add_annotation(
+                x=transit_df["date"].max(), y=baseline_val,
+                text=f"Tanker baseline {baseline_val}/day (2025)",
+                showarrow=False,
+                font=dict(color="#22c55e", size=8),
+                xanchor="right", yanchor="bottom",
+            )
+
+    # ── Crisis onset marker ────────────────────────────────────────────────
     fig.add_shape(type="line", x0=_CRISIS_DATE, x1=_CRISIS_DATE,
                   y0=0, y1=1, yref="paper",
                   line=dict(color="#ef4444", width=1, dash="dot"))
     fig.add_annotation(x=_CRISIS_DATE, y=0.95, yref="paper",
                        text="Crisis onset Mar 1", showarrow=False,
                        font=dict(color="#ef4444", size=8), xanchor="left")
-    _chart_layout(fig, "Hormuz Daily Transits vs 2025 Baseline")
+
+    _chart_layout(fig, "Hormuz Daily Transits — All Types vs Tanker Baseline")
     return fig
 
 

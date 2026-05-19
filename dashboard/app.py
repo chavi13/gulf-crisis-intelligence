@@ -1072,6 +1072,34 @@ with st.sidebar:
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
+    # ── Weekly Report download ────────────────────────────────────────────
+    st.markdown("""
+        <div class="section-header" style="margin-top:0;">Weekly Report</div>
+    """, unsafe_allow_html=True)
+
+    if st.button("📄 Generate PDF Report", use_container_width=True):
+        with st.spinner("Building report..."):
+            try:
+                _proj_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                if _proj_root not in sys.path:
+                    sys.path.insert(0, _proj_root)
+                from reports.generate_report import build_report_bytes
+                pdf_bytes = build_report_bytes()
+                date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                st.download_button(
+                    label="⬇ Download Report",
+                    data=pdf_bytes,
+                    file_name=f"gulf_crisis_weekly_{date_str}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+            except ImportError as e:
+                st.error(f"Missing dependency: {e}\n\nRun: pip install reportlab plotly kaleido")
+            except Exception as e:
+                st.error(f"Report generation failed: {e}")
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
     # Last pipeline run timestamp
     last_run = tanker.get("logged_at") or gap.get("logged_at") or "unknown"
     st.markdown(f"""
@@ -1082,42 +1110,8 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
-"""
-Paste this block into dashboard/app.py — inside the sidebar section,
-after the "Data Sources" section and before the "Pipeline Last Run" timestamp.
 
-It adds a "Download Weekly Report" button that generates and downloads the PDF on click.
-"""
 
-# ── Weekly Report download ──────────────────────────────────────────────────
-st.sidebar.markdown("---")
-st.sidebar.markdown(
-    '<div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;'
-    'text-transform:uppercase;color:#f59e0b;margin-bottom:0.5rem;">'
-    'WEEKLY REPORT</div>',
-    unsafe_allow_html=True,
-)
-
-if st.sidebar.button("📄 Generate PDF Report", use_container_width=True):
-    with st.sidebar:
-        with st.spinner("Building report..."):
-            try:
-                import sys, os
-                # Make sure reports/ folder is on the path
-                sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-                from reports.generate_report import build_report_bytes
-                pdf_bytes = build_report_bytes()
-                from datetime import datetime, timezone
-                date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                st.download_button(
-                    label="⬇ Download Report",
-                    data=pdf_bytes,
-                    file_name=f"gulf_crisis_weekly_{date_str}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-            except Exception as e:
-                st.error(f"Report generation failed: {e}")
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN TABS
 # ══════════════════════════════════════════════════════════════════════════════
