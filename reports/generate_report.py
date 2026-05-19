@@ -36,7 +36,7 @@ for candidate in [_HERE.parent / "dashboard", _HERE / "dashboard"]:
         sys.path.insert(0, str(candidate))
         break
 
-from db import (
+from dashboard.db import (
     get_latest_tanker_metrics,
     get_latest_lng_metrics,
     get_latest_supply_gap_metrics,
