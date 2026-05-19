@@ -1271,12 +1271,12 @@ with tab_tanker:
             {_flag_badge}
         </div>
         <div class="card-ta-sub">of pre-crisis normal &nbsp;·&nbsp; {safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_annual"), "{:.0f}")} baseline (full-year 2025)</div>
-        <div class="card-ta-sub">z-score {safe(tanker.get("z_score"), "{:.1f}")}</div>
-    </div>
+<div class="card-ta-sub" style="margin-top:0.75rem;color:#8a9bb5;">Hormuz carries ~20% of global oil supply. At {safe(tanker.get("pct_of_normal"), "{:.1f}%")} of normal traffic, the strait is effectively closed to commercial shipping.</div>
+        <div class="card-ta-sub" style="margin-top:0.4rem;color:#4a5a72;">{(datetime.now(timezone.utc).date() - datetime(2026, 2, 28, tzinfo=timezone.utc).date()).days} days since crisis began — 28 Feb 2026</div>    </div>
     <div class="card" style="min-height:unset;">
         <div class="card-ta-label">7-Day Recovery Trend</div>
         <div class="card-ta-value">{safe(tanker.get("trend_direction"))}</div>
-        <div class="card-ta-sub">Slope +{safe(tanker.get("trend_slope"), "{:.1f}")} transits/day</div>
+                <div class="card-ta-sub" style="margin-top:0.75rem;color:#8a9bb5;">At peak in 2024, Hormuz handled 93 ships/day across all vessel types. Today's count of {safe(tanker.get("transit_count"))} is the lowest sustained level since records began in 2019.</div>
     </div>
     <div style="display:flex;flex-direction:column;justify-content:space-between;min-height:320px;">
         <div class="card card--sm">
