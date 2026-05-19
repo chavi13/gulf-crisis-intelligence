@@ -100,7 +100,7 @@ def _styles():
             fontName="Helvetica-Bold",
             fontSize=20,
             textColor=TEXT_PRIMARY,
-            spaceAfter=2,
+            spaceAfter=30,
             spaceBefore=0,
             leading=28,
             alignment=TA_LEFT,
@@ -199,7 +199,7 @@ def _styles():
             textColor=TEXT_SEC,
             spaceBefore=8,
             
-spaceAfter=20,
+spaceAfter=2,
         ),
     }
 
