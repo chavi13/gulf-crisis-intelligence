@@ -1332,7 +1332,9 @@ with tab_tanker:
         ))
 
         # Crisis event vertical lines — numbered markers instead of rotated text
+        _crisis_keys = list(CRISIS_EVENTS.keys())
         for i, (date_str, label) in enumerate(CRISIS_EVENTS.items(), 1):
+            _xanchor = "left" if date_str == _crisis_keys[0] else ("right" if date_str == _crisis_keys[-1] else "center")
             fig_transit.add_shape(
                 type="line",
                 x0=date_str, x1=date_str,
@@ -1352,6 +1354,7 @@ with tab_tanker:
                 borderwidth=1,
                 borderpad=3,
                 yanchor="top",
+                xanchor=_xanchor,
             )
 
         fig_transit.update_layout(
@@ -1371,6 +1374,9 @@ with tab_tanker:
                 gridcolor="#1a2235",
                 linecolor="#2a3a55",
                 tickfont=dict(size=12, family="IBM Plex Mono"),
+                tickformat="%b %d",
+                dtick=7*24*60*60*1000,
+                tick0="2026-02-28",
             ),
             yaxis=dict(
                 gridcolor="#1a2235",
@@ -1746,6 +1752,9 @@ with tab_tanker:
                 gridcolor="#1a2235",
                 linecolor="#2a3a55",
                 tickfont=dict(size=12, family="IBM Plex Mono"),
+                tickformat="%b %d",
+                dtick=7*24*60*60*1000,
+                tick0="2026-02-28",
             ),
             yaxis=dict(
                 gridcolor="#1a2235",
@@ -1868,18 +1877,15 @@ with tab_lng:
         st.markdown(f"""
             <div class="card card--kpi" style="min-height:220px;">
                 <div class="card-label">JKM–TTF Spread (7-day avg)</div>
-                <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">${safe(lng.get("spread_7d"), "{:.3f}")}</div></div>
+                <div class="card-value-slot"><div class="card-value" style="font-size:var(--text-lg);">${safe(lng.get("spread_7d"), "{:.3f}")} <span style="font-family:'IBM Plex Sans',sans-serif;font-size:var(--text-xs);color:var(--text-muted);font-weight:400;">/MMBtu</span></div></div>
                 <div class="card-sub" style="margin-top:0.3rem;">
                     {risk_badge("GREEN" if safe(lng.get("routing_signal")) == "NEUTRAL" else "AMBER")}
                 </div>
                 <div class="card-sub" style="margin-top:0.45rem;">
-                    <span style="color:var(--text-muted);">/MMBtu</span>
+                    Routing signal: <span style="font-family:'IBM Plex Mono',monospace;color:#e8edf5;font-weight:600;">{safe(lng.get("routing_signal"))}</span>
                 </div>
                 <div class="card-sub" style="margin-top:0.2rem;">
-                    Routing signal:
-                    <span style="font-family:'IBM Plex Mono',monospace;
-                    color:#e8edf5;font-weight:600;">{safe(lng.get("routing_signal"))}</span>
-                    &nbsp;·&nbsp; threshold <span style="font-family:'IBM Plex Mono',monospace;color:#e8edf5;">$2.00</span>
+                    Threshold <span style="font-family:'IBM Plex Mono',monospace;color:#e8edf5;">$2.00</span>/MMBtu
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -2010,8 +2016,10 @@ with tab_lng:
         # Stagger y positions to prevent overlap on clustered dates
         y_positions = [0.97, 0.82, 0.67, 0.97, 0.82, 0.67, 0.97, 0.82]
 
+        _visible_keys = list(visible_lng_events.keys())
         for i, (date_str, label) in enumerate(visible_lng_events.items(), 1):
             y_pos = y_positions[(i - 1) % len(y_positions)]
+            _xanchor = "left" if date_str == _visible_keys[0] else ("right" if date_str == _visible_keys[-1] else "center")
             fig_spread.add_shape(
                 type="line",
                 x0=date_str, x1=date_str,
@@ -2030,6 +2038,7 @@ with tab_lng:
                 borderwidth=1,
                 borderpad=3,
                 yanchor="top",
+                xanchor=_xanchor,
             )
 
         fig_spread.update_layout(
@@ -2049,6 +2058,9 @@ with tab_lng:
                 gridcolor="#1a2235",
                 linecolor="#2a3a55",
                 tickfont=dict(size=12, family="IBM Plex Mono"),
+                tickformat="%b %d",
+                dtick=7*24*60*60*1000,
+                tick0="2026-02-28",
             ),
             yaxis=dict(
                 gridcolor="#1a2235",
