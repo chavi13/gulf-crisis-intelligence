@@ -1,6 +1,6 @@
 # Gulf Crisis Supply Intelligence System
 
-*Last updated: May 16, 2026*
+*Last updated: May 19, 2026*
 
 A multi-module supply intelligence dashboard tracking tanker routing anomalies, LNG cargo rebalancing, and regional supply gap quantification during the 2026 Strait of Hormuz crisis.
 
@@ -174,14 +174,13 @@ gulf-crisis-intelligence/
 
 ## Dashboard Features
 
-The Streamlit dashboard (`dashboard/app.py`) has four tabs — Overview, Tanker Module, Supply Gap, LNG Module — with the following notable features:
+The Streamlit dashboard (`dashboard/app.py`) has four tabs — Overview, Vessel Transits, Supply Gap, LNG Cargo Flows— with the following notable features:
 
 **Signal breakdown panel** — The LNG Market State card includes an expandable "Why ELEVATED · HIGH confidence" panel showing the three signals that produced the score (US utilization threshold, EU storage pace, routing signal), each with a checkbox indicating whether it is stressed. Confidence level is derived automatically from how many signals are in the stress direction.
 
 **Interactive tooltips** — Three KPI cards (LNG Gap, EU Storage, US Utilization) include ⓘ tooltip icons explaining the methodology behind each metric.
 
-**Date range slider** — The JKM–TTF spread chart includes a draggable date range slider. Narrowing to a specific period (e.g. March 2026) spreads out clustered event annotations for readability. The event legend below the chart filters to match the selected range.
-
+**Date range slider** — The JKM–TTF spread chart includes a draggable date range slider. Narrowing to a specific period (e.g. March 2026) spreads out clustered event annotations for readability. The event legend below the chart filters to match the selected range. The Vessel Transits tab includes the same slider, linked to the timeline checkbox selection.
 **Event hover tooltips** — Hovering on any date in the JKM–TTF chart that coincides with a crisis event shows the event name in the price tooltip (e.g. `⚑ Strait declared closed`).
 
 **Vessel type checkboxes** — The Historical Transit chart allows toggling individual vessel types (Tanker, Container, Dry Bulk, RoRo, General Cargo, Total) and timeline range via checkboxes.
