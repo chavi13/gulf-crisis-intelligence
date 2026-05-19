@@ -1201,7 +1201,7 @@ with tab_overview:
     st.markdown(f"""
 <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
     <div class="card card--kpi">
-        <div class="card-label">Net Crude Gap</div>
+        <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">Net Crude Gap</div>
         <div class="card-value-slot"><div class="card-value">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div></div>
         <div class="card-sub">Mb/d after bypass + SPR offsets</div>
     </div>
@@ -1212,7 +1212,7 @@ with tab_overview:
     </div>
     <div class="card card--kpi">
         <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">EU Storage vs Seasonal<span class="has-tooltip" style="cursor:help;flex-shrink:0;white-space:nowrap;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">EU gas storage vs the 5-year seasonal average (2020–2024) for this calendar date. Not a fixed target — shows how far below where Europe normally is at this time of year. Normal mid-May storage is ~51–53%; current is ~36%.</span></span></div>
-        <div class="card-value-slot kpi-storage-row">
+        <div class="card-value-slot kpi-storage-row" style="align-items:flex-start;">
             <div class="card-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
             <span class="kpi-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
         </div>
