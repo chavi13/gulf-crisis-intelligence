@@ -163,7 +163,9 @@ gulf-crisis-intelligence/
 │   └── supply_gap.py
 ├── dashboard/
 │   ├── db.py                       ← all SQL queries, single data access layer
-│   └── app.py                      ← Streamlit dashboard
+│   └── app.py  
+├── reports/
+│   └── generate_report.py/                    ← auto-generated weekly PDF reports (Monday)                    ← Streamlit 
 ├── .github/workflows/
 │   └── daily_update.yml            ← GitHub Actions: runs daily at 06:00 UTC
 ├── requirements.txt
