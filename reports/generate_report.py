@@ -103,7 +103,6 @@ def _styles():
             spaceAfter=6,
             spaceBefore=0,
             leading=40,
-
             alignment=TA_LEFT,
         ),
         "report_subtitle": ParagraphStyle(
@@ -462,8 +461,7 @@ def _build_page1(story, S, tanker, lng, gap, crisis, report_date):
 
     # ── Report header ──────────────────────────────────────────────────────────
     story.append(Paragraph("Gulf Crisis Supply Intelligence", S["report_title"]))
-    story.append(Spacer(1, 20))  # ADD THIS
-   
+    story.append(Spacer(1, 20))
     # Format raw ISO timestamp to readable form e.g. "2026-05-19 07:26 UTC"
     raw_ts = tanker.get("logged_at") or ""
     try:
@@ -671,7 +669,7 @@ def _build_page3(story, S, gap, tanker, report_date):
     """Page 3: regional risk table, trend extrapolation, data sources."""
     story.append(PageBreak())
     story.append(Paragraph("Regional Risk & Trend Extrapolation", S["report_title"]))
-    story.append(Spacer(1, 20))  # ADD THIS
+    story.append(Spacer(1, 20))
     story.append(Paragraph(
         "Supply gap model output and short-term trend projections.",
         S["report_subtitle"]
