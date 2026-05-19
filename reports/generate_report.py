@@ -54,7 +54,7 @@ from db import (
     get_vessel_mix_history,
 )
 
-# ── ReportLab imports — explicit error if not installed ───────────────────────
+# ── ReportLab + Plotly imports — preserve original error for diagnosis ───────
 try:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import mm
@@ -65,22 +65,10 @@ try:
         HRFlowable, Image, PageBreak, KeepTogether,
     )
     from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
-except ImportError:
-    raise ImportError(
-        "reportlab is required for PDF generation.\n"
-        "Install it in the same Python environment as Streamlit:\n"
-        "    pip install reportlab\n"
-        "If using a venv, activate it first."
-    )
+except ImportError as _rl_err:
+    raise ImportError(f"reportlab import failed: {_rl_err}") from _rl_err
 
-# ── Plotly + kaleido — explicit error if not installed ───────────────────────
-try:
-    import plotly.graph_objects as go
-except ImportError:
-    raise ImportError(
-        "plotly is required for chart generation.\n"
-        "Install it: pip install plotly kaleido"
-    )
+import plotly.graph_objects as go
 
 # ══════════════════════════════════════════════════════════════════════════════
 # COLOUR PALETTE — mirrors dashboard CSS variables
