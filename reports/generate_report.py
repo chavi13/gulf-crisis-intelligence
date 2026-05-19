@@ -102,7 +102,8 @@ def _styles():
             textColor=TEXT_PRIMARY,
             spaceAfter=6,
             spaceBefore=0,
-            leading=28,
+            leading=40,
+
             alignment=TA_LEFT,
         ),
         "report_subtitle": ParagraphStyle(
