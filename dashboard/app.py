@@ -1091,7 +1091,7 @@ tab_overview, tab_tanker, tab_gap, tab_lng = st.tabs([
     "⬡  Overview",
     "🚢  Vessel Transits",
     "📊  Supply Gap",
-    "🔥  LNG Module",
+    "🔥  LNG Cargo Flows",
 ])
 
 
