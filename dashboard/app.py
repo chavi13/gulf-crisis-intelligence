@@ -1184,6 +1184,82 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN TABS
 # ══════════════════════════════════════════════════════════════════════════════
+# ── Ticker tape ───────────────────────────────────────────────────────────────
+_ticker_pct    = f"{tanker.get('pct_of_normal') or 0:.1f}%"
+_ticker_spread = f"${lng.get('spread_7d') or 0:.2f}/MMBtu"
+_ticker_util   = f"{lng.get('us_utilization') or 0:.1f}%"
+_ticker_asia_c = f"{gap.get('asia_crude_gap_mbd') or 0:.2f} Mb/d"
+_ticker_eur_c  = f"{gap.get('europe_crude_gap_mbd') or 0:.2f} Mb/d"
+_ticker_stor   = f"{lng.get('storage_pct') or 0:.1f}%"
+
+st.markdown(f"""
+<style>
+.ticker-wrap {{
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    padding: 0.35rem 0;
+}}
+.ticker-track {{
+    display: inline-flex;
+    white-space: nowrap;
+    animation: ticker-scroll 35s linear infinite;
+}}
+.ticker-track:hover {{ animation-play-state: paused; }}
+@keyframes ticker-scroll {{
+    0%   {{ transform: translateX(0); }}
+    100% {{ transform: translateX(-50%); }}
+}}
+.ticker-item {{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    padding: 0 2rem;
+}}
+.ticker-item span.tk-label {{ color: var(--text-muted); font-weight: 400; }}
+.ticker-item span.tk-val   {{ color: var(--text-primary); }}
+.ticker-item span.tk-red   {{ color: #ef4444; }}
+.ticker-item span.tk-amber {{ color: #f59e0b; }}
+.ticker-sep {{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--border);
+    padding: 0 0.5rem;
+}}
+</style>
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span class="ticker-item"><span class="tk-label">HORMUZ TRANSIT </span><span class="tk-red">{_ticker_pct}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">JKM–TTF SPREAD </span><span class="tk-amber">{_ticker_spread}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">US LNG UTIL </span><span class="tk-val">{_ticker_util}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">ASIA CRUDE GAP </span><span class="tk-red">{_ticker_asia_c}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">EU CRUDE GAP </span><span class="tk-amber">{_ticker_eur_c}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">EU GAS STORAGE </span><span class="tk-val">{_ticker_stor}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">HORMUZ TRANSIT </span><span class="tk-red">{_ticker_pct}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">JKM–TTF SPREAD </span><span class="tk-amber">{_ticker_spread}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">US LNG UTIL </span><span class="tk-val">{_ticker_util}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">ASIA CRUDE GAP </span><span class="tk-red">{_ticker_asia_c}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">EU CRUDE GAP </span><span class="tk-amber">{_ticker_eur_c}</span></span>
+    <span class="ticker-sep">·</span>
+    <span class="ticker-item"><span class="tk-label">EU GAS STORAGE </span><span class="tk-val">{_ticker_stor}</span></span>
+    <span class="ticker-sep">·</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 tab_overview, tab_tanker, tab_gap, tab_lng = st.tabs([
     "⬡  Overview",
@@ -1205,9 +1281,33 @@ with tab_overview:
     st.markdown(f"""
         <div class="thesis-block">
             <div class="thesis-label">⬡ Current Market View</div>
-            <div class="thesis-text">{thesis_text}</div>
+            <div class="thesis-text">
+                <span id="typewriter-target"></span><span class="thesis-cursor">▌</span>
+            </div>
         </div>
     """, unsafe_allow_html=True)
+
+    import streamlit.components.v1 as components
+    components.html(f"""
+        <script>
+        (function() {{
+            const text = {repr(thesis_text)};
+            function tryType() {{
+                const el = window.parent.document.getElementById('typewriter-target');
+                if (!el) {{ setTimeout(tryType, 100); return; }}
+                let i = 0;
+                function type() {{
+                    if (i < text.length) {{
+                        el.textContent += text[i++];
+                        setTimeout(type, 18);
+                    }}
+                }}
+                type();
+            }}
+            setTimeout(tryType, 400);
+        }})();
+        </script>
+    """, height=0)
 
     # ── Consolidated metrics row — 4 KPI cards below thesis block ────────────
 
