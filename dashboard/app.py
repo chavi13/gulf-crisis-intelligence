@@ -586,7 +586,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
     line-height: 1.5;
     text-transform: none;
     letter-spacing: normal;
-    border: 1px solid #2a3a55;
+    border: 1px solid #4a5a72;
     border-radius: 6px;
     padding: 0.6rem 0.85rem;
     position: absolute;
@@ -818,12 +818,10 @@ details.signal-panel[open] .signal-panel-body {
 }
 }
 
-/* ── Scenario toggle active state ───────────────────────────────── */
-div[data-testid="stButton"] button[data-active="true"] {
-    background: rgba(245,158,11,0.15) !important;
-    border-color: var(--accent-amber) !important;
-    color: var(--accent-amber) !important;
-}
+/* ── Scenario radio toggle ──────────────────────────────────────── */
+div[data-testid="stRadio"] p { color: #e8edf5 !important; }
+div[data-testid="stRadio"] label:has(input:checked) p { color: #f59e0b !important; }
+div[data-testid="stRadio"] input[type="radio"] { accent-color: #f59e0b !important; }
 
 </style>
 """, unsafe_allow_html=True)
@@ -2839,39 +2837,14 @@ with tab_gap:
         "Pessimistic (3.5 Mb/d)": 3.5,
     }
 
-    if "bypass_scenario" not in st.session_state:
-        st.session_state.bypass_scenario = "Midpoint — IEA (4.5 Mb/d)"
-
-    st.markdown('<div class="card-label">Bypass pipeline capacity assumption</div>',
-                unsafe_allow_html=True)
-
-    cols = st.columns([2, 2.2, 2, 6])
-
-    for i, (label, val) in enumerate(BYPASS_SCENARIOS.items()):
-        with cols[i]:
-            if st.button(label, key=f"bypass_{i}"):
-                st.session_state.bypass_scenario = label
-                st.rerun()
-
-    active_label = st.session_state.bypass_scenario
-    st.markdown(f"""
-        <script>
-        (function() {{
-            const btns = window.parent.document.querySelectorAll(
-                '[data-testid="stButton"] button'
-            );
-            btns.forEach(b => {{
-                if (b.innerText.trim() === {active_label!r}) {{
-                    b.setAttribute('data-active', 'true');
-                }} else {{
-                    b.removeAttribute('data-active');
-                }}
-            }});
-        }})();
-        </script>
-    """, unsafe_allow_html=True)
-
-    bypass_offset = BYPASS_SCENARIOS[st.session_state.bypass_scenario]
+    selected_scenario = st.radio(
+        "Bypass pipeline capacity assumption",
+        options=list(BYPASS_SCENARIOS.keys()),
+        index=1,
+        horizontal=True,
+        help="IEA states 3.5–5.5 Mb/d available (Saudi East-West + UAE ADCOP). Midpoint is the documented base case.",
+    )
+    bypass_offset = BYPASS_SCENARIOS[selected_scenario]
 
 
     # ── Pre-compute gap variables (used by both interpretation box and waterfall)
