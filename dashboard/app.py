@@ -2825,15 +2825,31 @@ with tab_lng:
 
 with tab_gap:
     import plotly.graph_objects as go
+    BYPASS_SCENARIOS = {
+    "Optimistic (5.5 Mb/d)":  5.5,
+    "Midpoint — IEA (4.5 Mb/d)": 4.5,
+    "Pessimistic (3.5 Mb/d)": 3.5,
+    }
+    selected_scenario = st.radio(
+        "Bypass pipeline capacity assumption",
+        options=list(BYPASS_SCENARIOS.keys()),
+        index=1,
+        horizontal=True,
+        help="IEA states 3.5–5.5 Mb/d available (Saudi East-West + UAE ADCOP). Midpoint is the documented base case.",
+    )
+    bypass_offset = BYPASS_SCENARIOS[selected_scenario]
 
     # ── Pre-compute gap variables (used by both interpretation box and waterfall)
     pct_normal     = gap.get("pct_of_normal") or 7.8
     normal_flow    = 15.0
     current_thru   = round(normal_flow * (pct_normal / 100), 2)
     disrupted      = round(normal_flow - current_thru, 2)
-    bypass_offset  = 4.5
+#    bypass_offset  = 4.5 
     spr_offset     = 3.0
-    net_gap        = round(gap.get("crude_gap_net_mbd") or 6.33, 2)
+    net_gap = round(max(disrupted - bypass_offset - spr_offset, 0), 2)
+    asia_crude_gap  = round(net_gap * 0.80, 2)
+    europe_crude_gap = round(net_gap * 0.04, 2)
+
 
     # ── Analyst interpretation — top of tab ───────────────────────────────────
     st.markdown(f"""
@@ -2843,14 +2859,14 @@ with tab_gap:
                 The net crude supply gap of
                 <strong style="color:#f59e0b;">{net_gap:.2f} Mb/d</strong>
                 reflects the residual shortfall after all available offsets are applied —
-                bypass pipelines (4.5 Mb/d) and the IEA coordinated SPR release
-                (3.0 Mb/d) together cover roughly 54% of the disrupted volume, but
+                f"bypass pipelines ({bypass_offset} Mb/d)" and the IEA coordinated SPR release
+                (3.0 Mb/d) together cover roughly f"{round((bypass_offset + spr_offset) / disrupted * 100):.0f}%" of the disrupted volume, but
                 cannot close the gap at current transit levels of {pct_normal:.1f}%
                 of normal.
                 <br><br>
                 The regional distribution is asymmetric and analytically important:
                 <strong style="color:#ef4444;">Asia bears 80%
-                ({safe(gap.get("asia_crude_gap_mbd"), "{:.2f}")} Mb/d)</strong>
+                ({asia_crude_gap:.2f} Mb/d)</strong>
                 of the crude impact because 80% of Hormuz crude was destined for
                 Asian markets. Europe bears only 4%
                 ({safe(gap.get("europe_crude_gap_mbd"), "{:.2f}")} Mb/d) of the
@@ -2946,12 +2962,12 @@ with tab_gap:
             Normal Hormuz crude flow is 15.0 Mb/d (IEA 2025 baseline).
             At {pct_normal:.1f}% of normal, only {current_thru:.2f} Mb/d is currently
             transiting — leaving {disrupted:.2f} Mb/d disrupted.
-            Bypass pipelines (Saudi East-West + UAE ADCOP) offset 4.5 Mb/d
+            Bypass pipelines (Saudi East-West + UAE ADCOP) offset {bypass_offset} Mb/d
             (IEA available capacity midpoint). The IEA coordinated SPR release
             offsets a further 3.0 Mb/d. The residual net gap is
             <strong style="color:#f59e0b;">{net_gap:.2f} Mb/d</strong> —
             of which Asia bears 80% ({safe(gap.get("asia_crude_gap_mbd"), "{:.2f}")} Mb/d)
-            and Europe bears 4% ({safe(gap.get("europe_crude_gap_mbd"), "{:.2f}")} Mb/d).
+            and Europe bears 4% ({europe_crude_gap:.2f} Mb/d).
         </div>
     """, unsafe_allow_html=True)
 
@@ -2961,14 +2977,14 @@ with tab_gap:
     gap_html_rows = [
         {
             "Region": "Asia",
-            "Crude Gap (Mb/d)": f"{safe(gap.get('asia_crude_gap_mbd'), '{:.2f}')}",
+            "Crude Gap (Mb/d)": f"{asia_crude_gap:.2f}",
             "Crude Risk": risk_badge(gap.get("asia_crude_risk")),
             "LNG Gap (Bcf/d)": f"{safe(gap.get('asia_lng_gap_bcfd'), '{:.2f}')}",
             "LNG Risk": risk_badge(gap.get("asia_lng_risk")),
         },
         {
             "Region": "Europe",
-            "Crude Gap (Mb/d)": f"{safe(gap.get('europe_crude_gap_mbd'), '{:.2f}')}",
+            "Crude Gap (Mb/d)": f"{europe_crude_gap:.2f}",
             "Crude Risk": europe_crude_badge(gap.get("europe_crude_risk")),
             "LNG Gap (Bcf/d)": f"{safe(gap.get('europe_lng_gap_bcfd'), '{:.2f}')}",
             "LNG Risk": risk_badge(gap.get("europe_lng_risk")),
