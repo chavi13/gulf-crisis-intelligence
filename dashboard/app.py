@@ -592,7 +592,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
     position: absolute;
     z-index: 99999;
     top: 120%;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);       
     width: 240px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.6);
     transition: opacity 0.15s ease;
