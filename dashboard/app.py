@@ -769,8 +769,30 @@ details.signal-panel summary:hover { color: var(--text-primary); }
     background-color: #d97706 !important;
     color: #0a0e1a !important;
 }
+# In app.py, replace line 772 with this:
+
+/* ── MOBILE: hide sidebar, full-width content, fix tabs ── */
+@media (max-width: 768px) {
+    section[data-testid="stSidebar"] {
+        display: none !important;
+    }
+    .main .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100% !important;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+        flex-wrap: wrap;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-size: 0.72rem !important;
+        padding: 5px 7px !important;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HELPERS
