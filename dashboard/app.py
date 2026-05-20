@@ -771,48 +771,36 @@ details.signal-panel summary:hover { color: var(--text-primary); }
 }
 # In app.py, replace line 772 with this:
 
-/* ── MOBILE: hide sidebar, full-width content, fix tabs ── */
 /* ── MOBILE ── */
 @media (max-width: 768px) {
-    section[data-testid="stSidebar"] {
-        display: none !important;
-    }
+    section[data-testid="stSidebar"] { display: none !important; }
+
     .main .block-container {
         padding-left: 0.75rem !important;
         padding-right: 0.75rem !important;
         max-width: 100% !important;
     }
-    /* Tabs: shrink and wrap */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 2px;
-        flex-wrap: wrap;
-    }
-    .stTabs [data-baseweb="tab"] {
-        font-size: 0.72rem !important;
-        padding: 5px 7px !important;
-    }
-    /* Overview: 3-col headline cards → single column */
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] { gap: 2px; flex-wrap: wrap; }
+    .stTabs [data-baseweb="tab"] { font-size: 0.72rem !important; padding: 5px 7px !important; }
+
+    /* Overview 3-col headline cards → stack */
     .headline-metrics-grid {
         grid-template-columns: 1fr !important;
     }
-    /* Overview: 4-col KPI row → 2x2 grid */
-    div[style*="repeat(4,minmax(0,1fr))"] {
+    /* Overview 4-col KPI row → 2x2 */
+    .kpi-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
-    /* Tanker tab: 3-col cards → single column */
-    div[style*="2fr 1.5fr 1fr"] {
+    /* Tanker 3-col → stack */
+    .tanker-grid {
         grid-template-columns: 1fr !important;
     }
-    /* Vessel mix: 6-col → 2-col */
-    div[style*="repeat(6,minmax(0,1fr))"] {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    }
-    /* Risk table: prevent clipping */
-    .overview-risk-table {
-        width: 100% !important;
-        font-size: 0.7rem !important;
-    }
+    /* Risk table: stop clipping */
+    .overview-risk-table { width: 100% !important; font-size: 0.7rem !important; }
+    .overview-risk-table td { padding: 3px 4px !important; }
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1369,7 +1357,7 @@ with tab_overview:
     # ── Supply gap KPIs ───────────────────────────────────────────────────────
 
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
+<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
     <div class="card card--kpi">
         <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">Net Crude Gap</div>
         <div class="card-value-slot"><div class="card-value">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div></div>
@@ -1582,7 +1570,7 @@ with tab_tanker:
     )
     _flag_badge  = transit_badge(tanker.get("pct_of_normal"))
     st.markdown(f"""
-<div style="display:grid;grid-template-columns:2fr 1.5fr 1fr;gap:1rem;align-items:stretch;margin-bottom:1.5rem;">
+<div class="tanker-grid" style="display:grid;grid-template-columns:2fr 1.5fr 1fr;gap:1rem;align-items:stretch;margin-bottom:1.5rem;">
     <div class="card card--primary">
         <div class="card-ta-label">Hormuz Transit · Current Reading</div>
         <div class="card-ta-number-row">
