@@ -1610,15 +1610,15 @@ with tab_tanker:
 
     anchorage_count = tanker.get("anchorage_count") or 0
     anchorage_status = (
-        "ELEVATED — possible Hormuz queue" if anchorage_count >= 15
-        else f"{anchorage_count} vessels present" if anchorage_count > 0
-        else "Accumulating — sparse data"
-    )
+    "ELEVATED — possible Hormuz queue" if anchorage_count >= 15
+    else f"{anchorage_count} vessels present" if anchorage_count > 0
+    else "Cannot verify — vessel_positions sparse. AIS coverage insufficient in Fujairah area."
+)
     anchorage_badge = (
-        risk_badge("RED")   if anchorage_count >= 15 else
-        risk_badge("AMBER") if anchorage_count > 0   else
-        risk_badge("GREEN")
-    )
+    risk_badge("RED")   if anchorage_count >= 15 else
+    risk_badge("AMBER") if anchorage_count > 0   else
+    '<span style="background:rgba(74,90,114,0.25);color:#8a9bb5;border:1px solid #4a5a72;padding:2px 10px;border-radius:3px;font-size:var(--text-xs);font-weight:600;letter-spacing:0.08em;font-family:var(--font-sans);">NO DATA</span>'
+)
     _flag_badge  = transit_badge(tanker.get("pct_of_normal"))
     st.markdown(f"""
 <div class="tanker-grid" style="display:grid;grid-template-columns:2fr 1.5fr 1fr;gap:1rem;align-items:stretch;margin-bottom:1.5rem;">
