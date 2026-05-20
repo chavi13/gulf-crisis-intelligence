@@ -818,7 +818,7 @@ details.signal-panel[open] .signal-panel-body {
 }
 }
 
-            /* ── Scenario radio toggle ──────────────────────────────────────── */
+/* ── Scenario radio toggle ──────────────────────────────────────── */
 div[data-testid="stRadio"] [data-testid="stWidgetLabel"] p {
     color: #e8edf5 !important;
     font-size: var(--text-xs) !important;
@@ -827,28 +827,23 @@ div[data-testid="stRadio"] [data-testid="stWidgetLabel"] p {
     text-transform: uppercase !important;
 }
 div[data-testid="stRadio"] label {
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 6px !important;
-    padding: 0.4rem 0.9rem !important;
-    margin-right: 0.5rem !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0.2rem 0.5rem !important;
     cursor: pointer !important;
-}
-div[data-testid="stRadio"] label:has(input:checked) {
-    border-color: var(--accent-amber) !important;
-    background: rgba(245,158,11,0.1) !important;
-}
-div[data-testid="stRadio"] label:has(input:checked) p,
-div[data-testid="stRadio"] label:has(input:checked) span {
-    color: var(--accent-amber) !important;
 }
 div[data-testid="stRadio"] label span {
     color: #8a9bb5 !important;
     font-family: var(--font-sans) !important;
     font-size: var(--text-sm) !important;
+    font-weight: 600 !important;
+}
+div[data-testid="stRadio"] label:has(input:checked) span {
+    color: var(--accent-amber) !important;
 }
 div[data-testid="stRadio"] input[type="radio"] {
-    display: none !important;
+    accent-color: var(--accent-amber) !important;
 }
 
 </style>
