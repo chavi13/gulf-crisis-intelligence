@@ -70,7 +70,7 @@ st.markdown("""
     /* Text */
     --text-primary:  #e8edf5;
     --text-secondary:#8a9bb5;
-    --text-muted:    #4a5a72;
+    --text-muted:    #7a8fa8;
     /* Accents */
     --accent-amber:  #f59e0b;
     --accent-red:    #ef4444;
