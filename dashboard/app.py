@@ -1377,30 +1377,58 @@ with tab_overview:
 <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;align-items:stretch;margin-bottom:1rem;">
     <div class="card card--kpi">
         <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">Net Crude Gap</div>
-        <div class="card-value-slot"><div class="card-value">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div></div>
+        <div class="card-value-slot"><div class="card-value" data-countup="{gap.get('crude_gap_net_mbd') or 0}" data-decimals="2" data-suffix="">{safe(gap.get("crude_gap_net_mbd"), "{:.2f}")}</div></div>
         <div class="card-sub">Mb/d after bypass + SPR offsets</div>
     </div>
     <div class="card card--kpi">
         <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">LNG Gap (Asia)<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">Volume of LNG that would normally transit Hormuz to Asia daily, now offline. Derived: 10.8 Bcf/d normal Hormuz LNG flow (IEA 2025) × 90% Asia destination share × ~96% disruption rate. Bcf/d = billion cubic feet per day, the standard US gas flow unit.</span></span></div>
-        <div class="card-value-slot"><div class="card-value">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div></div>
+        <div class="card-value-slot"><div class="card-value" data-countup="{gap.get('asia_lng_gap_bcfd') or 0}" data-decimals="2" data-suffix="">{safe(gap.get("asia_lng_gap_bcfd"), "{:.2f}")}</div></div>
         <div class="card-sub">Bcf/d — no pipeline bypass available</div>
     </div>
     <div class="card card--kpi">
         <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">EU Storage vs Seasonal<span class="has-tooltip" style="cursor:help;flex-shrink:0;white-space:nowrap;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">EU gas storage vs the 5-year seasonal average (2020–2024) for this calendar date. Not a fixed target — shows how far below where Europe normally is at this time of year. Normal mid-May storage is ~51–53%; current is ~36%.</span></span></div>
         <div class="card-value-slot kpi-storage-row" style="align-items:flex-start;">
-            <div class="card-value">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
+            <div class="card-value" data-countup="{lng.get('storage_pct') or 0}" data-decimals="1" data-suffix="%">{safe(lng.get("storage_pct"), "{:.1f}%")}</div>
             <span class="kpi-storage-badge">{risk_badge(lng.get("storage_risk"))}</span>
         </div>
         <div class="card-sub">{safe(lng.get("seasonal_deficit"), "{:.1f} %")} below seasonal avg</div>
     </div>
     <div class="card card--kpi">
         <div class="card-label" style="display:flex;align-items:center;gap:0.35rem;">US export terminal utilization<span class="has-tooltip" style="cursor:help;flex-shrink:0;"><span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span><span class="tooltip-text" style="width:260px;">Actual LNG exports as % of nameplate liquefaction capacity across 8 US terminals (EIA data, Feb 2026). Above 100% means terminals are exceeding their design baseline — less maintenance downtime, trains at peak output. No spare capacity remains to offset the Hormuz LNG loss.</span></span></div>
-        <div class="card-value-slot"><div class="card-value">{safe(lng.get("us_utilization"), "{:.1f}%")}</div></div>
+        <div class="card-value-slot"><div class="card-value" data-countup="{lng.get('us_utilization') or 0}" data-decimals="1" data-suffix="%">{safe(lng.get("us_utilization"), "{:.1f}%")}</div></div>
         <div class="card-sub">System at maximum — no relief capacity</div>
 <div class="card-sub" style="margin-top:0.25rem;color:var(--text-muted);font-size:0.62rem;">Latest available: Feb 2026 (EIA 6–8 week lag)</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
+    
+import streamlit.components.v1 as components
+components.html("""
+<script>
+(function() {
+    function animateCountUp(el) {
+        var target   = parseFloat(el.dataset.countup);
+        var decimals = parseInt(el.dataset.decimals || "0");
+        var suffix   = el.dataset.suffix || "";
+        var duration = 900;
+        var start    = performance.now();
+        function step(now) {
+            var progress = Math.min((now - start) / duration, 1);
+            var ease     = 1 - Math.pow(1 - progress, 3);
+            el.textContent = (target * ease).toFixed(decimals) + suffix;
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+    function tryAnimate() {
+        var els = window.parent.document.querySelectorAll("[data-countup]");
+        if (els.length === 0) { setTimeout(tryAnimate, 100); return; }
+        els.forEach(animateCountUp);
+    }
+    tryAnimate();
+})();
+</script>
+""", height=0)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1591,7 +1619,7 @@ with tab_tanker:
     <div class="card card--primary">
         <div class="card-ta-label">Hormuz Transit · Current Reading</div>
         <div class="card-ta-number-row">
-            <span class="card-ta-big-value">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}</span>
+            <span class="card-ta-big-value" data-countup="{tanker.get('pct_of_normal') or 0}" data-decimals="1" data-suffix="%">{safe(tanker.get("pct_of_normal"), "{:.1f}%")}</span>
             {_flag_badge}
         </div>
         <div class="card-ta-sub">of pre-crisis normal &nbsp;·&nbsp; {safe(tanker.get("transit_count"))} ships/day vs {safe(tanker.get("baseline_annual"), "{:.0f}")} baseline (full-year 2025)</div>
