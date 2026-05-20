@@ -1924,7 +1924,7 @@ with tab_tanker:
                           "general_cargo", "total"]
             ],
             marker_line=dict(color="rgba(255,255,255,0.1)", width=1),
-            hovertemplate="%{x}<br>Latest ({vessel_mix.get('latest_date') or '—'}): %{{y}} ships<extra></extra>",
+            hovertemplate=f"%{{x}}<br>Latest ({vessel_mix.get('latest_date') or '—'}): %{{y}} ships<extra></extra>",
         ))
 
         fig_bar.update_layout(
