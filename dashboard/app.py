@@ -797,6 +797,16 @@ details.signal-panel summary:hover { color: var(--text-primary); }
     /* Risk table: stop clipping */
     .overview-risk-table { width: 100% !important; font-size: 0.7rem !important; }
     .overview-risk-table td { padding: 3px 4px !important; }
+    /* Fix horizontal bleed */
+    div[data-testid="stAppViewContainer"] {
+        overflow-x: hidden !important;
+    }
+    section.main {
+        overflow-x: hidden !important;
+    }
+    .vessel-mix-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
 }
 
 </style>
@@ -1737,7 +1747,7 @@ with tab_tanker:
     ]
 
     if vessel_mix:
-        cards_html = '<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0.65rem;margin-bottom:1.5rem;">'
+        cards_html = '<div class="vessel-mix-grid" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0.65rem;margin-bottom:1.5rem;">'
         for label, n_key, b_key, pct_key, z_key, flag_key in VESSEL_TYPES:
             today     = vessel_mix.get(n_key)
             baseline  = vessel_mix.get(b_key)
