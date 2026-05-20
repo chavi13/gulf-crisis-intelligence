@@ -817,34 +817,38 @@ details.signal-panel[open] .signal-panel-body {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 }
-            
-/* ── Scenario radio toggle ──────────────────────────────────────── */
-div[data-testid="stRadio"] > label {
-    font-family: var(--font-sans);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
+
+            /* ── Scenario radio toggle ──────────────────────────────────────── */
 div[data-testid="stRadio"] [data-testid="stWidgetLabel"] p {
-    color: var(--text-secondary) !important;
+    color: #e8edf5 !important;
     font-size: var(--text-xs) !important;
     font-weight: 600 !important;
     letter-spacing: 0.08em !important;
     text-transform: uppercase !important;
 }
-div[data-testid="stRadio"] label span:last-child {
-    color: var(--text-secondary) !important;
+div[data-testid="stRadio"] label {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    padding: 0.4rem 0.9rem !important;
+    margin-right: 0.5rem !important;
+    cursor: pointer !important;
+}
+div[data-testid="stRadio"] label:has(input:checked) {
+    border-color: var(--accent-amber) !important;
+    background: rgba(245,158,11,0.1) !important;
+}
+div[data-testid="stRadio"] label:has(input:checked) p,
+div[data-testid="stRadio"] label:has(input:checked) span {
+    color: var(--accent-amber) !important;
+}
+div[data-testid="stRadio"] label span {
+    color: #8a9bb5 !important;
     font-family: var(--font-sans) !important;
     font-size: var(--text-sm) !important;
 }
-div[data-testid="stRadio"]:has(input:checked) label span:last-child {
-    color: var(--accent-amber) !important;
-}
 div[data-testid="stRadio"] input[type="radio"] {
-    accent-color: var(--accent-amber);
+    display: none !important;
 }
 
 </style>
