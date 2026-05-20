@@ -1881,7 +1881,7 @@ with tab_tanker:
     # Immediately shows which vessel types collapsed and which held on.
 
     if vessel_mix:
-        st.markdown('<div class="section-header">Today vs Pre-Crisis Baseline — By Vessel Type</div>',
+        st.markdown(f'<div class="section-header">Latest Data ({vessel_mix.get("latest_date") or "—"}) vs Pre-Crisis Baseline — By Vessel Type</div>',
                     unsafe_allow_html=True)
 
         bar_labels    = ["Tanker", "Container", "Dry Bulk", "RoRo", "Gen. Cargo", "Total"]
@@ -1924,7 +1924,7 @@ with tab_tanker:
                           "general_cargo", "total"]
             ],
             marker_line=dict(color="rgba(255,255,255,0.1)", width=1),
-            hovertemplate="%{x}<br>Today: %{y} ships<extra></extra>",
+            hovertemplate="%{x}<br>Latest ({vessel_mix.get('latest_date') or '—'}): %{{y}} ships<extra></extra>",
         ))
 
         fig_bar.update_layout(
