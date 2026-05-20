@@ -2845,7 +2845,7 @@ with tab_gap:
     st.markdown('<div class="card-label">Bypass pipeline capacity assumption</div>',
                 unsafe_allow_html=True)
 
-    cols = st.columns([1.5, 1.5, 1.5, 4])
+    cols = st.columns([2, 2.2, 2, 6])
 
     for i, (label, val) in enumerate(BYPASS_SCENARIOS.items()):
         with cols[i]:
@@ -2894,8 +2894,8 @@ with tab_gap:
                 The net crude supply gap of
                 <strong style="color:#f59e0b;">{net_gap:.2f} Mb/d</strong>
                 reflects the residual shortfall after all available offsets are applied —
-                f"bypass pipelines ({bypass_offset} Mb/d)" and the IEA coordinated SPR release
-                (3.0 Mb/d) together cover roughly f"{round((bypass_offset + spr_offset) / disrupted * 100):.0f}%" of the disrupted volume, but
+                bypass pipelines ({bypass_offset} Mb/d) and the IEA coordinated SPR release
+                (3.0 Mb/d) together cover roughly {round((bypass_offset + spr_offset) / disrupted * 100):.0f}% of the disrupted volume, but
                 cannot close the gap at current transit levels of {pct_normal:.1f}%
                 of normal.
                 <br><br>
@@ -2904,7 +2904,7 @@ with tab_gap:
                 ({asia_crude_gap:.2f} Mb/d)</strong>
                 of the crude impact because 80% of Hormuz crude was destined for
                 Asian markets. Europe bears only 4%
-                ({safe(gap.get("europe_crude_gap_mbd"), "{:.2f}")} Mb/d) of the
+                ({europe_crude_gap:.2f} Mb/d) of the
                 crude impact — but faces a
                 <strong style="color:#f59e0b;">disproportionate LNG impact
                 ({safe(gap.get("europe_lng_gap_bcfd"), "{:.2f}")} Bcf/d)</strong>
