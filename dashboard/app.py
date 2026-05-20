@@ -772,15 +772,17 @@ details.signal-panel summary:hover { color: var(--text-primary); }
 # In app.py, replace line 772 with this:
 
 /* ── MOBILE: hide sidebar, full-width content, fix tabs ── */
+/* ── MOBILE ── */
 @media (max-width: 768px) {
     section[data-testid="stSidebar"] {
         display: none !important;
     }
     .main .block-container {
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
         max-width: 100% !important;
     }
+    /* Tabs: shrink and wrap */
     .stTabs [data-baseweb="tab-list"] {
         gap: 2px;
         flex-wrap: wrap;
@@ -788,6 +790,27 @@ details.signal-panel summary:hover { color: var(--text-primary); }
     .stTabs [data-baseweb="tab"] {
         font-size: 0.72rem !important;
         padding: 5px 7px !important;
+    }
+    /* Overview: 3-col headline cards → single column */
+    .headline-metrics-grid {
+        grid-template-columns: 1fr !important;
+    }
+    /* Overview: 4-col KPI row → 2x2 grid */
+    div[style*="repeat(4,minmax(0,1fr))"] {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    /* Tanker tab: 3-col cards → single column */
+    div[style*="2fr 1.5fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    /* Vessel mix: 6-col → 2-col */
+    div[style*="repeat(6,minmax(0,1fr))"] {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    /* Risk table: prevent clipping */
+    .overview-risk-table {
+        width: 100% !important;
+        font-size: 0.7rem !important;
     }
 }
 </style>
