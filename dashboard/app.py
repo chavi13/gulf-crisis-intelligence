@@ -408,7 +408,7 @@ button[kind="header"]:hover {
 /* Headline metrics grid layout */
 .headline-metrics-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1rem;
     align-items: stretch;
     margin-bottom: 1rem;
@@ -769,9 +769,7 @@ details.signal-panel summary:hover { color: var(--text-primary); }
     background-color: #d97706 !important;
     color: #0a0e1a !important;
 }
-# In app.py, replace line 772 with this:
 
-/* ── MOBILE ── */
 @media (max-width: 768px) {
     section[data-testid="stSidebar"] { display: none !important; }
 
