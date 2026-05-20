@@ -984,12 +984,24 @@ def render_signal_panel(lng: dict, panel_id: str = "signals") -> str:
     else:
         conf_note = "No signals stressed &mdash; score may be revising."
 
-    return f"""<details class="signal-panel" id="{panel_id}">
-  <summary>
-    <span class="signal-chevron">&#9654;</span>
+    return f"""<div class="signal-panel" id="{panel_id}">
+  <div class="signal-panel-summary" onclick="(function(){{
+    var b=document.getElementById('{panel_id}-body');
+    var c=document.getElementById('{panel_id}-chevron');
+    if(b.style.maxHeight && b.style.maxHeight!=='0px'){{
+      b.style.maxHeight='0px';
+      b.style.padding='0 0.9rem';
+      c.style.transform='rotate(0deg)';
+    }} else {{
+      b.style.maxHeight='300px';
+      b.style.padding='0.7rem 0.9rem';
+      c.style.transform='rotate(90deg)';
+    }}
+  }})()" style="display:flex;align-items:center;gap:0.45rem;font-family:var(--font-sans);font-size:var(--text-xs);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);cursor:pointer;list-style:none;padding:0;user-select:none;">
+    <span id="{panel_id}-chevron" class="signal-chevron" style="transition:transform 0.25s ease;">&#9654;</span>
     Why {score}&nbsp;&middot;&nbsp;{confidence} confidence
-  </summary>
-  <div class="signal-panel-body">
+  </div>
+  <div id="{panel_id}-body" class="signal-panel-body" style="max-height:0;overflow:hidden;padding:0 0.9rem;transition:max-height 0.3s ease,padding 0.3s ease;">
     <div class="signal-row">
       <span class="{sig1_check}">{sig1_icon}</span>
       <span class="signal-text">{sig1_text}</span>
@@ -1007,7 +1019,7 @@ def render_signal_panel(lng: dict, panel_id: str = "signals") -> str:
     </div>
     <div class="signal-panel-footer">{conf_note}</div>
   </div>
-</details>"""
+</div>"""
 
 
 def fmt_timestamp(ts: str) -> str:
