@@ -578,7 +578,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 .has-tooltip .tooltip-text {
     visibility: hidden;
     opacity: 0;
-    background: #2a3a55;
+    background: #0d1626;
     color: #e8edf5;
     font-family: var(--font-sans);
     font-size: var(--text-xs);
