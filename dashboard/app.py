@@ -707,6 +707,15 @@ details.signal-panel summary:hover { color: var(--text-primary); }
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 0.7rem 0.9rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+details.signal-panel[open] .signal-panel-body {
+    max-height: 300px;
+    padding: 0.7rem 0.9rem;
 }
 .signal-row {
     display: grid;
