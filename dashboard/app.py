@@ -817,9 +817,39 @@ details.signal-panel[open] .signal-panel-body {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 }
+            
+/* ── Scenario radio toggle ──────────────────────────────────────── */
+div[data-testid="stRadio"] > label {
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+div[data-testid="stRadio"] [data-testid="stWidgetLabel"] p {
+    color: var(--text-secondary) !important;
+    font-size: var(--text-xs) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}
+div[data-testid="stRadio"] label span:last-child {
+    color: var(--text-secondary) !important;
+    font-family: var(--font-sans) !important;
+    font-size: var(--text-sm) !important;
+}
+div[data-testid="stRadio"]:has(input:checked) label span:last-child {
+    color: var(--accent-amber) !important;
+}
+div[data-testid="stRadio"] input[type="radio"] {
+    accent-color: var(--accent-amber);
+}
 
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════
