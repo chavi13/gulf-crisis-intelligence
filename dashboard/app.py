@@ -2845,7 +2845,8 @@ with tab_gap:
     st.markdown('<div class="card-label">Bypass pipeline capacity assumption</div>',
                 unsafe_allow_html=True)
 
-    cols = st.columns(len(BYPASS_SCENARIOS))
+    cols = st.columns([1.5, 1.5, 1.5, 4])
+
     for i, (label, val) in enumerate(BYPASS_SCENARIOS.items()):
         with cols[i]:
             if st.button(label, key=f"bypass_{i}"):
