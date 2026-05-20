@@ -578,7 +578,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
 .has-tooltip .tooltip-text {
     visibility: hidden;
     opacity: 0;
-    background: #1a2235;
+    background: #2a3a55;
     color: #e8edf5;
     font-family: var(--font-sans);
     font-size: var(--text-xs);
@@ -834,7 +834,7 @@ div[data-testid="stRadio"] label {
     cursor: pointer !important;
 }
 div[data-testid="stRadio"] label span {
-    color: #8a9bb5 !important;
+    color: #e8edf5 !important;
     font-family: var(--font-sans) !important;
     font-size: var(--text-sm) !important;
     font-weight: 600 !important;
