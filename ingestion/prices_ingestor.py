@@ -1,3 +1,4 @@
+import argparse
 import yfinance as yf
 import sqlite3
 from datetime import datetime
@@ -7,21 +8,35 @@ DB_PATH = "data/processed/gulf_data.db"
 
 # ─────────────────────────────────────────────
 # Tickers fetched from yfinance
-# TTF  — Title Transfer Facility (European gas benchmark) $/MMBtu
-# BRENT — Brent crude oil $/barrel
-# HH   — Henry Hub (US natural gas benchmark) $/MMBtu
 #
-# NOTE: TTF and HH are in $/MMBtu. Brent is in $/barrel.
-# These are different units — never compare raw prices
-# across tickers without unit context.
-# Unit reference is enforced in lng_rebalancing.py via
-# PRICE_UNITS dictionary.
+# EXISTING:
+# TTF   — Title Transfer Facility (European gas benchmark) $/MMBtu
+# BRENT — Brent crude oil $/barrel
+# HH    — Henry Hub (US natural gas benchmark) $/MMBtu
+# JKM   — Japan Korea Marker (Asian LNG benchmark) $/MMBtu
+#
+# NEW (Sprint 1 — refined products for crack spread calculation):
+# RBOB_Gasoline — US gasoline futures $/gallon
+# HeatingOil    — Heating oil / diesel proxy $/gallon
+# WTI           — West Texas Intermediate crude $/barrel
+#
+# ⚠️ UNIT WARNING:
+# RBOB_Gasoline and HeatingOil are stored in $/gallon as returned
+# by yfinance. To compute crack spreads in $/barrel, multiply by 42.
+# This conversion is applied in the crack spread model (Sprint 2),
+# not here. Raw prices are always stored as-is.
 # ─────────────────────────────────────────────
 TICKERS = {
-    "TTF":   "TTE=F",
-    "BRENT": "BZ=F",
-    "HH":    "NG=F",
-    "JKM":   "JKM=F"    # Asian LNG benchmark — Japan Korea Marker
+    # Existing — do not modify
+    "TTF":            "TTE=F",
+    "BRENT":          "BZ=F",
+    "HH":             "NG=F",
+    "JKM":            "JKM=F",
+
+    # New — refined products
+    "RBOB_Gasoline":  "RB=F",
+    "HeatingOil":     "HO=F",
+    "WTI":            "CL=F",
 }
 
 # ─────────────────────────────────────────────
@@ -123,8 +138,33 @@ def store_prices(rows):
 
 
 if __name__ == "__main__":
+
+    # ─────────────────────────────────────────────
+    # Two run modes:
+    #   python prices_ingestor.py             → daily mode  (start = 2025-01-01)
+    #   python prices_ingestor.py --backfill  → backfill mode (start = 2024-01-01)
+    #
+    # Daily mode: what run_all.py calls every day. Fetches recent data only.
+    # Backfill mode: run ONCE manually to extend history back to 2024.
+    #                Safe to re-run — INSERT OR REPLACE prevents duplicates.
+    # ─────────────────────────────────────────────
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--backfill",
+        action="store_true",
+        help="Fetch from 2024-01-01 instead of 2025-01-01"
+    )
+    args = parser.parse_args()
+
+    if args.backfill:
+        START_DATE = "2006-01-01"
+        print(f"Mode: BACKFILL — fetching from {START_DATE}")
+    else:
+        START_DATE = "2025-01-01"
+        print(f"Mode: DAILY — fetching from {START_DATE}")
+
     print("Fetching price data...")
-    rows = fetch_prices()
+    rows = fetch_prices(start=START_DATE)
     n = store_prices(rows)
     print(f"\nStored/updated {n} rows in price_data")
 
@@ -153,7 +193,7 @@ if __name__ == "__main__":
     print("\nDate coverage by ticker:")
     print(coverage_df.to_string(index=False))
 
-    # FIX 1 — Duplicate check on every run
+    # Duplicate check on every run
     dup_df = pd.read_sql("""
         SELECT date, ticker, COUNT(*) as count
         FROM price_data

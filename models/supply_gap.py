@@ -81,15 +81,27 @@ def get_crude_supply_gap():
         if row and row["pct_of_normal"] is not None:
             pct_of_normal = float(row["pct_of_normal"])
         else:
-            # Fallback: compute from transit_events directly
-            # (pct_of_normal is not stored as a column there — must calculate)
-            row = conn.execute("""
-                SELECT ROUND((CAST(transit_count AS REAL) / baseline_30d) * 100, 1)
-                AS pct_of_normal
-                FROM transit_events
+            # Fallback: compute pct_of_normal from transit_events directly.
+            # Used only when anomaly_log is empty (e.g. first run before
+            # tanker_anomaly.py has executed).
+            # transit_events uses n_tanker (not transit_count).
+            # Baseline = full-year 2025 average, computed inline — same
+            # logic as tanker_anomaly.py get_latest_index().
+            latest_row = conn.execute("""
+                SELECT n_tanker FROM transit_events
                 ORDER BY date DESC LIMIT 1
             """).fetchone()
-            pct_of_normal = float(row["pct_of_normal"]) if row else 0.0
+            baseline_row = conn.execute("""
+                SELECT AVG(n_tanker) as baseline
+                FROM transit_events
+                WHERE date >= '2025-01-01' AND date < '2026-01-01'
+            """).fetchone()
+            if latest_row and baseline_row and baseline_row["baseline"]:
+                current  = float(latest_row["n_tanker"] or 0)
+                baseline = float(baseline_row["baseline"])
+                pct_of_normal = round((current / baseline) * 100, 1) if baseline > 0 else 0.0
+            else:
+                pct_of_normal = 0.0
             print("  WARNING: anomaly_log empty — fell back to transit_events")
     finally:
         conn.close()

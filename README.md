@@ -1,8 +1,8 @@
 # Gulf Crisis Supply Intelligence System
 
-*Last updated: May 19, 2026*
+*Last updated: May 25, 2026*
 
-A multi-module supply intelligence dashboard tracking tanker routing anomalies, LNG cargo rebalancing, and regional supply gap quantification during the 2026 Strait of Hormuz crisis.
+A multi-module supply intelligence dashboard tracking tanker routing anomalies, LNG cargo rebalancing, regional supply gap quantification, and price volatility during the 2026 Strait of Hormuz crisis.
 
 **Live dashboard**: [gulf-crisis-intelligence.streamlit.app](https://gulf-crisis-intelligence.streamlit.app)
 
@@ -12,13 +12,14 @@ A multi-module supply intelligence dashboard tracking tanker routing anomalies, 
 
 This is not a price prediction tool. It is a physical supply intelligence system — built to answer the question a commodities analyst or risk desk actually cares about: *who is exposed, by how much, and is it getting better or worse?*
 
-The system produces three named metrics updated daily:
+The system produces four named metrics updated daily:
 
 - **Hormuz Transit Anomaly Index** — daily tanker transits as a percentage of pre-crisis baseline, with z-score deviation and recovery trend
 - **LNG Cargo Pull Score** — direction and strength of Atlantic Basin LNG rebalancing, driven by JKM-TTF spread vs. a $2.00/MMBtu routing threshold
 - **Regional Supply Gap Table** — net crude and LNG shortfall by region (Asia, Europe, US) after accounting for bypass pipeline capacity and IEA SPR releases
+- **Brent Volatility Regime** — daily realized volatility classified as LOW / MEDIUM / HIGH, with shock detection when current vol exceeds 2× the 90-day baseline
 
-Each metric has a defined methodology, a validated output, and a plain-English interpretation. The dashboard synthesises all three into a committed "Current Market View" thesis at the top of the Overview tab.
+Each metric has a defined methodology, a validated output, and a plain-English interpretation. The dashboard synthesises all three physical metrics into a committed "Current Market View" thesis at the top of the Overview tab.
 
 ---
 
@@ -30,19 +31,27 @@ External APIs (EIA, GIE AGSI+, yfinance, AISStream, IMF PortWatch)
         ▼
 ingestion/          ← fetch and store raw data only
     eia_ingestor.py
+    eia_refinery_ingestor.py  ← NEW: EIA weekly refinery utilization + inventories
     gie_ingestor.py
-    prices_ingestor.py
-    ais_ingestor.py       ← continuous background process
-    portwatch_ingestor.py ← weekly Hormuz transit counts (replaces Kaggle CSV)
+    prices_ingestor.py        ← extended: now fetches RBOB, HeatingOil, WTI
+    ais_ingestor.py           ← continuous background process
+    portwatch_ingestor.py     ← IMF PortWatch Hormuz + Suez transit counts
         │
         ▼
-data/processed/gulf_data.db   ← SQLite, 7 tables
+data/processed/gulf_data.db   ← SQLite, 13 tables
         │
         ▼
 models/             ← read from DB, compute metrics, write back
     tanker_anomaly.py
     lng_rebalancing.py
     supply_gap.py
+    volatility_tracker.py     ← NEW: Brent realized vol + shock detection
+    build_features.py         ← NEW: feature engineering pipeline for ML models
+    shock_detector.py         ← NEW: utility module — reads volatility_log
+        │
+        ▼
+notebooks/
+    training_testing.py       ← NEW: XGBoost + Prophet crack spread forecasting
         │
         ▼
 dashboard/
@@ -54,7 +63,7 @@ Ingestion and model logic are strictly separated. Ingestion scripts never comput
 
 ---
 
-## The Three Modules
+## The Four Modules
 
 ### Module 1 — Tanker Routing & AIS Anomaly Detection
 
@@ -96,6 +105,64 @@ Regional distribution (IEA destination shares):
 
 **EU storage risk labels** (applied to days-behind-pace metric): CRITICAL = >15 days below seasonal norm; ELEVATED = 5–15 days; STABLE = within 5 days. These thresholds are documented analytical judgments, not industry standards. Regional crude/LNG risk labels (Asia, Europe, US) are derived separately from gap magnitude relative to estimated total imports.
 
+### Module 4 — Brent Volatility Regime & Shock Detection (NEW)
+
+Computes Brent realized volatility on a rolling basis and classifies each trading day into a volatility regime. Feeds the ML forecasting layer as a regime label.
+
+**Methodology** (`models/volatility_tracker.py`):
+1. Daily log returns: ln(P_t / P_{t-1})
+2. 20-day rolling std → annualised × √252 → expressed as %
+3. 90-day rolling average of annualised vol (baseline)
+4. `vol_ratio` = realized_vol_20d / vol_90d_avg
+5. Percentile-based regime over full history: LOW (below 33rd pct) / MEDIUM (33rd–66th pct) / HIGH (above 66th pct)
+6. `shock_flag` = 1 when `vol_ratio` ≥ 2.0
+
+Results are written to the `volatility_log` table. The `shock_detector.py` utility exposes clean read functions (`get_current_vol_state()`, `get_shock_days()`, `classify_period()`) for use by other modules.
+
+---
+
+## ML Forecasting Layer (NEW)
+
+A machine-learning forecasting layer has been added for Brent crude and refined product crack spreads. This layer does not drive the dashboard's primary supply intelligence metrics — it is a separate analytical capability.
+
+### Feature Engineering (`models/build_features.py`)
+
+Reads raw prices and physical market data from `gulf_data.db` and produces a clean feature matrix:
+
+- **Price series**: Brent ($/bbl), Diesel (HeatingOil × 42), Gasoline (RBOB × 42), Jet (Diesel × 1.04 proxy)
+- **Crack spreads**: Diesel–Brent, Gasoline–Brent, Jet–Brent ($/bbl)
+- **Rolling volatility** (30-day window, annualised): per product
+- **90-day rolling correlations**: Brent–Diesel, Brent–Gasoline, Brent–Jet
+- **Physical market features** (from `refinery_data`): refinery utilization rate, crude stocks, gasoline stocks, distillate stocks — weekly EIA series, forward-filled to daily
+- **Vol_Regime label**: Low / Medium / High (percentile-based, recalculated from full history on every run)
+
+### Model Training (`notebooks/training_testing.py`)
+
+Trains and evaluates two model families for four target series (Brent_Price, Diesel_Crack, Gasoline_Crack, Jet_Crack):
+
+**XGBoost**
+- Lag features (7, 14, 30 days), rolling mean/std (60, 90 days), pct change (30, 60 days)
+- 252-day rolling baseline replaces calendar year to avoid memorising level shifts
+- Vol_Regime one-hot encoded (Low / Medium / High)
+- 300 estimators, max_depth 6, learning_rate 0.05, early stopping
+
+**Prophet**
+- `growth='flat'` for crack spreads (mean-reverting); `growth='linear'` for Brent
+- Floor/cap applied to crack spreads (floor = $0, cap = 99th percentile × 1.5)
+- Vol_Regime_Low and Vol_Regime_High added as external regressors
+- Yearly seasonality forced on Gasoline_Crack; auto-detected otherwise
+
+**Training strategy**:
+- Brent: full history from 2007-07-30 (no structural shift)
+- Crack spreads: post-COVID data only from 2020-01-01 (+60–90% structural level shift post-2020)
+- Test set: 2025-01-01 onward (includes full Gulf crisis period)
+
+**Ensemble**: Brent uses 80/20 (XGBoost/Prophet) weighted blend; crack spreads use XGBoost only (Prophet still noisy on spreads).
+
+**Saved model artefacts** (`models/`):
+- `prophet_Brent_Price.pkl`, `prophet_Diesel_Crack.pkl`, `prophet_Gasoline_Crack.pkl`, `prophet_Jet_Crack.pkl`
+- `xgboost_Brent_Price.json`, `xgboost_Diesel_Crack.json`, `xgboost_Gasoline_Crack.json`, `xgboost_Jet_Crack.json`
+
 ---
 
 ## Data Sources
@@ -103,10 +170,11 @@ Regional distribution (IEA destination shares):
 | Source | Data | Access | Lag |
 |--------|------|--------|-----|
 | EIA Open Data API | US LNG export volumes by terminal | Free API key | 6–8 weeks |
+| EIA Open Data API | US refinery utilization rate, crude + product stocks (weekly) | Free API key | ~4 days |
 | GIE AGSI+ API | European gas storage by country, daily | Free API key | 1–2 days |
-| yfinance | JKM futures, TTF futures, Brent crude | Free, no key | Same day |
+| yfinance | JKM, TTF, Brent, HH, RBOB Gasoline, Heating Oil, WTI | Free, no key | Same day |
 | AISStream.io | Vessel position messages, Gulf region | Free API key | Near real-time |
-| IMF PortWatch ArcGIS API | Hormuz daily transit counts by vessel type, Jan 2019–present | Free, no key | ~4 days |
+| IMF PortWatch ArcGIS API | Hormuz + Suez daily transit counts by vessel type, Jan 2019–present | Free, no key | ~4 days |
 | Kaggle AIS dataset | Historical AIS backfill (Jan–May 2026) — static snapshot, retired as primary transit source | Free download | Static |
 | IEA Strait of Hormuz Factsheet | Baseline flow figures, destination shares, bypass capacity | Public PDF | Feb 2026 |
 
@@ -127,6 +195,7 @@ Regional distribution (IEA destination shares):
 | IEA SPR release rate | 3.0 Mb/d total | S&P Global CERAWeek, March 23 2026 |
 | IPSA pipeline | EXCLUDED — mothballed since 1990 | Global Energy Monitor Jan 2026 |
 | Iran Goreh-Jask pipeline | EXCLUDED — non-operational | IEA Factsheet Feb 2026 |
+| Jet fuel price | HeatingOil × 1.04 proxy | Standard industry practice; Jet-A trades OTC |
 
 **Known limitations:**
 
@@ -136,12 +205,9 @@ Regional distribution (IEA destination shares):
 - **Asia risk labels are proxy estimates**: No free-tier Asian LNG or crude storage data is available. Asia risk labels are derived from gap magnitude relative to estimated total imports, not measured storage. Europe uses real GIE AGSI+ data.
 - **Bypass pipeline data is static**: No live throughput feed exists for the Saudi East-West Pipeline or UAE ADCOP. Model uses IEA's stated available capacity range and documents this explicitly.
 - **SPR rate is announced, not confirmed live**: The 3.0 Mb/d IEA total release is the planned rate. Actual delivery lags 2–4 weeks from announcement.
-- **Bypass pipeline utilization tracking toward upper bound**: Bypass pipeline utilization — external corroboration
-LSEG Global Crude Report (May 11, 2026) reports combined Saudi Petroline and UAE Fujairah bypass at ~5.7 Mb/d — consistent with the upper end of the IEA's 3.5–5.5 Mb/d range. Model uses IEA midpoint (4.5 Mb/d) per crisis-onset documentation.
-
-
-
-
+- **Bypass pipeline utilization tracking toward upper bound**: LSEG Global Crude Report (May 11, 2026) reports combined Saudi Petroline and UAE Fujairah bypass at ~5.7 Mb/d — consistent with the upper end of the IEA's 3.5–5.5 Mb/d range. Model uses IEA midpoint (4.5 Mb/d) per crisis-onset documentation.
+- **Refinery data is weekly**: EIA publishes `refinery_data` series on Wednesdays. The feature matrix forward-fills each reading to the next Wednesday. The most recent 3–5 trading days will carry the prior week's value.
+- **ML forecasting layer is not crisis-aware**: XGBoost and Prophet models were trained on 2020–2024 data. They capture vol regime signals but do not have structural knowledge of the Hormuz disruption. Forecasts should be treated as quantitative baselines, not crisis-adjusted predictions.
 
 ---
 
@@ -150,28 +216,44 @@ LSEG Global Crude Report (May 11, 2026) reports combined Saudi Petroline and UAE
 ```
 gulf-crisis-intelligence/
 ├── data/
-│   ├── processed/gulf_data.db     ← SQLite database (committed as static snapshot)
+│   ├── processed/gulf_data.db     ← SQLite database (13 tables, committed as static snapshot)
 │   └── reference/
 │       ├── supply_gap_constants.py ← all verified hard-coded constants
 │       ├── geofences.py            ← Hormuz strait polygon definitions
 │       └── lng_terminals.py        ← terminal nameplate capacities
 ├── ingestion/
 │   ├── ais_ingestor.py             ← continuous background process
-│   ├── eia_ingestor.py
+│   ├── eia_ingestor.py             ← US LNG export volumes
+│   ├── eia_refinery_ingestor.py    ← NEW: EIA weekly refinery utilization + inventory
 │   ├── gie_ingestor.py
-│   ├── prices_ingestor.py
-│   ├── portwatch_ingestor.py       ← IMF PortWatch transit data (replaces Kaggle CSV)
-│   ├── run_all.py                  ← daily scheduler
-│   └── setupdb.py                  ← schema initialisation
+│   ├── prices_ingestor.py          ← extended: Brent, TTF, HH, JKM, RBOB, HeatingOil, WTI
+│   ├── portwatch_ingestor.py       ← IMF PortWatch Hormuz + Suez transit data
+│   ├── run_all.py                  ← daily scheduler (now includes eia_refinery + volatility_tracker)
+│   └── setupdb.py                  ← schema initialisation (13 tables)
 ├── models/
 │   ├── tanker_anomaly.py
 │   ├── lng_rebalancing.py
-│   └── supply_gap.py
+│   ├── supply_gap.py
+│   ├── volatility_tracker.py       ← NEW: Brent realized vol + shock regime classification
+│   ├── shock_detector.py           ← NEW: utility — reads volatility_log for other modules
+│   ├── build_features.py           ← NEW: full feature engineering pipeline for ML models
+│   ├── prophet_Brent_Price.pkl     ← NEW: trained Prophet model
+│   ├── prophet_Diesel_Crack.pkl    ← NEW: trained Prophet model
+│   ├── prophet_Gasoline_Crack.pkl  ← NEW: trained Prophet model
+│   ├── prophet_Jet_Crack.pkl       ← NEW: trained Prophet model
+│   ├── xgboost_Brent_Price.json    ← NEW: trained XGBoost model
+│   ├── xgboost_Diesel_Crack.json   ← NEW: trained XGBoost model
+│   ├── xgboost_Gasoline_Crack.json ← NEW: trained XGBoost model
+│   └── xgboost_Jet_Crack.json      ← NEW: trained XGBoost model
+├── notebooks/
+│   └── training_testing.py         ← NEW: XGBoost + Prophet training script
 ├── dashboard/
 │   ├── db.py                       ← all SQL queries, single data access layer
-│   └── app.py  
+│   └── app.py
 ├── reports/
-│   └── generate_report.py          ← auto-generated weekly PDF reports (Monday)                    
+│   └── generate_report.py          ← auto-generated weekly PDF reports (Monday)
+├── docs/
+│   └── analyst_note.md
 ├── .github/workflows/
 │   └── daily_update.yml            ← GitHub Actions: runs daily at 06:00 UTC
 ├── requirements.txt
@@ -180,20 +262,43 @@ gulf-crisis-intelligence/
 
 ---
 
+## Database Schema
+
+The SQLite database (`data/processed/gulf_data.db`) now has 13 tables:
+
+| Table | Description | Written by |
+|-------|-------------|------------|
+| `vessel_positions` | AIS vessel position messages | ais_ingestor.py |
+| `transit_events` | Daily Hormuz transit counts by vessel type | portwatch_ingestor.py |
+| `suez_transit_events` | Daily Suez Canal transit counts by vessel type | portwatch_ingestor.py |
+| `lng_export_volumes` | US LNG exports by terminal (EIA, monthly) | eia_ingestor.py |
+| `gas_storage_levels` | European gas storage by country (GIE, daily) | gie_ingestor.py |
+| `price_data` | Commodity prices: Brent, TTF, HH, JKM, RBOB, HeatingOil, WTI | prices_ingestor.py |
+| `refinery_data` | EIA weekly: utilization rate, crude + gasoline + distillate stocks | eia_refinery_ingestor.py |
+| `anomaly_log` | Daily tanker anomaly module outputs | tanker_anomaly.py |
+| `lng_rebalancing_log` | Daily LNG rebalancing module outputs | lng_rebalancing.py |
+| `supply_gap_log` | Daily supply gap model outputs | supply_gap.py |
+| `volatility_log` | Daily Brent realized vol, regime, shock flag | volatility_tracker.py |
+| `vessel_registry` | MMSI → ship type mapping (from AIS static data) | ais_ingestor.py |
+| `crisis_context` | Structured geopolitical status (manually updated) | setupdb.py seed |
+
+---
+
 ## Dashboard Features
 
-The Streamlit dashboard (`dashboard/app.py`) has four tabs — Overview, Vessel Transits, Supply Gap, LNG Cargo Flows— with the following notable features:
+The Streamlit dashboard (`dashboard/app.py`) has four tabs — Overview, Vessel Transits, Supply Gap, LNG Cargo Flows — with the following notable features:
 
 **Signal breakdown panel** — The LNG Market State card includes an expandable "Why ELEVATED · HIGH confidence" panel showing the three signals that produced the score (US utilization threshold, EU storage pace, routing signal), each with a checkbox indicating whether it is stressed. Confidence level is derived automatically from how many signals are in the stress direction.
 
 **Interactive tooltips** — Three KPI cards (LNG Gap, EU Storage, US Utilization) include ⓘ tooltip icons explaining the methodology behind each metric.
 
 **Date range slider** — The JKM–TTF spread chart includes a draggable date range slider. Narrowing to a specific period (e.g. March 2026) spreads out clustered event annotations for readability. The event legend below the chart filters to match the selected range. The Vessel Transits tab includes the same slider, linked to the timeline checkbox selection.
+
 **Event hover tooltips** — Hovering on any date in the JKM–TTF chart that coincides with a crisis event shows the event name in the price tooltip (e.g. `⚑ Strait declared closed`).
 
 **Vessel type checkboxes** — The Historical Transit chart allows toggling individual vessel types (Tanker, Container, Dry Bulk, RoRo, General Cargo, Total) and timeline range via checkboxes.
 
-**Cross-module event consistency** — Crisis events are now consistent across the Tanker and LNG charts. Shared geopolitical events (Strait declared closed, P&I insurance withdrawn, Ceasefire agreed, US naval blockade, Ceasefire collapse) appear on both charts. Module-specific events (Brent peaks, SPR release on tanker; JKM inflection, Spread peaks on LNG) remain separate.
+**Cross-module event consistency** — Crisis events are consistent across the Tanker and LNG charts. Shared geopolitical events (Strait declared closed, P&I insurance withdrawn, Ceasefire agreed, US naval blockade, Ceasefire collapse) appear on both charts. Module-specific events (Brent peaks, SPR release on tanker; JKM inflection, Spread peaks on LNG) remain separate.
 
 **Hormuz chokepoint map** — A static SVG map of the Strait of Hormuz on the Vessel Transits tab showing the chokepoint location, key ports (Fujairah, Bandar Abbas, Ras Laffan), and flow direction arrows. The pulsing status dot is colour-coded red/amber/green directly from the live transit index.
 
@@ -213,6 +318,9 @@ cp .env.example .env   # fill in EIA_API_KEY, GIE_API_KEY, AISSTREAM_API_KEY
 # Run ingestion + models
 python ingestion/run_all.py
 
+# (Optional) Re-train ML models — takes ~5 minutes
+python notebooks/training_testing.py
+
 # Launch dashboard
 streamlit run dashboard/app.py
 ```
@@ -221,7 +329,20 @@ streamlit run dashboard/app.py
 
 ## Automated Daily Updates
 
-A GitHub Actions workflow (`.github/workflows/daily_update.yml`) runs the full ingestion and model pipeline at 06:00 UTC daily. On completion it commits the updated `gulf_data.db` to the repository. Streamlit Cloud detects the commit and redeploys automatically. No manual intervention required.
+A GitHub Actions workflow (`.github/workflows/daily_update.yml`) runs the full ingestion and model pipeline at 06:00 UTC daily. The pipeline now runs in this order:
+
+1. `eia_ingestor.py` — US LNG export volumes
+2. `gie_ingestor.py` — European gas storage
+3. `prices_ingestor.py` — commodity prices (Brent, TTF, HH, JKM, RBOB, HeatingOil, WTI)
+4. `portwatch_ingestor.py` — Hormuz + Suez transit counts
+5. `eia_refinery_ingestor.py` — refinery utilization + inventory (EIA weekly, safe no-op on non-Wednesday days)
+6. `tanker_anomaly.py`
+7. `lng_rebalancing.py`
+8. `supply_gap.py`
+9. `volatility_tracker.py` — Brent vol regime (runs after prices_ingestor.py)
+10. Weekly PDF report generation (Mondays only)
+
+On completion the workflow commits the updated `gulf_data.db` to the repository. Streamlit Cloud detects the commit and redeploys automatically. No manual intervention required.
 
 ---
 

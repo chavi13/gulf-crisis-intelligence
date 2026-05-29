@@ -13,6 +13,13 @@ scripts = [
     # portwatch_ingestor.py runs daily — fetches latest chokepoint6 transit
     # counts from IMF PortWatch API and upserts new rows into transit_events.
     "ingestion/portwatch_ingestor.py",
+
+    # Phase 2b — refinery utilization + inventory (EIA weekly)
+    # Must run before model scripts in case models eventually read refinery_data.
+    # Safe to run daily — EIA only publishes new data on Wednesdays, so most
+    # days this script will find nothing new and exit cleanly.
+    "ingestion/eia_refinery_ingestor.py",
+
     "models/tanker_anomaly.py",
 
     # Phase 3 — LNG cargo flow & Atlantic Basin rebalancing
@@ -22,6 +29,12 @@ scripts = [
     # Must run AFTER tanker_anomaly.py and lng_rebalancing.py
     # Reads from anomaly_log and lng_rebalancing_log which those scripts write
     "models/supply_gap.py",
+
+    # Phase 5 — Brent realized volatility
+    # Must run AFTER prices_ingestor.py so it reads the freshest Brent prices.
+    # Rewrites all rows in volatility_log on every run (INSERT OR REPLACE) —
+    # thresholds are percentile-based and recalculate across full history each time.
+    "models/volatility_tracker.py",
 ]
 
 print(f"=== Daily ingestion run: {datetime.now().isoformat()} ===")

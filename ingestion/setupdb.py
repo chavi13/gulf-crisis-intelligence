@@ -93,7 +93,7 @@ cursor.execute("""
         run_date         TEXT,
         latest_data_date TEXT,
         transit_count    INTEGER,
-        baseline_30d     REAL,
+        baseline_annual     REAL,
         z_score          REAL,
         anomaly_flag     INTEGER,
         pct_of_normal    REAL,
@@ -218,6 +218,66 @@ if cursor.fetchone()[0] == 0:
         )
     """)
 
+# Table 11: refinery data — EIA weekly refinery utilization + inventory levels
+# series_id distinguishes between the four EIA series stored in this table:
+#   - refinery utilization rate (% of operable capacity)
+#   - US crude stocks (thousand barrels)
+#   - US gasoline stocks (thousand barrels)
+#   - US distillate stocks (thousand barrels)
+# UNIQUE(date, series_id) — prevents duplicate rows on re-run
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS refinery_data (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        date        TEXT NOT NULL,
+        series_id   TEXT NOT NULL,
+        series_name TEXT NOT NULL,
+        value       REAL,
+        unit        TEXT,
+        fetched_at  TEXT DEFAULT (datetime('now')),
+        UNIQUE(date, series_id)
+    )
+""")
+print("  refinery_data        — EIA refinery utilization + crude/product inventories")
+
+# Table 12: Suez Canal transit events — PortWatch (mirrors transit_events exactly)
+# Kept separate from transit_events (Hormuz) so existing anomaly logic is never touched.
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS suez_transit_events (
+        date              TEXT PRIMARY KEY,
+        n_tanker          INTEGER,
+        n_container       INTEGER,
+        n_dry_bulk        INTEGER,
+        n_roro            INTEGER,
+        n_general_cargo   INTEGER,
+        n_total           INTEGER,
+        capacity_tanker   INTEGER,
+        capacity_total    INTEGER
+    )
+""")
+
+print("  suez_transit_events  — PortWatch Suez Canal daily transit counts")
+
+# Table 13: volatility log — daily Brent realized volatility + shock detection
+# One row per day. Written by models/volatility_tracker.py.
+# vol_regime: LOW / MEDIUM / HIGH / SHOCK
+# shock_flag: 1 if today's vol is more than 2x the 90-day average, else 0
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS volatility_log (
+        id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+        date                        TEXT NOT NULL UNIQUE,
+        brent_price                 REAL,
+        daily_return                REAL,
+        realized_vol_20d            REAL,
+        realized_vol_20d_annualized REAL,
+        vol_90d_avg                 REAL,
+        vol_ratio                   REAL,
+        vol_regime                  TEXT,
+        shock_flag                  INTEGER DEFAULT 0,
+        computed_at                 TEXT DEFAULT (datetime('now'))
+    )
+""")
+print("  volatility_log       — daily Brent realized volatility and shock regime")
+
 conn.commit()
 conn.close()
 
@@ -233,3 +293,6 @@ print("  lng_rebalancing_log  — daily LNG rebalancing module run log")
 print("  supply_gap_log       — daily supply gap model run log")
 print("  vessel_registry      — MMSI → ship type lookup (from ShipStaticData messages)")
 print("  crisis_context       — structured geopolitical status record (manually updated)")
+print("  refinery_data        — EIA refinery utilization + crude/product inventories")
+print("  suez_transit_events  — PortWatch Suez Canal daily transit counts")
+print("  volatility_log       — daily Brent realized volatility and shock regime")

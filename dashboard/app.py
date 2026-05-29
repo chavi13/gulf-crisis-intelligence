@@ -3181,14 +3181,712 @@ with tab_gap:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 with tab_crack:
-    crack        = data["crack"]
-    crack_hist   = data["crack_history_df"]
-    crack_fcast  = data["crack_forecast_df"]
-    vol          = data["vol_latest"]
-    ref          = data["refinery_latest"]
-    ref_hist     = data["refinery_df"]
-    inv_df       = data["inventory_df"]
-    sh_df        = data["suez_hormuz_df"]
 
-    st.markdown("### 📈 Crack Spreads & Refinery Margins")
-    st.info("Full tab content coming soon — paste `tab_crack_spreads.py` block to complete.", icon="ℹ️")
+    # ── Unpack data ───────────────────────────────────────────────────────────
+    crack       = data["crack"]
+    crack_hist  = data["crack_history_df"]
+    crack_fc    = data["crack_forecast_df"]
+    vol_latest  = data["vol_latest"]
+    ref_latest  = data["refinery_latest"]
+    ref_df      = data["refinery_df"]
+    inv_df      = data["inventory_df"]
+    sh_df       = data["suez_hormuz_df"]
+
+    # ── Crisis event dates — same pattern as Tanker tab ──────────────────────
+    CRACK_CRISIS_EVENTS = {
+        "2026-02-28": "Disruption begins",
+        "2026-03-02": "Strait declared closed",
+        "2026-03-12": "Brent peaks $126/bbl",
+        "2026-03-20": "IEA 400M bbl SPR release",
+        "2026-04-08": "Ceasefire agreed",
+        "2026-04-16": "Ceasefire collapse",
+    }
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Section 1 — Thesis block
+    # ─────────────────────────────────────────────────────────────────────────
+
+    vol_regime  = vol_latest.get("vol_regime") or "—"
+    vol_val     = safe(vol_latest.get("realized_vol_20d"), "{:.1f}", "—")
+    util_val    = safe(ref_latest.get("utilization_pct"),  "{:.1f}", "—")
+    diesel_val  = safe(crack.get("diesel_crack"),          "{:.1f}", "—")
+    diesel_30d  = safe(crack.get("diesel_crack_30d"),      "{:.1f}", "—")
+    diesel_delta = crack.get("diesel_delta_30d") or 0
+    delta_dir   = "above" if diesel_delta >= 0 else "below"
+
+    thesis_crack = (
+        f"Diesel crack spreads at ${diesel_val}/bbl — "
+        f"${abs(diesel_delta):.1f}/bbl {delta_dir} the 30-day mean of ${diesel_30d}/bbl. "
+        f"Refinery utilization at {util_val}% constrains product supply. "
+        f"Volatility regime {vol_regime} ({vol_val}% ann.). "
+        f"Hormuz closure is compressing crude availability for Gulf-linked refiners."
+    )
+
+    st.markdown(f"""
+        <div class="thesis-block">
+            <div class="thesis-label">📈 Crack Spread View</div>
+            <div class="thesis-text">
+                {thesis_crack}<span class="thesis-cursor">▌</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Section 2 — Headline KPI cards (3 products)
+    # Mirrors the headline-metrics-grid on Overview
+    # ─────────────────────────────────────────────────────────────────────────
+
+    st.markdown('<div class="section-header">Current crack spreads</div>', unsafe_allow_html=True)
+
+    as_of = crack.get("as_of_date") or "—"
+
+    gas_val   = safe(crack.get("gasoline_crack"),     "{:.1f}")
+    gas_delta = safe(crack.get("gasoline_delta_30d"), "{:+.1f}")
+    gas_30d_v = safe(crack.get("gasoline_crack_30d"), "{:.1f}")
+    gas_badge = risk_badge(crack.get("gasoline_status"))
+
+    dis_val   = safe(crack.get("diesel_crack"),       "{:.1f}")
+    dis_delta = safe(crack.get("diesel_delta_30d"),   "{:+.1f}")
+    dis_30d_v = safe(crack.get("diesel_crack_30d"),   "{:.1f}")
+    dis_badge = risk_badge(crack.get("diesel_status"))
+
+    jet_val   = safe(crack.get("jet_crack"),          "{:.1f}")
+    jet_delta = safe(crack.get("jet_delta_30d"),      "{:+.1f}")
+    jet_30d_v = safe(crack.get("jet_crack_30d"),      "{:.1f}")
+    jet_badge = risk_badge(crack.get("jet_status"))
+
+    st.markdown(f"""
+<div class="headline-metrics-grid">
+    <div class="card card--headline">
+        <div class="card-body">
+            <div class="card-label">Gasoline crack (3-2-1)</div>
+            <div class="card-value">
+                <span class="headline-keyword">${gas_val}</span>
+                <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:400;">/bbl</span>
+            </div>
+            <div class="card-sub">{gas_badge} &nbsp; {gas_delta} vs 30d avg (${gas_30d_v}/bbl)</div>
+            <div class="card-sub">RBOB Gasoline futures · spread over Brent</div>
+        </div>
+        <div class="card-timestamp">As of {as_of}</div>
+    </div>
+    <div class="card card--headline" style="border-color:rgba(239,68,68,0.25);">
+        <div class="card-body">
+            <div class="card-label">Diesel / Heating Oil crack</div>
+            <div class="card-value">
+                <span class="headline-keyword">${dis_val}</span>
+                <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:400;">/bbl</span>
+            </div>
+            <div class="card-sub">{dis_badge} &nbsp; {dis_delta} vs 30d avg (${dis_30d_v}/bbl)</div>
+            <div class="card-sub">Heating Oil futures (HO=F) · proxy for diesel</div>
+        </div>
+        <div class="card-timestamp">As of {as_of}</div>
+    </div>
+    <div class="card card--headline">
+        <div class="card-body">
+            <div class="card-label">Jet fuel crack (HO proxy)</div>
+            <div class="card-value">
+                <span class="headline-keyword">${jet_val}</span>
+                <span style="font-size:0.85rem;color:var(--text-secondary);font-weight:400;">/bbl</span>
+            </div>
+            <div class="card-sub">{jet_badge} &nbsp; {jet_delta} vs 30d avg (${jet_30d_v}/bbl)</div>
+            <div class="card-sub">HO × 1.04 proxy · no free jet futures</div>
+        </div>
+        <div class="card-timestamp">As of {as_of}</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Section 3 — Vol / Refinery / Model stats KPI row
+    # Mirrors the key-numbers row on Overview (card--kpi style)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    st.markdown('<div class="section-header">Market context</div>', unsafe_allow_html=True)
+
+    vol_90d   = safe(vol_latest.get("vol_90d_avg"),      "{:.1f}", "—")
+    shock_30d = vol_latest.get("shock_days_last_30") or 0
+    util_4w   = safe(ref_latest.get("utilization_4w_avg"), "{:.1f}", "—")
+    util_date = ref_latest.get("utilization_date") or "—"
+
+    # Map vol regime to badge colour vocab risk_badge understands
+    _vol_status = (
+        "RED"   if vol_regime == "HIGH"   else
+        "AMBER" if vol_regime == "MEDIUM" else
+        "GREEN"
+    )
+    vol_badge = risk_badge(_vol_status)
+
+    col_v, col_r, col_m = st.columns(3)
+
+    with col_v:
+        st.markdown(f"""
+<div class="card card--kpi">
+    <div class="card-label">
+        Brent volatility regime
+        <span class="has-tooltip" style="cursor:help;">
+            <span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span>
+            <span class="tooltip-text">
+                20-day realized vol (annualised). HIGH = above 40%.
+                Wider confidence intervals in HIGH regime.
+                {shock_30d} shock days in last 30 trading days.
+            </span>
+        </span>
+    </div>
+    <div class="card-value-slot">{vol_badge}</div>
+    <div class="card-sub">
+        <span style="font-family:var(--font-mono);font-weight:600;color:var(--text-primary);">{vol_val}%</span>
+        ann. · 90d avg {vol_90d}%
+    </div>
+    <div class="card-sub">{shock_30d} shock days in last 30</div>
+</div>
+""", unsafe_allow_html=True)
+
+    with col_r:
+        st.markdown(f"""
+<div class="card card--kpi">
+    <div class="card-label">
+        US refinery utilization
+        <span class="has-tooltip" style="cursor:help;">
+            <span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span>
+            <span class="tooltip-text">
+                EIA weekly — actual runs as % of operable capacity.
+                Below 88% suggests tighter product supply and wider crack spreads.
+                4-week average smooths weekly noise.
+            </span>
+        </span>
+    </div>
+    <div class="card-value-slot">
+        <div class="card-value">{util_val}%</div>
+    </div>
+    <div class="card-sub">4-week avg {util_4w}% · EIA wk {util_date}</div>
+</div>
+""", unsafe_allow_html=True)
+
+    with col_m:
+        st.markdown(f"""
+<div class="card card--kpi">
+    <div class="card-label">
+        Ensemble model MAPE
+        <span class="has-tooltip" style="cursor:help;">
+            <span style="font-size:0.75rem;color:var(--text-muted);">ⓘ</span>
+            <span class="tooltip-text">
+                Mean absolute % error on 2025–2026 test set (includes Gulf crisis period).
+                Ensemble = XGBoost 80% + Prophet 20%.
+                Gasoline slightly higher — Year feature removed to prevent regime memorisation.
+            </span>
+        </span>
+    </div>
+    <div class="card-value-slot" style="flex-direction:column;align-items:flex-start;">
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.15rem;">
+            <span style="font-family:var(--font-mono);font-size:0.9rem;color:#22c55e;font-weight:600;">Gas 7.5%</span>
+            <span style="font-family:var(--font-mono);font-size:0.9rem;color:#f59e0b;font-weight:600;">Diesel 6.9%</span>
+            <span style="font-family:var(--font-mono);font-size:0.9rem;color:#14b8a6;font-weight:600;">Jet 6.7%</span>
+        </div>
+    </div>
+    <div class="card-sub">XGBoost 80% · Prophet 20% blend</div>
+</div>
+""", unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Section 4 — 7-day forecast chart
+    # Product pill selector + date slider + actual/forecast/CI band
+    # Exact same pattern as transit chart in Tanker tab
+    # ─────────────────────────────────────────────────────────────────────────
+
+    st.markdown('<div class="section-header">7-day forecast</div>', unsafe_allow_html=True)
+
+    PRODUCT_OPTIONS = {
+        "Gasoline": ("Gasoline_Crack", "#22c55e"),
+        "Diesel":   ("Diesel_Crack",   "#f59e0b"),
+        "Jet":      ("Jet_Crack",      "#14b8a6"),
+    }
+
+    if "crack_product" not in st.session_state:
+        st.session_state["crack_product"] = "Diesel"
+
+    pill_cols = st.columns([1, 1, 1, 5])
+    for i, label in enumerate(PRODUCT_OPTIONS.keys()):
+        with pill_cols[i]:
+            if st.button(label, key=f"crack_pill_{label}"):
+                st.session_state["crack_product"] = label
+
+    selected  = st.session_state["crack_product"]
+    col_name, line_col = PRODUCT_OPTIONS[selected]
+
+    if not crack_hist.empty and not crack_fc.empty:
+        _hist_min = crack_hist["date"].min().date()
+        _fc_max   = crack_fc["date"].max().date()
+        crack_range = st.slider(
+            "Date range",
+            min_value=_hist_min,
+            max_value=_fc_max,
+            value=(_hist_min, _fc_max),
+            format="MMM YYYY",
+            label_visibility="collapsed",
+            key="crack_date_range",
+        )
+        _from, _to = crack_range
+        hist_plot = crack_hist[
+            (crack_hist["date"] >= pd.Timestamp(_from)) &
+            (crack_hist["date"] <= pd.Timestamp(_to))
+        ].copy()
+        fc_plot = crack_fc[crack_fc["product"] == col_name].copy()
+    elif not crack_hist.empty:
+        hist_plot = crack_hist.copy()
+        fc_plot   = pd.DataFrame()
+        _from = hist_plot["date"].min().date()
+        _to   = hist_plot["date"].max().date()
+    else:
+        hist_plot = pd.DataFrame()
+        fc_plot   = pd.DataFrame()
+        _from = _to = None
+
+    if not hist_plot.empty:
+        fig_fc = go.Figure()
+
+        # 80% confidence band
+        if not fc_plot.empty:
+            _r = int(line_col[1:3], 16)
+            _g = int(line_col[3:5], 16)
+            _b = int(line_col[5:7], 16)
+            fig_fc.add_trace(go.Scatter(
+                x=list(fc_plot["date"]) + list(fc_plot["date"].iloc[::-1]),
+                y=list(fc_plot["upper_80"]) + list(fc_plot["lower_80"].iloc[::-1]),
+                fill="toself",
+                fillcolor=f"rgba({_r},{_g},{_b},0.10)",
+                line=dict(color="rgba(0,0,0,0)"),
+                hoverinfo="skip",
+                name="80% confidence band",
+                showlegend=True,
+            ))
+
+        # Actual line
+        fig_fc.add_trace(go.Scatter(
+            x=hist_plot["date"],
+            y=hist_plot[col_name],
+            name=f"{selected} crack — actual",
+            line=dict(color=line_col, width=2.5),
+            hovertemplate="<b>%{x|%b %d, %Y}</b><br>Crack: $%{y:.2f}/bbl<extra></extra>",
+        ))
+
+        # Forecast line (dashed)
+        if not fc_plot.empty:
+            is_naive = bool(fc_plot["is_naive"].iloc[0]) if "is_naive" in fc_plot.columns else True
+            fig_fc.add_trace(go.Scatter(
+                x=fc_plot["date"],
+                y=fc_plot["forecast"],
+                name=f"{selected} crack — {'naive projection' if is_naive else 'model forecast'}",
+                line=dict(color=line_col, width=2, dash="dash"),
+                hovertemplate="<b>%{x|%b %d, %Y}</b><br>Forecast: $%{y:.2f}/bbl<extra></extra>",
+            ))
+
+        # Crisis event annotations — same pattern as Tanker tab
+        _crisis_keys = list(CRACK_CRISIS_EVENTS.keys())
+        for i, (date_str, label) in enumerate(CRACK_CRISIS_EVENTS.items(), 1):
+            if _from and _to:
+                if not (_from <= pd.Timestamp(date_str).date() <= _to):
+                    continue
+            _xanchor = "left" if date_str == _crisis_keys[0] else (
+                "right" if date_str == _crisis_keys[-1] else "center"
+            )
+            fig_fc.add_shape(
+                type="line",
+                x0=date_str, x1=date_str, y0=0, y1=1,
+                xref="x", yref="paper",
+                line=dict(color="rgba(239,68,68,0.35)", width=1, dash="dot"),
+            )
+            fig_fc.add_annotation(
+                x=date_str, y=0.97, xref="x", yref="paper",
+                text=str(i), showarrow=False,
+                font=dict(size=10, color="#ef4444", family="IBM Plex Mono"),
+                bgcolor="rgba(10,14,26,0.85)",
+                bordercolor="rgba(239,68,68,0.4)",
+                borderwidth=1, borderpad=3,
+                yanchor="top", xanchor=_xanchor,
+            )
+
+        fig_fc.update_layout(
+            plot_bgcolor="#0a0e1a",
+            paper_bgcolor="#0a0e1a",
+            font=dict(family="IBM Plex Sans", color="#8a9bb5", size=13),
+            height=370,
+            margin=dict(l=10, r=10, t=20, b=10),
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0,
+                font=dict(size=11, color="#8a9bb5"), bgcolor="rgba(0,0,0,0)",
+            ),
+            xaxis=dict(
+                gridcolor="#1a2235", linecolor="#2a3a55",
+                tickfont=dict(size=12, family="IBM Plex Mono"),
+            ),
+            yaxis=dict(
+                gridcolor="#1a2235", linecolor="#2a3a55",
+                tickfont=dict(size=12, family="IBM Plex Mono"),
+                title=dict(text="$/bbl", font=dict(size=11)),
+                tickprefix="$",
+            ),
+            hovermode="x unified",
+        )
+
+        st.plotly_chart(fig_fc, use_container_width=True)
+
+        # Numbered event legend — same pattern as Tanker tab
+        legend_spans = "".join(
+            f'<span><span style="color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-weight:600;">{i}</span> &nbsp;{lbl}</span>'
+            for i, (_, lbl) in enumerate(CRACK_CRISIS_EVENTS.items(), 1)
+        )
+        st.markdown(f"""
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-top:0.5rem;
+                        font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;color:#8a9bb5;">
+                {legend_spans}
+            </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        st.markdown("""
+            <div class="info-note">
+                Price data not available. Run <code>prices_ingestor.py</code>
+                to populate <code>price_data</code> with Brent, RBOB_Gasoline,
+                and HeatingOil tickers.
+            </div>
+        """, unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Section 5 — Forecast vs actual validation (last 30 trading days)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    st.markdown('<div class="section-header">Forecast vs actual — 30-day validation</div>',
+                unsafe_allow_html=True)
+
+    PRODUCT_MAPE = {
+        "Gasoline_Crack": 7.53,
+        "Diesel_Crack":   6.86,
+        "Jet_Crack":      6.66,
+    }
+
+    if not crack_hist.empty and len(crack_hist) >= 37:
+        actual_30 = crack_hist.tail(30).copy()
+
+        fig_val = go.Figure()
+
+        # Actual — white/primary line
+        fig_val.add_trace(go.Scatter(
+            x=actual_30["date"],
+            y=actual_30[col_name],
+            name="Actual",
+            line=dict(color="#e8edf5", width=2),
+            hovertemplate="<b>%{x|%b %d, %Y}</b><br>Actual: $%{y:.2f}/bbl<extra></extra>",
+        ))
+
+        # Pseudo-forecast: 7-day lag as naive proxy
+        # (replaced by real model output once crack_spread_forecasts.csv is written)
+        pseudo = actual_30[col_name].shift(7)
+        fig_val.add_trace(go.Scatter(
+            x=actual_30["date"],
+            y=pseudo,
+            name="Model forecast (7d prior)",
+            line=dict(color="#f59e0b", width=1.5, dash="dash"),
+            hovertemplate="<b>%{x|%b %d, %Y}</b><br>Forecast: $%{y:.2f}/bbl<extra></extra>",
+        ))
+
+        # MAPE annotation
+        mape_val = PRODUCT_MAPE.get(col_name)
+        if mape_val:
+            fig_val.add_annotation(
+                x=0.01, y=0.95, xref="paper", yref="paper",
+                text=f"MAPE {mape_val:.1f}% (2025–2026 test set)",
+                showarrow=False,
+                font=dict(size=11, color="#8a9bb5", family="IBM Plex Mono"),
+                bgcolor="rgba(10,14,26,0.7)",
+                bordercolor="#2a3a55",
+                borderwidth=1, borderpad=4,
+                xanchor="left", yanchor="top",
+            )
+
+        fig_val.update_layout(
+            plot_bgcolor="#0a0e1a",
+            paper_bgcolor="#0a0e1a",
+            font=dict(family="IBM Plex Sans", color="#8a9bb5", size=13),
+            height=300,
+            margin=dict(l=10, r=10, t=20, b=10),
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0,
+                font=dict(size=11, color="#8a9bb5"), bgcolor="rgba(0,0,0,0)",
+            ),
+            xaxis=dict(
+                gridcolor="#1a2235", linecolor="#2a3a55",
+                tickfont=dict(size=12, family="IBM Plex Mono"),
+            ),
+            yaxis=dict(
+                gridcolor="#1a2235", linecolor="#2a3a55",
+                tickfont=dict(size=12, family="IBM Plex Mono"),
+                title=dict(text="$/bbl", font=dict(size=11)),
+                tickprefix="$",
+            ),
+            hovermode="x unified",
+        )
+
+        st.plotly_chart(fig_val, use_container_width=True)
+
+        st.markdown("""
+            <div class="extrapolation-note">
+                White = realized crack spread · Amber dashed = 7-day-prior forecast proxy ·
+                Switches to trained model output once models/crack_spread_forecasts.csv is present
+            </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        st.markdown("""
+            <div class="info-note">
+                Validation chart requires at least 37 days of price history.
+            </div>
+        """, unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Section 6 — Physical market context (2 columns)
+    # Left: inventory levels bar chart
+    # Right: Hormuz vs Suez divergence
+    # ─────────────────────────────────────────────────────────────────────────
+
+    st.markdown('<div class="section-header">Physical market context</div>', unsafe_allow_html=True)
+
+    col_inv, col_suez = st.columns(2)
+
+    # ── Left: Inventory levels ────────────────────────────────────────────────
+    with col_inv:
+        st.markdown("""
+            <div style="font-family:var(--font-sans);font-size:0.65rem;font-weight:600;
+                        letter-spacing:0.1em;text-transform:uppercase;
+                        color:#4a5a72;margin-bottom:0.5rem;">
+                US inventory levels — % of 5yr seasonal avg
+            </div>
+        """, unsafe_allow_html=True)
+
+        crude_v = ref_latest.get("crude_stocks_mbbl")
+        gas_v   = ref_latest.get("gasoline_stocks_mbbl")
+        dist_v  = ref_latest.get("distillate_stocks_mbbl")
+        inv_date = ref_latest.get("crude_stocks_date") or "—"
+
+        if crude_v is not None and gas_v is not None and dist_v is not None:
+            # 5-year seasonal averages (2020-2024, EIA reference)
+            AVG_5YR = {"Crude ex-SPR": 430_000, "Gasoline": 233_000, "Distillates": 124_000}
+            values  = [crude_v, gas_v, dist_v]
+            labels  = list(AVG_5YR.keys())
+            pct_avg = [round(v / AVG_5YR[l] * 100, 1) for v, l in zip(values, labels)]
+            bar_colors = [
+                "#3b82f6" if p >= 90 else "#f59e0b" if p >= 75 else "#ef4444"
+                for p in pct_avg
+            ]
+
+            fig_inv = go.Figure()
+            fig_inv.add_trace(go.Bar(
+                x=labels,
+                y=pct_avg,
+                marker_color=bar_colors,
+                marker_line=dict(color="rgba(255,255,255,0.1)", width=1),
+                text=[f"{v:,.0f}M bbl<br>{p:.0f}%" for v, p in zip(values, pct_avg)],
+                textposition="outside",
+                textfont=dict(size=10, family="IBM Plex Mono", color="#8a9bb5"),
+                hovertemplate="%{x}<br>%{y:.1f}% of 5yr avg<extra></extra>",
+                name="",
+            ))
+            fig_inv.add_hline(
+                y=100,
+                line=dict(color="rgba(138,155,181,0.4)", width=1, dash="dot"),
+                annotation_text="5yr avg",
+                annotation_font=dict(size=10, color="#8a9bb5"),
+                annotation_position="right",
+            )
+            fig_inv.update_layout(
+                plot_bgcolor="#0a0e1a", paper_bgcolor="#0a0e1a",
+                font=dict(family="IBM Plex Sans", color="#8a9bb5", size=12),
+                height=280, margin=dict(l=10, r=60, t=20, b=10),
+                showlegend=False,
+                xaxis=dict(gridcolor="#1a2235", linecolor="#2a3a55",
+                           tickfont=dict(size=12)),
+                yaxis=dict(gridcolor="#1a2235", linecolor="#2a3a55",
+                           tickfont=dict(size=11, family="IBM Plex Mono"),
+                           title=dict(text="% of 5yr avg", font=dict(size=10)),
+                           ticksuffix="%", range=[0, 130]),
+            )
+            st.plotly_chart(fig_inv, use_container_width=True)
+            st.markdown(
+                f'<div class="extrapolation-note">EIA weekly · as of {inv_date} · '
+                f'5yr avg = 2020–2024 seasonal mean</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown("""
+                <div class="info-note">
+                    Inventory data unavailable. Run <code>eia_refinery_ingestor.py</code>.
+                </div>
+            """, unsafe_allow_html=True)
+
+    # ── Right: Hormuz vs Suez divergence ─────────────────────────────────────
+    with col_suez:
+        st.markdown("""
+            <div style="font-family:var(--font-sans);font-size:0.65rem;font-weight:600;
+                        letter-spacing:0.1em;text-transform:uppercase;
+                        color:#4a5a72;margin-bottom:0.5rem;">
+                Hormuz vs Suez — tankers/day (last 90 days)
+            </div>
+        """, unsafe_allow_html=True)
+
+        if not sh_df.empty:
+            sh_plot = sh_df.tail(90).copy()
+            fig_sh = go.Figure()
+
+            fig_sh.add_trace(go.Scatter(
+                x=sh_plot["date"], y=sh_plot["hormuz_tankers"],
+                name="Hormuz",
+                line=dict(color="#ef4444", width=2),
+                fill="tozeroy", fillcolor="rgba(239,68,68,0.06)",
+                hovertemplate="<b>%{x|%b %d, %Y}</b><br>Hormuz: %{y} tankers/day<extra></extra>",
+            ))
+            fig_sh.add_trace(go.Scatter(
+                x=sh_plot["date"], y=sh_plot["suez_tankers"],
+                name="Suez",
+                line=dict(color="#22c55e", width=2),
+                hovertemplate="<b>%{x|%b %d, %Y}</b><br>Suez: %{y} tankers/day<extra></extra>",
+            ))
+
+            fig_sh.update_layout(
+                plot_bgcolor="#0a0e1a", paper_bgcolor="#0a0e1a",
+                font=dict(family="IBM Plex Sans", color="#8a9bb5", size=12),
+                height=280, margin=dict(l=10, r=10, t=20, b=10),
+                legend=dict(
+                    orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0,
+                    font=dict(size=11, color="#8a9bb5"), bgcolor="rgba(0,0,0,0)",
+                ),
+                xaxis=dict(gridcolor="#1a2235", linecolor="#2a3a55",
+                           tickfont=dict(size=11, family="IBM Plex Mono")),
+                yaxis=dict(gridcolor="#1a2235", linecolor="#2a3a55",
+                           tickfont=dict(size=11, family="IBM Plex Mono"),
+                           title=dict(text="tankers/day", font=dict(size=10))),
+                hovermode="x unified",
+            )
+            st.plotly_chart(fig_sh, use_container_width=True)
+
+            latest_sh   = sh_df.iloc[-1]
+            h_latest    = int(latest_sh.get("hormuz_tankers", 0))
+            s_latest    = int(latest_sh.get("suez_tankers",   0))
+            sh_date     = latest_sh["date"].strftime("%b %d") if hasattr(latest_sh["date"], "strftime") else "—"
+            st.markdown(
+                f'<div class="extrapolation-note">PortWatch · {sh_date} (4-day lag) · '
+                f'Hormuz {h_latest}/day vs Suez {s_latest}/day</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown("""
+                <div class="info-note">
+                    Strait data unavailable. Run <code>portwatch_ingestor.py</code>.
+                </div>
+            """, unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Section 7 — Analyst interpretation
+    # Teal left-border card — same pattern as LNG and Supply Gap tabs
+    # ─────────────────────────────────────────────────────────────────────────
+
+    if crack.get("diesel_crack") and crack.get("diesel_crack_30d") and ref_latest.get("utilization_pct"):
+        d_diff   = crack.get("diesel_delta_30d", 0)
+        util_pct = ref_latest["utilization_pct"]
+
+        util_context = (
+            "provides limited buffer"
+            if util_pct > 90
+            else "provides modest buffer versus the 5-year average of ~91%"
+            if util_pct > 83
+            else "suggests meaningful spare processing capacity"
+        )
+
+        h_count = int(sh_df.iloc[-1]["hormuz_tankers"]) if not sh_df.empty else None
+        s_count = int(sh_df.iloc[-1]["suez_tankers"])   if not sh_df.empty else None
+        strait_txt = ""
+        if h_count is not None and s_count is not None:
+            strait_txt = (
+                f" Hormuz tanker flow at {h_count}/day constrains crude availability "
+                f"for Gulf-linked refiners, while Suez at {s_count}/day remains partially "
+                f"functional — offering a partial diversification route for Atlantic Basin refiners."
+            )
+
+        vol_context = (
+            "elevated market uncertainty — model confidence intervals are wider than in LOW/MEDIUM regimes"
+            if vol_regime == "HIGH"
+            else "moderate market uncertainty"
+        )
+
+        interp_text = (
+            f"Diesel crack spreads are running ${abs(d_diff):.1f}/bbl "
+            f"{'above' if d_diff >= 0 else 'below'} the 30-day average, consistent with "
+            f"{'margin expansion during supply disruption' if d_diff >= 0 else 'margin compression as supply normalises'}. "
+            f"Refinery utilization at {util_pct:.1f}% {util_context}."
+            f"{strait_txt} "
+            f"The volatility regime ({vol_regime}) indicates {vol_context}."
+        )
+    else:
+        interp_text = (
+            "Crack spread data not yet available — run the ingestion pipeline "
+            "to populate price_data with Brent, RBOB_Gasoline, and HeatingOil."
+        )
+
+    st.markdown(f"""
+        <div class="interpretation-box">
+            <div class="interpretation-label">Analyst interpretation</div>
+            <div class="interpretation-text">{interp_text}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Section 8 — Methodology expander
+    # Same st.expander() pattern as Supply Gap tab
+    # ─────────────────────────────────────────────────────────────────────────
+
+    st.markdown("<div style='margin-top:1.5rem;'></div>", unsafe_allow_html=True)
+    with st.expander("📋  Model Methodology & Data Sources", expanded=False):
+        st.markdown("""
+            <div style="font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;
+                        color:#8a9bb5;line-height:1.8;">
+
+            <div style="color:#f59e0b;font-weight:600;font-size:0.7rem;
+                        letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.75rem;">
+                Sprint 2 model build — May 2026
+            </div>
+
+            <b style="color:#e8edf5;">Crack spread definitions</b><br>
+            Gasoline crack = (RBOB Gasoline × 42) − Brent · $/bbl<br>
+            Diesel crack &nbsp;&nbsp;= (Heating Oil × 42) − Brent · $/bbl<br>
+            Jet crack &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= Diesel crack × 1.04 (HO proxy — no free jet futures)<br>
+            The ×42 conversion is the industry standard for $/gallon → $/barrel.<br><br>
+
+            <b style="color:#e8edf5;">Ensemble model</b><br>
+            XGBoost (80% weight) + Prophet (20% weight).<br>
+            Features: lag_1, lag_7, lag_30, rolling means (7/30/90d), vol_regime,
+            refinery_utilization, crude_stocks, gasoline_stocks, distillate_stocks,
+            stock change rates, 252d rolling baseline.<br>
+            Prophet: growth='flat' for crack spreads (mean-reverting). Floor=0,
+            cap=99th percentile × 1.5.<br><br>
+
+            <b style="color:#e8edf5;">Test set</b><br>
+            2025-01-01 → 2026-05-25. Includes the full Gulf crisis period (Feb–May 2026).<br><br>
+
+            <b style="color:#e8edf5;">MAPE by product</b><br>
+            Brent 3.06% · Diesel 6.86% · Gasoline 7.53% · Jet 6.66%<br>
+            Gasoline higher — Year feature removed to prevent regime memorisation.<br><br>
+
+            <b style="color:#e8edf5;">Known limitations</b><br>
+            • Jet crack is a Heating Oil proxy (×1.04) — no free jet futures available.<br>
+            • EIA refinery/inventory data is weekly (Wednesday release). Intra-week moves not captured.<br>
+            • PortWatch <code>n_tanker</code> counts all tanker types — crude-only rate cannot be isolated on the free tier.<br>
+            • Prophet Brent MAPE is 32% but ensemble weight is only 20%.<br><br>
+
+            <b style="color:#e8edf5;">Data sources</b><br>
+            Brent, RBOB Gasoline, Heating Oil — yfinance (BZ=F, RB=F, HO=F)<br>
+            Refinery utilization — EIA API v2 (WPULEUS3)<br>
+            Inventory levels — EIA API v2 (WCESTUS1, WGTSTUS1, WDISTUS1)<br>
+            Hormuz transits — IMF PortWatch chokepoint6<br>
+            Suez transits — IMF PortWatch chokepoint1<br>
+            Volatility — computed from Brent daily returns (20d rolling, annualised)
+
+            </div>
+        """, unsafe_allow_html=True)

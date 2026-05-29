@@ -3,13 +3,14 @@ ingestion/portwatch_ingestor.py
 
 Replaces: load_kaggle_ais.py
 Source:   IMF PortWatch — Daily Chokepoints Data (ArcGIS FeatureServer)
-Target:   transit_events table in gulf_data.db
+Targets:  transit_events       (Strait of Hormuz — chokepoint6)
+          suez_transit_events  (Suez Canal       — chokepoint1)
 
 What it does:
-  - Calls the PortWatch ArcGIS API for chokepoint6 (Strait of Hormuz)
+  - Calls the PortWatch ArcGIS API for both chokepoints
   - Paginates through all records (1000 rows per call)
-  - Writes all vessel type counts + tonnage into transit_events
-  - On subsequent runs: only inserts rows that don't already exist (UPSERT)
+  - Writes all vessel type counts + tonnage into the appropriate table
+  - On subsequent runs: only inserts rows that don't already exist (INSERT OR IGNORE)
   - Runs automatically via run_all.py daily scheduler
 
 Data returned per row:
@@ -17,6 +18,8 @@ Data returned per row:
   n_total, capacity_tanker, capacity_total
 
 Coverage: Jan 1 2019 → ~4 days ago (updated every Tuesday 9 AM ET)
+
+To add a third strait in future: add one entry to CHOKEPOINTS dict only.
 """
 
 import requests
@@ -49,23 +52,42 @@ FIELDS = (
 
 BATCH_SIZE = 1000       # ArcGIS max records per call
 
+# ── Chokepoint registry ───────────────────────────────────────────────────────
+# To add a new strait: add one entry here. No other code changes needed.
+#   chokepoint_id : the portid value used in the PortWatch API WHERE clause
+#   display_name  : used in print statements only
+#   table         : the DB table to write into
 
-# ── Step 1: Fetch all chokepoint6 records from PortWatch ─────────────────────
+CHOKEPOINTS = {
+    "hormuz": {
+        "chokepoint_id": "chokepoint6",
+        "display_name" : "Strait of Hormuz",
+        "table"        : "transit_events",
+    },
+    "suez": {
+        "chokepoint_id": "chokepoint1",
+        "display_name" : "Suez Canal",
+        "table"        : "suez_transit_events",
+    },
+}
 
-def fetch_portwatch_data():
+
+# ── Step 1: Fetch all records for one chokepoint from PortWatch ───────────────
+
+def fetch_portwatch_data(chokepoint_id, display_name):
     """
-    Fetches all daily transit records for chokepoint6 (Strait of Hormuz).
+    Fetches all daily transit records for the given chokepoint.
     Paginates in batches of 1000 until all records are retrieved.
     Returns a list of dicts, one per day.
     """
     all_records = []
     offset = 0
 
-    print(f"[PortWatch] Starting fetch for chokepoint6...")
+    print(f"[PortWatch] Starting fetch for {display_name} ({chokepoint_id})...")
 
     while True:
         params = {
-            "where"           : "portid='chokepoint6'",
+            "where"           : f"portid='{chokepoint_id}'",
             "outFields"       : FIELDS,
             "f"               : "json",
             "resultOffset"    : offset,
@@ -94,7 +116,7 @@ def fetch_portwatch_data():
         for feature in features:
             all_records.append(feature["attributes"])
 
-        print(f"[PortWatch] Fetched {len(all_records)} records so far...")
+        print(f"[PortWatch] [{display_name}] Fetched {len(all_records)} records so far...")
 
         # If we got fewer than BATCH_SIZE, we've reached the end
         if len(features) < BATCH_SIZE:
@@ -102,7 +124,7 @@ def fetch_portwatch_data():
 
         offset += BATCH_SIZE
 
-    print(f"[PortWatch] Total records fetched: {len(all_records)}")
+    print(f"[PortWatch] [{display_name}] Total records fetched: {len(all_records)}")
     return all_records
 
 
@@ -148,11 +170,11 @@ def parse_record(record):
 
 # ── Step 3: Write records to transit_events ───────────────────────────────────
 
-def write_to_db(records):
+def write_to_db(records, table_name):
     """
-    Inserts records into transit_events.
+    Inserts records into the given table (transit_events or suez_transit_events).
     Uses INSERT OR IGNORE so re-runs are safe — existing dates are skipped.
-    (transit_events.date is PRIMARY KEY — duplicates are silently ignored)
+    (date is PRIMARY KEY in both tables — duplicates are silently ignored)
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -167,8 +189,8 @@ def write_to_db(records):
             continue
 
         try:
-            cursor.execute("""
-                INSERT OR IGNORE INTO transit_events (
+            cursor.execute(f"""
+                INSERT OR IGNORE INTO {table_name} (
                     date,
                     n_tanker,
                     n_container,
@@ -207,23 +229,23 @@ def write_to_db(records):
 
 # ── Step 4: Verify what we loaded ─────────────────────────────────────────────
 
-def verify_load():
+def verify_load(table_name, display_name):
     """
-    Prints a quick summary of what is now in transit_events.
+    Prints a quick summary of what is now in the given table.
     Checks row count, date range, and a sample of the latest rows.
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM transit_events")
+    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
     total = cursor.fetchone()[0]
 
-    cursor.execute("SELECT MIN(date), MAX(date) FROM transit_events")
+    cursor.execute(f"SELECT MIN(date), MAX(date) FROM {table_name}")
     min_date, max_date = cursor.fetchone()
 
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT date, n_tanker, n_container, n_dry_bulk, n_total, capacity_tanker
-        FROM transit_events
+        FROM {table_name}
         ORDER BY date DESC
         LIMIT 5
     """)
@@ -231,7 +253,7 @@ def verify_load():
 
     conn.close()
 
-    print(f"\n[PortWatch] ── Verification ──────────────────────────")
+    print(f"\n[PortWatch] ── Verification: {display_name} ─────────────")
     print(f"  Total rows : {total}")
     print(f"  Date range : {min_date} → {max_date}")
     print(f"  Latest 5 rows (date | tanker | container | dry_bulk | total | tanker_capacity):")
@@ -247,24 +269,31 @@ def main():
     print(f"\n[PortWatch] {'='*50}")
     print(f"[PortWatch] Starting PortWatch ingestor")
     print(f"[PortWatch] Source  : IMF PortWatch ArcGIS API")
-    print(f"[PortWatch] Filter  : chokepoint6 (Strait of Hormuz)")
+    print(f"[PortWatch] Chokepoints : {len(CHOKEPOINTS)} ({', '.join(c['display_name'] for c in CHOKEPOINTS.values())})")
     print(f"[PortWatch] Target  : {DB_PATH}")
     print(f"[PortWatch] {'='*50}\n")
 
-    # 1. Fetch from API
-    raw_records = fetch_portwatch_data()
+    for key, config in CHOKEPOINTS.items():
+        chokepoint_id = config["chokepoint_id"]
+        display_name  = config["display_name"]
+        table         = config["table"]
 
-    if not raw_records:
-        print("[PortWatch] No records returned from API. Exiting.")
-        return
+        print(f"[PortWatch] ── {display_name} ({chokepoint_id}) → {table}")
 
-    # 2. Write to DB
-    inserted, skipped = write_to_db(raw_records)
-    print(f"[PortWatch] Inserted : {inserted} new rows")
-    print(f"[PortWatch] Skipped  : {skipped} (already exist or null date)")
+        # 1. Fetch from API
+        raw_records = fetch_portwatch_data(chokepoint_id, display_name)
 
-    # 3. Verify
-    verify_load()
+        if not raw_records:
+            print(f"[PortWatch] No records returned for {display_name}. Skipping.")
+            continue
+
+        # 2. Write to DB
+        inserted, skipped = write_to_db(raw_records, table)
+        print(f"[PortWatch] Inserted : {inserted} new rows")
+        print(f"[PortWatch] Skipped  : {skipped} (already exist or null date)")
+
+        # 3. Verify
+        verify_load(table, display_name)
 
     print("[PortWatch] Done.")
 
