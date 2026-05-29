@@ -804,3 +804,265 @@ def check_db_connection() -> dict:
             "tables_missing": expected_tables,
             "error": str(e)
         }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CRACK SPREADS TAB — NEW FUNCTIONS (Sprint 3)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_latest_crack_metrics() -> dict:
+    """Compute current crack spreads from latest price_data rows."""
+    try:
+        with _connect() as conn:
+            df = pd.read_sql_query("""
+                SELECT date, ticker, price
+                FROM price_data
+                WHERE ticker IN ('Brent', 'RBOB_Gasoline', 'HeatingOil')
+                  AND price IS NOT NULL
+                ORDER BY date ASC
+            """, conn, parse_dates=["date"])
+
+        if df.empty:
+            return {k: None for k in ["brent_price","gasoline_crack","diesel_crack",
+                "jet_crack","gasoline_crack_30d","diesel_crack_30d","jet_crack_30d",
+                "gasoline_delta_30d","diesel_delta_30d","jet_delta_30d",
+                "gasoline_status","diesel_status","jet_status","as_of_date"]}
+
+        wide = df.pivot_table(index="date", columns="ticker", values="price", aggfunc="last")
+        wide = wide.dropna(subset=["Brent", "RBOB_Gasoline", "HeatingOil"])
+        if len(wide) < 2:
+            return {k: None for k in ["brent_price","gasoline_crack","diesel_crack",
+                "jet_crack","gasoline_crack_30d","diesel_crack_30d","jet_crack_30d",
+                "gasoline_delta_30d","diesel_delta_30d","jet_delta_30d",
+                "gasoline_status","diesel_status","jet_status","as_of_date"]}
+
+        wide["Gasoline_Crack"] = (wide["RBOB_Gasoline"] * 42) - wide["Brent"]
+        wide["Diesel_Crack"]   = (wide["HeatingOil"]   * 42) - wide["Brent"]
+        wide["Jet_Crack"]      = wide["Diesel_Crack"]  * 1.04
+
+        latest   = wide.iloc[-1]
+        last_30d = wide.tail(30)
+
+        def _status(current, avg):
+            if not avg: return "STABLE"
+            pct = (current - avg) / abs(avg) * 100
+            return "CRITICAL" if pct > 20 else "ELEVATED" if pct > 5 else "STABLE"
+
+        gas   = round(float(latest["Gasoline_Crack"]), 2)
+        dis   = round(float(latest["Diesel_Crack"]),   2)
+        jet   = round(float(latest["Jet_Crack"]),      2)
+        gas30 = round(float(last_30d["Gasoline_Crack"].mean()), 2)
+        dis30 = round(float(last_30d["Diesel_Crack"].mean()),   2)
+        jet30 = round(float(last_30d["Jet_Crack"].mean()),      2)
+
+        return {
+            "brent_price":        round(float(latest["Brent"]), 2),
+            "gasoline_crack":     gas,  "diesel_crack": dis,   "jet_crack": jet,
+            "gasoline_crack_30d": gas30,"diesel_crack_30d": dis30,"jet_crack_30d": jet30,
+            "gasoline_delta_30d": round(gas - gas30, 2),
+            "diesel_delta_30d":   round(dis - dis30, 2),
+            "jet_delta_30d":      round(jet - jet30, 2),
+            "gasoline_status":    _status(gas, gas30),
+            "diesel_status":      _status(dis, dis30),
+            "jet_status":         _status(jet, jet30),
+            "as_of_date":         wide.index[-1].strftime("%Y-%m-%d"),
+        }
+    except Exception as e:
+        print(f"[db] get_latest_crack_metrics error: {e}")
+        return {k: None for k in ["brent_price","gasoline_crack","diesel_crack",
+            "jet_crack","gasoline_crack_30d","diesel_crack_30d","jet_crack_30d",
+            "gasoline_delta_30d","diesel_delta_30d","jet_delta_30d",
+            "gasoline_status","diesel_status","jet_status","as_of_date"]}
+
+
+def get_crack_spread_history(start_date: str = "2024-01-01") -> pd.DataFrame:
+    """Daily crack spread time series for charts."""
+    try:
+        with _connect() as conn:
+            df = pd.read_sql_query(f"""
+                SELECT date, ticker, price FROM price_data
+                WHERE ticker IN ('Brent','RBOB_Gasoline','HeatingOil')
+                  AND date >= '{start_date}' AND price IS NOT NULL
+                ORDER BY date ASC
+            """, conn, parse_dates=["date"])
+
+        if df.empty:
+            return pd.DataFrame(columns=["date","Brent","Gasoline_Crack","Diesel_Crack","Jet_Crack"])
+
+        wide = df.pivot_table(index="date", columns="ticker", values="price", aggfunc="last").reset_index()
+        wide = wide.dropna(subset=["Brent","RBOB_Gasoline","HeatingOil"])
+        wide["Gasoline_Crack"] = (wide["RBOB_Gasoline"] * 42) - wide["Brent"]
+        wide["Diesel_Crack"]   = (wide["HeatingOil"]   * 42) - wide["Brent"]
+        wide["Jet_Crack"]      = wide["Diesel_Crack"]  * 1.04
+        return wide[["date","Brent","Gasoline_Crack","Diesel_Crack","Jet_Crack"]]
+    except Exception as e:
+        print(f"[db] get_crack_spread_history error: {e}")
+        return pd.DataFrame(columns=["date","Brent","Gasoline_Crack","Diesel_Crack","Jet_Crack"])
+
+
+def get_crack_spread_forecast() -> pd.DataFrame:
+    """
+    Load 7-day forward forecast from models/crack_spread_forecasts.csv if it exists.
+    Falls back to a naive last-value-forward projection so the tab renders either way.
+    """
+    import os
+    forecast_path = Path(__file__).parent.parent / "models" / "crack_spread_forecasts.csv"
+
+    if forecast_path.exists():
+        try:
+            df = pd.read_csv(forecast_path, parse_dates=["date"])
+            df["is_naive"] = False
+            return df[["date","product","forecast","lower_80","upper_80","is_naive"]]
+        except Exception:
+            pass
+
+    # Naive fallback
+    history = get_crack_spread_history()
+    if history.empty:
+        return pd.DataFrame(columns=["date","product","forecast","lower_80","upper_80","is_naive"])
+
+    latest    = history.iloc[-1]
+    last_date = latest["date"]
+    rows = []
+    for product in ["Gasoline_Crack","Diesel_Crack","Jet_Crack"]:
+        last_val = float(latest[product])
+        for d in range(1, 8):
+            band = last_val * 0.005 * d
+            rows.append({
+                "date":     last_date + pd.Timedelta(days=d),
+                "product":  product,
+                "forecast": round(last_val, 2),
+                "lower_80": round(last_val - 1.28 * band, 2),
+                "upper_80": round(last_val + 1.28 * band, 2),
+                "is_naive": True,
+            })
+    return pd.DataFrame(rows)
+
+
+def get_latest_vol_metrics() -> dict:
+    """Latest row from volatility_log for the vol regime KPI card."""
+    try:
+        with _connect() as conn:
+            row = conn.execute("""
+                SELECT date,
+                       realized_vol_20d_annualized AS realized_vol_20d,
+                       vol_90d_avg, vol_ratio, vol_regime, shock_flag
+                FROM volatility_log ORDER BY date DESC LIMIT 1
+            """).fetchone()
+            shock_30d = conn.execute("""
+                SELECT COUNT(*) AS cnt FROM (
+                    SELECT shock_flag FROM volatility_log ORDER BY date DESC LIMIT 30
+                ) WHERE shock_flag = 1
+            """).fetchone()
+
+        if row is None:
+            return {"date":None,"realized_vol_20d":None,"vol_90d_avg":None,
+                    "vol_ratio":None,"vol_regime":"—","shock_flag":0,"shock_days_last_30":0}
+        return {
+            "date":               row["date"],
+            "realized_vol_20d":   round(float(row["realized_vol_20d"] or 0), 1),
+            "vol_90d_avg":        round(float(row["vol_90d_avg"]       or 0), 1),
+            "vol_ratio":          round(float(row["vol_ratio"]         or 0), 2),
+            "vol_regime":         row["vol_regime"] or "—",
+            "shock_flag":         int(row["shock_flag"] or 0),
+            "shock_days_last_30": int(shock_30d["cnt"] or 0) if shock_30d else 0,
+        }
+    except Exception as e:
+        print(f"[db] get_latest_vol_metrics error: {e}")
+        return {"date":None,"realized_vol_20d":None,"vol_90d_avg":None,
+                "vol_ratio":None,"vol_regime":"—","shock_flag":0,"shock_days_last_30":0}
+
+
+def get_latest_refinery_metrics() -> dict:
+    """Latest EIA weekly readings from refinery_data."""
+    try:
+        with _connect() as conn:
+            util_rows = conn.execute("""
+                SELECT date, value FROM refinery_data
+                WHERE series_name = 'Refinery_Utilization_Rate' AND value IS NOT NULL
+                ORDER BY date DESC LIMIT 4
+            """).fetchall()
+
+            def _latest(series):
+                return conn.execute("""
+                    SELECT date, value FROM refinery_data
+                    WHERE series_name = ? AND value IS NOT NULL
+                    ORDER BY date DESC LIMIT 1
+                """, (series,)).fetchone()
+
+            crude    = _latest("US_Crude_Stocks_ExSPR")
+            gasoline = _latest("US_Gasoline_Stocks")
+            dist     = _latest("US_Distillate_Stocks")
+
+        if not util_rows:
+            return {k: None for k in ["utilization_pct","utilization_date",
+                "utilization_4w_avg","crude_stocks_mbbl","gasoline_stocks_mbbl",
+                "distillate_stocks_mbbl","crude_stocks_date"]}
+
+        return {
+            "utilization_pct":        round(float(util_rows[0]["value"]), 1),
+            "utilization_date":       util_rows[0]["date"],
+            "utilization_4w_avg":     round(sum(float(r["value"]) for r in util_rows) / len(util_rows), 1),
+            "crude_stocks_mbbl":      round(float(crude["value"]),    0) if crude    else None,
+            "gasoline_stocks_mbbl":   round(float(gasoline["value"]), 0) if gasoline else None,
+            "distillate_stocks_mbbl": round(float(dist["value"]),     0) if dist     else None,
+            "crude_stocks_date":      crude["date"] if crude else None,
+        }
+    except Exception as e:
+        print(f"[db] get_latest_refinery_metrics error: {e}")
+        return {k: None for k in ["utilization_pct","utilization_date",
+            "utilization_4w_avg","crude_stocks_mbbl","gasoline_stocks_mbbl",
+            "distillate_stocks_mbbl","crude_stocks_date"]}
+
+
+def get_refinery_history(start_date: str = "2024-01-01") -> pd.DataFrame:
+    """Weekly refinery utilization history."""
+    try:
+        with _connect() as conn:
+            return pd.read_sql_query(f"""
+                SELECT date, value AS utilization_pct FROM refinery_data
+                WHERE series_name = 'Refinery_Utilization_Rate'
+                  AND date >= '{start_date}' AND value IS NOT NULL
+                ORDER BY date ASC
+            """, conn, parse_dates=["date"])
+    except Exception as e:
+        print(f"[db] get_refinery_history error: {e}")
+        return pd.DataFrame(columns=["date","utilization_pct"])
+
+
+def get_inventory_levels() -> pd.DataFrame:
+    """Latest 52 weeks of crude, gasoline, distillate stocks."""
+    try:
+        with _connect() as conn:
+            return pd.read_sql_query("""
+                SELECT date, series_name, value FROM refinery_data
+                WHERE series_name IN (
+                    'US_Crude_Stocks_ExSPR','US_Gasoline_Stocks','US_Distillate_Stocks'
+                ) AND value IS NOT NULL
+                  AND date >= date('now', '-52 weeks')
+                ORDER BY date ASC
+            """, conn, parse_dates=["date"])
+    except Exception as e:
+        print(f"[db] get_inventory_levels error: {e}")
+        return pd.DataFrame(columns=["date","series_name","value"])
+
+
+def get_suez_hormuz_comparison(start_date: str = "2024-01-01") -> pd.DataFrame:
+    """Daily tanker counts for Hormuz and Suez side by side."""
+    try:
+        with _connect() as conn:
+            hormuz = pd.read_sql_query(f"""
+                SELECT date, n_tanker AS hormuz_tankers FROM transit_events
+                WHERE date >= '{start_date}' ORDER BY date ASC
+            """, conn, parse_dates=["date"])
+            suez = pd.read_sql_query(f"""
+                SELECT date, n_tanker AS suez_tankers FROM suez_transit_events
+                WHERE date >= '{start_date}' ORDER BY date ASC
+            """, conn, parse_dates=["date"])
+
+        if hormuz.empty and suez.empty:
+            return pd.DataFrame(columns=["date","hormuz_tankers","suez_tankers"])
+        return pd.merge(hormuz, suez, on="date", how="outer").sort_values("date").fillna(0)
+    except Exception as e:
+        print(f"[db] get_suez_hormuz_comparison error: {e}")
+        return pd.DataFrame(columns=["date","hormuz_tankers","suez_tankers"])

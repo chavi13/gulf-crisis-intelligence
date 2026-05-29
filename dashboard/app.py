@@ -37,6 +37,15 @@ from db import (
     get_supply_gap_log_history,
     get_vessel_mix_latest,
     get_vessel_mix_history,
+    # ── Sprint 3 — Crack Spreads tab ──
+    get_latest_crack_metrics,
+    get_crack_spread_history,
+    get_crack_spread_forecast,
+    get_latest_vol_metrics,
+    get_latest_refinery_metrics,
+    get_refinery_history,
+    get_inventory_levels,
+    get_suez_hormuz_comparison,
 )
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1108,6 +1117,14 @@ def load_all_data():
         "gap_log_df":    get_supply_gap_log_history(),
         "vessel_mix":    get_vessel_mix_latest(),
         "vessel_mix_df": get_vessel_mix_history(),
+        "crack":             get_latest_crack_metrics(),
+        "crack_history_df":  get_crack_spread_history(),
+        "crack_forecast_df": get_crack_spread_forecast(),
+        "vol_latest":        get_latest_vol_metrics(),
+        "refinery_latest":   get_latest_refinery_metrics(),
+        "refinery_df":       get_refinery_history(),
+        "inventory_df":      get_inventory_levels(),
+        "suez_hormuz_df":    get_suez_hormuz_comparison(),
     }
 
 
@@ -1243,11 +1260,12 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 
 
-tab_overview, tab_tanker, tab_gap, tab_lng = st.tabs([
+tab_overview, tab_tanker, tab_gap, tab_lng, tab_crack = st.tabs([
     "⬡  Overview",
     "🚢  Vessel Transits",
     "📊  Supply Gap",
     "🔥  LNG Cargo Flows",
+    "📈  Crack Spreads",
 ])
 
 
@@ -3155,3 +3173,22 @@ with tab_gap:
         """, unsafe_allow_html=True)
 
     # ── Section 5 — Analyst interpretation ────────────────────────────────────
+    # TODO: add analyst interpretation block here
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# TAB 5 — CRACK SPREADS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+with tab_crack:
+    crack        = data["crack"]
+    crack_hist   = data["crack_history_df"]
+    crack_fcast  = data["crack_forecast_df"]
+    vol          = data["vol_latest"]
+    ref          = data["refinery_latest"]
+    ref_hist     = data["refinery_df"]
+    inv_df       = data["inventory_df"]
+    sh_df        = data["suez_hormuz_df"]
+
+    st.markdown("### 📈 Crack Spreads & Refinery Margins")
+    st.info("Full tab content coming soon — paste `tab_crack_spreads.py` block to complete.", icon="ℹ️")
