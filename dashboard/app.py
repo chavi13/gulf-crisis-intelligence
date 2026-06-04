@@ -1260,12 +1260,12 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 
 
-tab_overview, tab_tanker, tab_gap, tab_lng, tab_crack = st.tabs([
+tab_overview, tab_tanker, tab_gap, tab_lng = st.tabs([
     "⬡  Overview",
     "🚢  Vessel Transits",
     "📊  Supply Gap",
     "🔥  LNG Cargo Flows",
-    "📈  Crack Spreads",
+    # "📈  Crack Spreads",  # temporarily hidden
 ])
 
 
@@ -3177,10 +3177,10 @@ with tab_gap:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# TAB 5 — CRACK SPREADS
+# TAB 5 — CRACK SPREADS (temporarily hidden)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-with tab_crack:
+if False:  # temporarily hidden — restore by re-adding to st.tabs() and changing back to `with tab_crack:`
 
     # ── Unpack data ───────────────────────────────────────────────────────────
     crack       = data["crack"]
